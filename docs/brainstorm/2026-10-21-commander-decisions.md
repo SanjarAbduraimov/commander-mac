@@ -125,7 +125,8 @@ Open · Open With ▸ (ilovalar, Other…, Always open with this app) · Quick L
 - Performance (Intel Mac): 5 000 faylli papka ≤100 ms (avtomatik benchmark); cold start ≤1 s va bo'sh holatda RAM ≤100 MB (Instruments bilan qo'lda).
 
 ## Ochiq savollar
-- Yo'q. Barcha dizayn bo'limlari tasdiqlandi; spec: `docs/superpowers/specs/2026-10-21-phase1-core-design.md` — foydalanuvchi ko'rib chiqishi kutilmoqda.
+- Spec tasdiqlandi: `docs/superpowers/specs/2026-10-21-phase1-core-design.md` (endi asosiy manba shu).
+- Plan A (CommanderKit) foydalanuvchi ko'rib chiqishi va bajarish usulini tanlashi kutilmoqda: `docs/superpowers/plans/2026-10-21-phase1a-commanderkit.md`. Bajarishdan oldin Xcode o'rnatilishi shart (CLT'da `Testing`/`XCTest` yo'q — tekshirilgan).
 
 ### Asboblar — **tasdiqlandi**
 - 2026-10-21 holati: Xcode o'rnatilmagan, faqat Command Line Tools (Swift 6.2.1, x86_64), XcodeGen yo'q.

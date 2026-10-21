@@ -1,6 +1,6 @@
 # Commander for Mac — 1-bosqich (yadro) dizayni
 
-Sana: 2026-10-21. Holat: **foydalanuvchi ko'rib chiqishi kutilmoqda.**
+Sana: 2026-10-21. Holat: **tasdiqlandi** (2026-10-21). Implementation plan: `docs/superpowers/plans/2026-10-21-phase1a-commanderkit.md` (A — CommanderKit); B — App UI plan'i keyin yoziladi.
 Manba: `docs/brainstorm/2026-10-21-commander-decisions.md` (bu spec tasdiqlangach asosiy manba shu fayl bo'ladi).
 Dizayn maketi: `docs/design/prototype/index.html`, layout **A · Native balance**.
 
