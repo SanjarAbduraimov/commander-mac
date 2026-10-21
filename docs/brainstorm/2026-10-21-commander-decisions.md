@@ -29,7 +29,7 @@ MacBook uchun Total Commander uslubidagi ikki panelli, klaviatura bilan tez ishl
 3. **Qo'shimchalar**: ZIP qilish/ochish, Quick Look, Share → Telegram, boshqa ilovalardan "Open in Commander".
 4. **Tarmoq**: SFTP/FTP.
 
-> **Taklif, hali tasdiqlanmagan:** oddiy copy / move / new folder / rename / Trash / drag & drop 1-bosqichga kiradi (fonda, oddiy progress, konfliktda Replace / Skip / Keep both). Aks holda yadro kundalik ishda yaroqsiz bo'ladi.
+> **Tasdiqlandi (B varianti):** oddiy copy / move / new folder / rename / Trash / drag & drop 1-bosqichga kiradi — fonda, oddiy progress, oddiy **Cancel** (har fayldan keyin tekshiriladi), konfliktda Replace / Skip / Keep both. Navbat, pause, batafsil konflikt dialogi, undo — 2-bosqichda.
 
 ### Klaviatura
 | Tugma | Vazifa (fayl jadvalida) |
@@ -81,22 +81,52 @@ Open · Open With ▸ (ilovalar, Other…, Always open with this app) · Quick L
 
 ## Dizayn bo'limlari (spec uchun)
 
-### 1-bo'lim: Arxitektura — **taqdim etilgan, tasdiq kutilmoqda**
+### 1-bo'lim: Arxitektura — **tasdiqlandi**
 - macOS 15.0+, x86_64 (universal ixtiyoriy). Sandbox yo'q, App Store yo'q. Full Disk Access tavsiya.
 - Modullar:
   - **Core** (sof Swift, UI'siz): `FileItem`, `PaneState` (path, tarix, kursor, belgilanganlar, saralash), `Command` enum, `KeyBindings`, `Settings`.
   - **FileSystem**: papka o'qish, FSEvents kuzatish, fayl amallari, ulangan disklar/SMB (`/Volumes`). Core'ga bog'liq.
+    - `FileOperation`: copy/move/trash fonda; progress va cancel Core'dagi `OperationState` orqali UI'ga beriladi (UI'siz test qilinadi).
   - **UI** (AppKit): main window, sidebar, 2× `PaneViewController` (tablar, path field, jadval, status), selection bar.
   - **SettingsUI** (SwiftUI): Appearance / Behavior / Shortcuts.
 - Har bir harakat bitta `Command` orqali: klaviatura, kontekst menyu, tugmalar, drag & drop bir xil kodni chaqiradi → shortcut remap = `KeyBindings` jadvalini o'zgartirish; Core UI'siz unit test qilinadi.
 - Klaviatura oqimi: event → fokus konteksti (jadval / matn maydoni) → `KeyBindings` → `Command` → `PaneState` → jadval yangilanadi.
 
-### Qolgan bo'limlar (hali taqdim etilmagan)
-2. Panel va tablar modeli, klaviatura + mouse xatti-harakatining aniq qoidalari
-3. Fayl tizimi: o'qish, kuzatish, amallar, xatolarni boshqarish
-4. Settings saqlash (format, joy, migratsiya)
-5. Testlash strategiyasi (Core unit testlar, UI testlar, Intel Mac'da performance o'lchovi)
+### 2-bo'lim: Panel/tab modeli, klaviatura + mouse — **tasdiqlandi**
+- `WindowState` (chap/o'ng panel, faol panel) → `PaneState` (tablar, faol tab) → `TabState` (`path`, back/forward tarix, kursor — nom bo'yicha, belgilanganlar — nomlar to'plami, saralash; papkalar doim yuqorida).
+- `..` qatori **yo'q** — yuqoriga `⌫` va path field orqali.
+- Buyruqlar belgilanganlarga, bo'lmasa kursordagi faylga ishlaydi.
+- Boshqa papkaga o'tganda belgilar tozalanadi; `⌫` bilan chiqqanda kursor chiqilgan papkada turadi.
+- FSEvents yangilanishida kursor va belgilar nom bo'yicha saqlanadi; fayl yo'qolsa kursor qo'shni qatorga.
+- Harf terish → shu nom bilan boshlanuvchi faylga sakrash (type-ahead).
+- Tablar: `⌘T` yangi (joriy papkada), `⌘W` yopish (oxirgisi yopilmaydi), `⌃Tab` / `⌃⇧Tab`. Qayta ochilganda tablar tiklanadi (Settings'da o'chiriladi).
+- Belgilash: `Space`; `⇧↑ / ⇧↓` yurib belgilaydi; `⇧`+click — kursordan bosilgan qatorgacha diapazon; `⌘`+click — bitta qatorni yoqish/o'chirish.
+- Click — kursor qo'yadi. O'ng tugma: belgilangan fayl ustida → menyu belgilanganlarga; belgilanmagan ustida → kursor o'sha faylga, menyu faqat unga.
+- Panelning istalgan joyiga bosish uni faol qiladi.
+
+### 3-bo'lim: Fayl tizimi — **tasdiqlandi**
+- **O'qish**: fonda, kerakli resource key'lar bir yo'la (nom, tur, hajm, sana, yashirin, symlink, package). Maqsad: Intel Mac'da 5 000 faylli papka ≤100 ms. Yashirin fayllar default yashirin, `⌘⇧.` bilan ko'rsatiladi. Package'lar (`.app`) fayl sifatida; kontekst menyuda "Show Package Contents".
+- **Kuzatish**: har panelning faol tabi FSEvents bilan, 150 ms debounce, keyin qayta o'qish. SMB'da panel fokusga qaytganda yangilanadi; `⌘R` — qo'lda yangilash.
+- **Amallar (`FileOperation`)**: copy — o'z daraxt yurgichi, har fayldan keyin cancel tekshiriladi; cancel'da chala fayl o'chiriladi, tayyorlari qoladi. Move bir disk ichida — rename; boshqa diskka — copy, hammasi muvaffaqiyatli bo'lgach asl o'chiriladi. Trash — `trashItem`; Trash bo'lmasa qaytarilmas o'chirish tasdig'i. Konflikt: Replace / Skip / Keep both + "Apply to all". Bir nechta amal parallel; progress (fayl soni, bayt) va Cancel footer'da.
+- **Xatolar**: ruxsat yo'q / fayl band → Retry / Skip / Cancel all. Joriy papka yo'qolsa (disk chiqarilgan) → eng yaqin mavjud ota papkaga. Full Disk Access yo'q → panelda banner, System Settings'ni ochuvchi tugma.
+
+### 4-bo'lim: Settings saqlash — **tasdiqlandi**
+- `~/Library/Application Support/Commander/`: `settings.json` (Appearance, Behavior, Shortcuts) va `session.json` (tablar, papkalar, faol panel, sidebar kengligi). Oyna frame — `NSWindow` autosave.
+- JSON + `Codable`, Core'da, UI'siz test qilinadi.
+- Shortcut'lar: faylga faqat foydalanuvchi o'zgartirganlari yoziladi; default'lar kodda (yangi default'lar avtomatik qo'shiladi).
+- Har o'zgarishda 0,5 s debounce bilan atomik yozish. Fayl faqat ishga tushishda o'qiladi.
+- `"version": 1`; eski versiya → ketma-ket migratsiya. Noma'lum kalit e'tiborsiz, yetishmagani default. Buzilgan fayl → `settings.broken-<sana>.json` ga saqlanadi, default bilan ochiladi, bir marta ogohlantiriladi.
+
+### 5-bo'lim: Testlash — **tasdiqlandi**
+- Core va FileSystem — **local Swift Package** (`swift test` bilan Xcode'siz ishlaydi; package AppKit'ni import qilmaydi). AppKit UI — Xcode app target.
+- Core unit testlar (TDD): `PaneState` (kursor, belgilash, `⇧↑/⇧↓`, tarix, `⌫` dan keyingi kursor, FSEvents yangilanishi), `KeyBindings` (tugma → `Command`, matn maydoni konteksti, to'qnashuv, override + default), `Settings` (o'qish/yozish, migratsiya, buzilgan fayl, noma'lum/yetishmagan kalitlar).
+- FileSystem integratsion testlar vaqtinchalik papkada: copy, move (bir disk / boshqa disk), cancel, konflikt, Retry/Skip. Trash protokol orqali, testda fake.
+- XCUITest — bir necha smoke test: ochilish, `Tab`, `⌫`, vaqtinchalik papkada `F5`.
+- Performance (Intel Mac): 5 000 faylli papka ≤100 ms (avtomatik benchmark); cold start ≤1 s va bo'sh holatda RAM ≤100 MB (Instruments bilan qo'lda).
 
 ## Ochiq savollar
-- Yuqoridagi "1-bosqichga oddiy fayl amallari kiradi" taklifi va 1-bo'lim arxitekturasini tasdiqlash.
-- Xcode versiyasi Intel Mac'da (`xcodebuild -version`) va loyiha formati: Xcode `.xcodeproj` yoki XcodeGen `project.yml` (agentlar uchun `.pbxproj`'dan ko'ra xavfsizroq) [Likely].
+- Yo'q. Barcha dizayn bo'limlari tasdiqlandi; spec: `docs/superpowers/specs/2026-10-21-phase1-core-design.md` — foydalanuvchi ko'rib chiqishi kutilmoqda.
+
+### Asboblar — **tasdiqlandi**
+- 2026-10-21 holati: Xcode o'rnatilmagan, faqat Command Line Tools (Swift 6.2.1, x86_64), XcodeGen yo'q.
+- Xcode'ni foydalanuvchi o'zi App Store'dan o'rnatadi. Loyiha formati — **XcodeGen `project.yml`** (`.xcodeproj` generatsiya qilinadi, git'ga kirmaydi). XcodeGen plan tasdiqlangach o'rnatiladi.
