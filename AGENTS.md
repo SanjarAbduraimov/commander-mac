@@ -34,4 +34,11 @@ Total Commander uslubidagi ikki panelli, klaviatura bilan tez ishlaydigan, yengi
 
 ## Build va test
 
-Xcode loyihasi hali yaratilmagan. Yaratilganda shu bo'limga aniq build, test va run buyruqlarini qo'shing.
+Talab: to'liq Xcode (Command Line Tools'da `Testing` moduli yo'q). Barcha buyruqlar repo ildizidan:
+
+- Core/FileSystem testlari: `swift test --package-path Packages/CommanderKit`
+- Bitta suite: `swift test --package-path Packages/CommanderKit --filter <SuiteName>`
+- Benchmark: `CK_BENCHMARK=1 swift test --package-path Packages/CommanderKit -c release --filter DirectoryReaderBenchmark`
+- Faqat kompilyatsiya (Xcode'siz ham ishlaydi): `swift build --package-path Packages/CommanderKit`
+
+App target (XcodeGen) hali yaratilmagan — yaratilganda build va run buyruqlarini shu yerga qo'shing.
