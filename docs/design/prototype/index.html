@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Commander for Mac · Design study</title>
+  <link rel="icon" href="data:,">
+  <link rel="stylesheet" href="layout-study.css">
+  <script src="layout-study.js" defer></script>
+</head>
+<body>
+<svg class="sprite" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+  <symbol id="i-panels" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M12 4v16M6 8h3m-3 4h3m6-4h3m-3 4h3"/></symbol>
+  <symbol id="i-sidebar" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M9 4v16M5.5 8h1M5.5 11h1"/></symbol>
+  <symbol id="i-folder" viewBox="0 0 24 24"><path d="M3 6a2 2 0 0 1 2-2h5l2 3h7a2 2 0 0 1 2 2v10a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1Z"/></symbol>
+  <symbol id="i-file" viewBox="0 0 24 24"><path d="M14 3H6a1 1 0 0 0-1 1v16a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V8Zm0 0v5h5M8 13h8m-8 4h6"/></symbol>
+  <symbol id="i-image" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8" cy="8" r="1.5"/><path d="m3 17 5-5 4 4 4-6 5 7"/></symbol>
+  <symbol id="i-archive" viewBox="0 0 24 24"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M11 3v2h2v2h-2v2h2v2h-2v2m0 2h2v3h-2z"/></symbol>
+  <symbol id="i-home" viewBox="0 0 24 24"><path d="m3 10 9-7 9 7M5 9v11h5v-7h4v7h5V9"/></symbol>
+  <symbol id="i-desktop" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="13" rx="2"/><path d="M8 21h8m-4-5v5M3 13h18"/></symbol>
+  <symbol id="i-download" viewBox="0 0 24 24"><path d="M12 3v12m-5-5 5 5 5-5M4 16v4h16v-4"/></symbol>
+  <symbol id="i-code" viewBox="0 0 24 24"><path d="m7 7-5 5 5 5m10-10 5 5-5 5M14 4l-4 16"/></symbol>
+  <symbol id="i-server" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="7" rx="2"/><rect x="3" y="14" width="18" height="7" rx="2"/><path d="M7 6.5h.01M7 17.5h.01m4-11h6m-6 11h6"/></symbol>
+  <symbol id="i-drive" viewBox="0 0 24 24"><path d="m4 4-2 12v4h20v-4L20 4ZM2 16h20m-5 2h.01m3 0h.01"/></symbol>
+  <symbol id="i-laptop" viewBox="0 0 24 24"><rect x="5" y="3" width="14" height="13" rx="1"/><path d="m5 16-3 5h20l-3-5M10 18h4"/></symbol>
+  <symbol id="i-check" viewBox="0 0 24 24"><path d="m5 12 4 4L19 6"/></symbol>
+  <symbol id="i-up" viewBox="0 0 24 24"><path d="M12 20V4m-6 6 6-6 6 6"/></symbol>
+  <symbol id="i-right" viewBox="0 0 24 24"><path d="M4 12h16m-6-6 6 6-6 6"/></symbol>
+  <symbol id="i-chevron" viewBox="0 0 24 24"><path d="m9 5 7 7-7 7"/></symbol>
+  <symbol id="i-sort" viewBox="0 0 24 24"><path d="m7 14 5-5 5 5"/></symbol>
+  <symbol id="i-copy" viewBox="0 0 24 24"><rect x="8" y="8" width="12" height="13" rx="2"/><path d="M15 8V3H3v13h5"/></symbol>
+  <symbol id="i-move" viewBox="0 0 24 24"><path d="M4 6h9v12H4zM10 12h11m-4-4 4 4-4 4"/></symbol>
+  <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+  <symbol id="i-share" viewBox="0 0 24 24"><path d="M7 9H4v12h16V9h-3M12 15V2m-5 5 5-5 5 5"/></symbol>
+  <symbol id="i-telegram" viewBox="0 0 24 24"><path d="m21 3-3.5 18-6-5-3 3v-5L3 12Zm0 0L8.5 14M11.5 16 18 7"/></symbol>
+  <symbol id="i-trash" viewBox="0 0 24 24"><path d="M3 6h18M9 6V3h6v3M5 6l1 15h12l1-15M10 10v7m4-7v7"/></symbol>
+  <symbol id="i-settings" viewBox="0 0 24 24"><path d="m9 3-.5 3-2 1L4 6 2 9l2.5 2v2L2 15l2 3 2.5-1 2 1 .5 3h6l.5-3 2-1 2.5 1 2-3-2.5-2v-2L22 9l-2-3-2.5 1-2-1L15 3Z"/><circle cx="12" cy="12" r="3"/></symbol>
+  <symbol id="i-search" viewBox="0 0 24 24"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 5 5"/></symbol>
+  <symbol id="i-x" viewBox="0 0 24 24"><path d="m6 6 12 12M6 18 18 6"/></symbol>
+  <symbol id="i-keyboard" viewBox="0 0 24 24"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M6 9h.01M10 9h.01M14 9h.01M18 9h.01M6 12h.01M10 12h.01M14 12h.01M18 12h.01M7 16h10"/></symbol>
+  <symbol id="i-sliders" viewBox="0 0 24 24"><path d="M4 7h5m4 0h7M4 17h9m4 0h3M9 4v6m4-6v6m0 4v6m4-6v6"/></symbol>
+  <symbol id="i-type" viewBox="0 0 24 24"><path d="m3 20 7-17 7 17M5 15h10m1-5h6m-3 0v10"/></symbol>
+  <symbol id="i-eye" viewBox="0 0 24 24"><path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/></symbol>
+  <symbol id="i-spark" viewBox="0 0 24 24"><path d="m12 3 2 7 7 2-7 2-2 7-2-7-7-2 7-2Z"/></symbol>
+</svg>
+<main class="study">
+  <header class="study-header">
+    <div class="identity"><div class="app-logo"><svg><use href="#i-panels"/></svg></div><div>Commander for Mac<div class="eyebrow">Design exploration · 01</div></div></div>
+    <div class="device"><svg><use href="#i-laptop"/></svg><span>MacBook Pro Intel</span><span>·</span><span>macOS 15.7.9</span></div>
+  </header>
+  <section class="study-heading"><div><h1>A familiar rhythm. A clearer workspace.</h1><p>Compare three layouts. Try marking files, switching panes, and making the interface your own.</p></div><span class="study-tag">Interactive design · Sample files</span></section>
+  <nav class="directions" role="tablist" aria-label="Design directions">
+    <button class="direction" role="tab" aria-selected="true" data-layout-choice="a" aria-controls="app-window"><div><div class="direction-title"><span class="letter">A</span><strong>Native balance</strong><span class="recommended">Recommended</span></div><p>Familiar places. Room to work.</p></div><div class="mini" aria-hidden="true"><div class="mini-side"></div><div class="mini-panel"></div><div class="mini-panel"></div></div></button>
+    <button class="direction" role="tab" aria-selected="false" data-layout-choice="b" aria-controls="app-window"><div><div class="direction-title"><span class="letter">B</span><strong>Commander compact</strong></div><p>Maximum files. Minimum chrome.</p></div><div class="mini mini-compact" aria-hidden="true"><div class="mini-panel"></div><div class="mini-panel"></div></div></button>
+    <button class="direction" role="tab" aria-selected="false" data-layout-choice="c" aria-controls="app-window"><div><div class="direction-title"><span class="letter">C</span><strong>Quiet focus</strong></div><p>A slim rail. More breathing room.</p></div><div class="mini mini-focus" aria-hidden="true"><div class="mini-side"></div><div class="mini-panel"></div><div class="mini-panel"></div></div></button>
+  </nav>
+  <section class="app-window" id="app-window" data-layout="a" data-theme="light" aria-label="Commander design preview">
+    <div class="titlebar"><div class="traffic-lights" aria-hidden="true"><i></i><i></i><i></i></div><button class="icon-button" id="toggle-sidebar" aria-label="Toggle places sidebar" title="Toggle places"><svg><use href="#i-sidebar"/></svg></button><span class="title-name">Commander</span><div class="titlebar-space"></div><button class="icon-button" id="open-search" aria-label="Search" title="Search"><svg><use href="#i-search"/></svg></button><span class="divider"></span><button class="icon-button" id="open-settings" aria-label="Open Settings" title="Settings · ⌘,"><svg><use href="#i-settings"/></svg></button></div>
+    <div class="work-area">
+      <aside class="places" aria-label="Places">
+        <p class="group-label">FAVORITES</p>
+        <button class="place" data-sample-path="/Users/sanjar" title="Home"><svg><use href="#i-home"/></svg><span>Home</span></button>
+        <button class="place" data-sample-path="/Users/sanjar/Desktop" title="Desktop"><svg><use href="#i-desktop"/></svg><span>Desktop</span></button>
+        <button class="place" data-sample-path="/Users/sanjar/Documents" title="Documents"><svg><use href="#i-folder"/></svg><span>Documents</span></button>
+        <button class="place active" data-sample-path="/Users/sanjar/Downloads" title="Downloads"><svg><use href="#i-download"/></svg><span>Downloads</span></button>
+        <button class="place" data-sample-path="/Users/sanjar/Projects" title="Projects"><svg><use href="#i-code"/></svg><span>Projects</span></button>
+        <p class="group-label spaced">CONNECTIONS</p>
+        <button class="place" data-sample-path="/home/sanjar/files" data-remote="sftp" title="Studio server · SFTP sample"><svg><use href="#i-server"/></svg><span>Studio server</span><span class="small-dot"></span></button>
+        <button class="place" data-sample-path="/Shared" data-remote="smb" title="Home NAS · SMB sample"><svg><use href="#i-drive"/></svg><span>Home NAS</span></button>
+        <div class="storage"><strong>Macintosh HD</strong><div class="storage-bar"></div>182 GB available of 500 GB</div>
+      </aside>
+      <div class="panes">
+        <section class="pane is-active" data-side="left" aria-label="Left pane">
+          <div class="pane-tabs"><span class="pane-tab current"><svg><use href="#i-folder"/></svg><span id="left-tab-name">Downloads</span><span class="tab-close" aria-hidden="true">×</span></span><button class="pane-tab" data-sample-path="/Users/sanjar/Projects" data-tab-side="left">Projects</button><button class="icon-button add-tab" data-add-tab="left" aria-label="New left pane tab"><svg><use href="#i-plus"/></svg></button></div>
+          <div class="pathline"><button class="icon-button" id="left-parent" aria-label="Left pane parent folder" title="Parent folder · ⌫"><svg><use href="#i-up"/></svg></button><input id="left-path" class="path-field" value="/Users/sanjar/Downloads" aria-label="Left folder path" spellcheck="false"><button class="icon-button" id="left-copy-path" aria-label="Copy left folder path" title="Copy path · ⌘⇧C"><svg><use href="#i-copy"/></svg></button></div>
+          <div class="file-head" aria-hidden="true"><span>Name<svg><use href="#i-sort"/></svg></span><span>Size</span><span>Modified</span></div>
+          <div class="file-list" id="left-files" role="grid" aria-label="Left files" aria-multiselectable="true" tabindex="0"></div>
+          <div class="pane-bottom"><span id="left-count">12 items · 3 marked</span><span class="active-indicator">Local</span></div>
+        </section>
+        <section class="pane" data-side="right" aria-label="Right pane">
+          <div class="pane-tabs"><span class="pane-tab current"><svg><use href="#i-server"/></svg><span id="right-tab-name">files</span><span class="tab-close" aria-hidden="true">×</span></span><span class="pane-tab" id="right-connection-name">Studio server</span><button class="icon-button add-tab" data-add-tab="right" aria-label="New right pane tab"><svg><use href="#i-plus"/></svg></button></div>
+          <div class="pathline"><button class="icon-button" id="right-parent" aria-label="Right pane parent folder" title="Parent folder · ⌫"><svg><use href="#i-up"/></svg></button><input id="right-path" class="path-field" value="/home/sanjar/files" aria-label="Right folder path" spellcheck="false"><span class="connection-badge">SFTP</span><button class="icon-button" id="right-copy-path" aria-label="Copy right folder path" title="Copy path · ⌘⇧C"><svg><use href="#i-copy"/></svg></button></div>
+          <div class="file-head" aria-hidden="true"><span>Name<svg><use href="#i-sort"/></svg></span><span>Size</span><span>Modified</span></div>
+          <div class="file-list" id="right-files" role="grid" aria-label="Right files" aria-multiselectable="true" tabindex="0"></div>
+          <div class="pane-bottom"><span id="right-count">9 items</span><span class="active-indicator">Studio server</span></div>
+        </section>
+      </div>
+    </div>
+    <div class="selectionbar"><span class="selection-summary" id="selection-summary"><strong>3 marked</strong> in left pane</span><div class="bar-spacer"></div><button class="action" data-action="preview"><svg><use href="#i-eye"/></svg>Preview<kbd data-shortcut-for="preview">⌘Y</kbd></button><button class="action" data-action="copy"><svg><use href="#i-copy"/></svg>Copy<kbd data-shortcut-for="copy">F5</kbd></button><button class="action" data-action="move"><svg><use href="#i-move"/></svg>Move<kbd data-shortcut-for="move">F6</kbd></button><button class="action" data-action="compress"><svg><use href="#i-archive"/></svg>Compress</button><button class="action" id="share-button" aria-label="Share options"><svg><use href="#i-share"/></svg>Share</button></div>
+    <div class="keyboard-footer"><span><kbd data-shortcut-for="mark">Space</kbd><span id="mark-hint">Mark & next</span></span><span><kbd>↑ ↓</kbd> Navigate</span><span><kbd>Tab</kbd> Switch pane</span><span><kbd data-shortcut-for="parent">⌫</kbd><span id="parent-hint">Parent folder</span></span><span><kbd data-shortcut-for="folder">F7</kbd> New folder</span></div>
+    <div class="toast" id="toast" role="status" hidden><svg><use href="#i-check"/></svg><span id="toast-text"></span></div>
+    <div class="share-popover" id="share-popover" hidden><p>SHARE SELECTED FILES</p><button id="telegram-share"><svg><use href="#i-telegram"/></svg>Telegram</button><button id="system-share"><svg><use href="#i-share"/></svg>More sharing options…</button></div>
+  </section>
+  <section class="preview-footer"><div class="direction-note"><strong id="direction-name">A · Native balance</strong><p id="direction-description">A familiar places sidebar, clear file lists, and just the actions you need.</p></div><button class="choose-direction" id="choose-direction" data-choice="layout-a"><span id="choose-label">Choose A</span><svg><use href="#i-right"/></svg></button></section>
+  <footer class="preview-disclaimer"><span id="choice-status">Compare layouts above. Settings work in every direction.</span><span><svg><use href="#i-spark"/></svg>Sample files only · No disk or server access</span></footer>
+</main>
+<dialog class="settings-dialog" id="settings-dialog" data-theme="light" aria-labelledby="settings-title">
+  <header class="settings-header"><div><h2 id="settings-title">Settings</h2><p>Your workspace, your habits.</p></div><button class="icon-button" data-close-settings aria-label="Close Settings"><svg><use href="#i-x"/></svg></button></header>
+  <div class="settings-body">
+    <nav class="settings-nav" aria-label="Settings categories" role="tablist" aria-orientation="vertical">
+      <button role="tab" aria-selected="true" data-setting-page="appearance" aria-controls="settings-appearance"><svg><use href="#i-type"/></svg>Appearance</button>
+      <button role="tab" aria-selected="false" data-setting-page="behavior" aria-controls="settings-behavior"><svg><use href="#i-sliders"/></svg>Behavior</button>
+      <button role="tab" aria-selected="false" data-setting-page="shortcuts" aria-controls="settings-shortcuts"><svg><use href="#i-keyboard"/></svg>Shortcuts</button>
+    </nav>
+    <div class="settings-content">
+      <section class="settings-page" id="settings-appearance" role="tabpanel">
+        <h3>Make room for your way of working.</h3><p class="settings-subtitle">Adjust the details. See the difference instantly.</p>
+        <div class="setting-row"><span class="setting-label">Theme</span><div class="segmented" aria-label="Theme"><button class="active" data-theme-choice="light">Light</button><button data-theme-choice="dark">Dark</button><button data-theme-choice="system">System</button></div></div>
+        <div class="setting-row"><label for="font-size">File name size</label><div class="range-control"><input type="range" id="font-size" min="11" max="18" value="12"><output for="font-size" id="font-output">12 px</output></div></div>
+        <div class="setting-row"><label for="icon-size">Icon size</label><div class="range-control"><input type="range" id="icon-size" min="14" max="28" value="18" step="1"><output for="icon-size" id="icon-output">18 px</output></div></div>
+        <div class="setting-row"><label for="row-height">Row height</label><div class="range-control"><input type="range" id="row-height" min="26" max="44" value="31"><output for="row-height" id="row-output">31 px</output></div></div>
+        <div class="settings-preview"><div class="settings-preview-label">LIVE PREVIEW</div><div class="file-row"><svg class="file-icon folder-icon"><use href="#i-folder"/></svg>Design assets<span class="preview-size">Folder</span></div><div class="file-row"><svg class="file-icon pdf-icon"><use href="#i-file"/></svg>brand-guidelines.pdf<span class="preview-size">4.8 MB</span></div></div>
+      </section>
+      <section class="settings-page" id="settings-behavior" role="tabpanel" hidden>
+        <h3>Familiar by default. Flexible by choice.</h3><p class="settings-subtitle">These are the defaults we agreed on. Make them yours.</p>
+        <div class="setting-row"><div><label for="backspace-behavior">Backspace</label><div class="description">While a file pane is focused</div></div><select id="backspace-behavior"><option value="parent">Go to parent folder</option><option value="history">Go back in history</option></select></div>
+        <div class="setting-row"><div><label for="space-behavior">After marking a file</label><div class="description">Toggle the mark with Space</div></div><select id="space-behavior"><option value="advance">Move to next row</option><option value="stay">Stay on current row</option></select></div>
+        <div class="setting-row"><div><label for="transfer-behavior">Copy & move to other pane</label><div class="description">Ask when file names conflict</div></div><select id="transfer-behavior"><option value="instant">Start immediately</option><option value="ask">Ask for destination</option></select></div>
+        <div class="setting-row"><div><label for="forward-delete">Also use Forward Delete</label><div class="description">Fn + ⌫ or an external Delete key</div></div><input type="checkbox" class="toggle" id="forward-delete" checked></div>
+        <p class="prototype-note">Typing in a path or file name always edits the text. Deleting from a location without Trash asks for confirmation.</p>
+      </section>
+      <section class="settings-page" id="settings-shortcuts" role="tabpanel" hidden>
+        <h3>Keep your muscle memory.</h3><p class="settings-subtitle">Mac + Commander defaults. Click a shortcut to change it.</p>
+        <input class="shortcut-search" id="shortcut-search" type="search" placeholder="Search actions…" aria-label="Search shortcuts">
+        <div id="shortcut-rows"></div><p id="shortcut-status" class="shortcut-status" role="status">Duplicates are detected before a shortcut is assigned.</p>
+      </section>
+    </div>
+  </div>
+  <footer class="settings-footer"><button class="text-button" id="restore-defaults">Restore defaults</button><button class="done-button" data-close-settings>Done</button></footer>
+</dialog>
+</body>
+</html>
