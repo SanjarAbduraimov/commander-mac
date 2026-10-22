@@ -9,7 +9,8 @@ struct DiskImage {
     let mountPoint: URL
     private let imageURL: URL
 
-    init(sizeMB: Int = 300) throws {
+    /// `browsable: false` keeps the volume out of Finder, but also out of the visible-volume list.
+    init(sizeMB: Int = 300, browsable: Bool = false) throws {
         let volumeName = "CKTest-\(UUID().uuidString.prefix(8))"
         let folder = FileManager.default.temporaryDirectory.appendingPathComponent("CKImages-\(UUID().uuidString)")
         try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
@@ -19,8 +20,8 @@ struct DiskImage {
             imageURL.deletingPathExtension().path,
         ])
         mountPoint = URL(fileURLWithPath: "/Volumes/\(volumeName)", isDirectory: true)
-        // Attached separately: only attach accepts -nobrowse, which keeps the test volume out of Finder.
-        try Self.hdiutil(["attach", "-nobrowse", "-mountpoint", mountPoint.path, imageURL.path])
+        // Attached separately: only attach accepts -nobrowse.
+        try Self.hdiutil(["attach"] + (browsable ? [] : ["-nobrowse"]) + ["-mountpoint", mountPoint.path, imageURL.path])
     }
 
     func detach() {
