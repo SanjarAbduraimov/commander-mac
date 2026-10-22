@@ -58,8 +58,10 @@ public struct FileSort: Codable, Hashable, Sendable {
         case .name:
             return a.name.localizedStandardCompare(b.name)
         case .size:
-            // Folders have no size; they stay in name order among themselves.
-            guard let sa = a.size, let sb = b.size else { return .orderedSame }
+            // No size (folders, packages) ranks below every real size; returning "same" for nil
+            // made the order non-transitive once packages sit among files.
+            let sa = a.size ?? -1
+            let sb = b.size ?? -1
             return sa == sb ? .orderedSame : (sa < sb ? .orderedAscending : .orderedDescending)
         case .modified:
             return a.modified == b.modified ? .orderedSame : (a.modified < b.modified ? .orderedAscending : .orderedDescending)
