@@ -146,7 +146,7 @@ Barcha tugmalar Settings → Shortcuts'da qayta tayinlanadi. Quyidagilar fokus *
 
 ### `FileOperation`
 - **Copy**: o'z rekursiv yurgichi; har fayldan keyin cancel tekshiriladi. Cancel'da chala yozilgan fayl o'chiriladi, tugallanganlari qoladi.
-- **Move**: bir volume ichida — rename (darhol). Boshqa volume'ga — copy, hammasi muvaffaqiyatli bo'lgach manbalar o'chiriladi; cancel yoki xatoda manbalar o'chirilmaydi.
+- **Move**: bir volume ichida — rename (darhol). Boshqa volume'ga — copy, keyin **to'liq nusxalangan** har bir manba o'chiriladi (Finder kabi). Cancel, skip yoki xatoda tugallanmagan manbalar joyida qoladi; chala nusxa manzildan o'chiriladi (2026-10-22 qarori).
 - **Trash**: `FileManager.trashItem`. Trash qo'llab-quvvatlanmasa → "Bu fayllar butunlay o'chiriladi, qaytarib bo'lmaydi" tasdig'i.
 - **Konflikt**: dialog Replace / Skip / Keep both + "Apply to all". Keep both → `name 2.ext` (Finder uslubi).
 - Bir nechta amal **parallel** ishlashi mumkin; har biri footer'da progress (fayl soni, bayt) va Cancel bilan.

@@ -126,8 +126,8 @@ Open · Open With ▸ (ilovalar, Other…, Always open with this app) · Quick L
 
 ## Ochiq savollar
 - Spec tasdiqlandi: `docs/superpowers/specs/2026-10-21-phase1-core-design.md` (endi asosiy manba shu).
-- Plan A (CommanderKit) bajarildi (2026-10-22, branch `phase1a-commanderkit`, 122 test, Xcode 26.3). Yakuniy review'dagi Critical/Important topilmalar tuzatildi.
-- Ochiq: boshqa diskka move'da Cancel bosilsa — to'liq nusxalangan manbalar o'chirilsinmi (hozirgi kod) yoki hammasi muvaffaqiyatli tugamaguncha hech biri o'chirilmasinmi (spec matni)?
+- Plan A (CommanderKit) bajarildi va `main` ga merge qilindi (2026-10-22, 122 test, Xcode 26.3). Yakuniy review'dagi Critical/Important topilmalar tuzatildi.
+- Hal qilindi (A): boshqa diskka move'da Cancel — to'liq nusxalangan manbalar o'chiriladi (Finder kabi); spec yangilandi.
 - Keyingi: 1-bosqich B plan'i — App UI.
 
 ### Asboblar — **tasdiqlandi**
