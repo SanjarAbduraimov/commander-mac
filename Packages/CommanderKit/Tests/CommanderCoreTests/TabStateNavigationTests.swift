@@ -24,7 +24,8 @@ struct TabStateNavigationTests {
 
     @Test func goUpPlacesCursorOnFolderWeLeft() {
         var state = TabState(path: url("/a/b"))
-        #expect(state.goUp())
+        let movedUp = state.goUp()
+        #expect(movedUp)
         #expect(state.path.path == "/a")
         state.apply(listing: [fixtureItem("a1", directory: true, in: "/a"), fixtureItem("b", directory: true, in: "/a"), fixtureItem("c", in: "/a")])
         #expect(state.cursor == "b")
@@ -32,7 +33,8 @@ struct TabStateNavigationTests {
 
     @Test func goUpAtRootReturnsFalse() {
         var state = TabState(path: url("/"))
-        #expect(state.goUp() == false)
+        let movedUp = state.goUp()
+        #expect(movedUp == false)
         #expect(state.path.path == "/")
         #expect(state.backHistory.isEmpty)
     }
@@ -40,13 +42,16 @@ struct TabStateNavigationTests {
     @Test func backAndForward() {
         var state = TabState(path: url("/a"))
         state.navigate(to: url("/b"))
-        #expect(state.goBack())
+        let wentBack = state.goBack()
+        #expect(wentBack)
         #expect(state.path.path == "/a")
         #expect(state.forwardHistory.map(\.path) == ["/b"])
-        #expect(state.goForward())
+        let wentForward = state.goForward()
+        #expect(wentForward)
         #expect(state.path.path == "/b")
         #expect(state.backHistory.map(\.path) == ["/a"])
-        #expect(state.goForward() == false)
+        let wentForwardAgain = state.goForward()
+        #expect(wentForwardAgain == false)
     }
 
     @Test func reloadKeepsCursorAndMarksByName() {

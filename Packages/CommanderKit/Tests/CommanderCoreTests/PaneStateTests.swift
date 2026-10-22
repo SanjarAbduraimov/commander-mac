@@ -25,18 +25,21 @@ struct PaneStateTests {
 
     @Test func cannotCloseLastTab() {
         var state = pane("/a")
-        #expect(state.closeActiveTab() == false)
+        let closed = state.closeActiveTab()
+        #expect(closed == false)
         #expect(state.tabs.count == 1)
     }
 
     @Test func closeActivatesNeighbor() {
         var last = pane("/a", "/b", "/c", active: 2)
-        #expect(last.closeActiveTab())
+        let closedLast = last.closeActiveTab()
+        #expect(closedLast)
         #expect(paths(last) == ["/a", "/b"])
         #expect(last.activeTabIndex == 1)
 
         var first = pane("/a", "/b", "/c", active: 0)
-        #expect(first.closeActiveTab())
+        let closedFirst = first.closeActiveTab()
+        #expect(closedFirst)
         #expect(paths(first) == ["/b", "/c"])
         #expect(first.activeTabIndex == 0)
     }
