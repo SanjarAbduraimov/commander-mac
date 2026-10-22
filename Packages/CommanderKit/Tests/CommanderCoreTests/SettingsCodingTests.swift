@@ -38,6 +38,25 @@ struct SettingsCodingTests {
         #expect(settings.shortcutOverrides == [.reload: [KeyChord("e", [.command])]])
     }
 
+    @Test func newerFileKeepsEverythingStillReadable() throws {
+        // A later build may add a theme; that one unknown value must not wipe the font size or shortcuts.
+        let settings = try decode(AppSettings.self, #"{"version":2,"appearance":{"theme":"sepia","fontSize":17},"shortcutOverrides":{"newTab":["cmd+n"]}}"#)
+        #expect(settings.appearance.theme == .system)
+        #expect(settings.appearance.fontSize == 17)
+        #expect(settings.shortcutOverrides == [.newTab: [KeyChord("n", [.command])]])
+    }
+
+    @Test func paneSessionMissingActiveTabKeepsTabs() throws {
+        let session = try decode(Session.self, #"{"left":{"tabPaths":["file:///tmp/"]}}"#)
+        #expect(session.left.tabPaths.map(\.path) == ["/tmp"])
+        #expect(session.left.activeTab == 0)
+    }
+
+    @Test func emptyTabPathsFallBackToHome() throws {
+        let session = try decode(Session.self, #"{"left":{"tabPaths":[],"activeTab":0}}"#)
+        #expect(session.left == Session().left)
+    }
+
     @Test func recentServersCappedAtTenNewestFirst() {
         var session = Session()
         for i in 1...12 { session.addRecentServer("smb://host\(i)/share") }

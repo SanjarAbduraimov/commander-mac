@@ -8,6 +8,14 @@ public struct PaneSession: Codable, Equatable, Sendable {
         self.tabPaths = tabPaths
         self.activeTab = activeTab
     }
+
+    public init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        let paths = c.value(.tabPaths, default: [URL]())
+        // A pane always has a tab (PaneState traps otherwise), so an empty list would crash every launch.
+        tabPaths = paths.isEmpty ? [FileManager.default.homeDirectoryForCurrentUser] : paths
+        activeTab = c.value(.activeTab, default: 0)
+    }
 }
 
 public struct Session: Codable, Equatable, Sendable {
@@ -38,13 +46,13 @@ public struct Session: Codable, Equatable, Sendable {
     public init(from decoder: Decoder) throws {
         let c = try decoder.container(keyedBy: CodingKeys.self)
         let d = Session()
-        version = try c.value(.version, default: Self.currentVersion)
-        left = try c.value(.left, default: d.left)
-        right = try c.value(.right, default: d.right)
-        activeSide = try c.value(.activeSide, default: d.activeSide)
-        sidebarWidth = try c.value(.sidebarWidth, default: d.sidebarWidth)
-        favorites = try c.value(.favorites, default: d.favorites)
-        recentServers = try c.value(.recentServers, default: d.recentServers)
+        version = c.value(.version, default: Self.currentVersion)
+        left = c.value(.left, default: d.left)
+        right = c.value(.right, default: d.right)
+        activeSide = c.value(.activeSide, default: d.activeSide)
+        sidebarWidth = c.value(.sidebarWidth, default: d.sidebarWidth)
+        favorites = c.value(.favorites, default: d.favorites)
+        recentServers = c.value(.recentServers, default: d.recentServers)
     }
 
     public mutating func addRecentServer(_ address: String) {
