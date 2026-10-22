@@ -80,6 +80,21 @@ struct MoveOperationTests {
         #expect(exists(sub))
     }
 
+    @Test func replaceRefusesWhenExistingTargetContainsSource() async throws {
+        let tmp = try TempDir()
+        defer { tmp.remove() }
+        let outer = tmp.url.appendingPathComponent("A/foo")
+        try write("keep", to: outer.appendingPathComponent("precious.txt"))
+        try write("x", to: outer.appendingPathComponent("foo/x.txt"))
+
+        let delegate = RecordingDelegate(resolutions: [ConflictResolution(decision: .replace)])
+        _ = await MoveOperation(sources: [outer.appendingPathComponent("foo")], destination: tmp.url.appendingPathComponent("A"), delegate: delegate).run()
+
+        #expect(delegate.failures.map(\.reason) == [.targetContainsSource])
+        #expect(try read(outer.appendingPathComponent("precious.txt")) == "keep")
+        #expect(try read(outer.appendingPathComponent("foo/x.txt")) == "x")
+    }
+
     @Test func crossVolumeMoveCopiesThenDeletes() async throws {
         let tmp = try TempDir()
         defer { tmp.remove() }

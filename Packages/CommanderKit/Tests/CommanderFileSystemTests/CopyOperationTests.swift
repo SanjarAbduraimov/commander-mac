@@ -206,6 +206,37 @@ struct CopyOperationTests {
         #expect(delegate.failures.count == 2)
     }
 
+    @Test func replaceRefusesWhenExistingTargetContainsSource() async throws {
+        // /A/foo/foo copied into /A collides with /A/foo; replacing it would delete the source itself.
+        let tmp = try TempDir()
+        defer { tmp.remove() }
+        let outer = tmp.url.appendingPathComponent("A/foo")
+        try write("keep", to: outer.appendingPathComponent("precious.txt"))
+        try write("x", to: outer.appendingPathComponent("foo/x.txt"))
+
+        let delegate = RecordingDelegate(resolutions: [ConflictResolution(decision: .replace)])
+        _ = await CopyOperation(sources: [outer.appendingPathComponent("foo")], destination: tmp.url.appendingPathComponent("A"), delegate: delegate).run()
+
+        #expect(delegate.failures.map(\.reason) == [.targetContainsSource])
+        #expect(try read(outer.appendingPathComponent("precious.txt")) == "keep")
+        #expect(try read(outer.appendingPathComponent("foo/x.txt")) == "x")
+    }
+
+    @Test func symlinkIntoItsOwnTargetIsCopiedAsLink() async throws {
+        let tmp = try TempDir()
+        defer { tmp.remove() }
+        let sub = try tmp.dir("real/sub")
+        let link = tmp.url.appendingPathComponent("link")
+        try FileManager.default.createSymbolicLink(at: link, withDestinationURL: tmp.url.appendingPathComponent("real"))
+
+        let delegate = RecordingDelegate()
+        let outcome = await CopyOperation(sources: [link], destination: sub, delegate: delegate).run()
+
+        #expect(outcome == .completed)
+        #expect(delegate.failures.isEmpty)
+        #expect((try? FileManager.default.destinationOfSymbolicLink(atPath: sub.appendingPathComponent("link").path)) != nil)
+    }
+
     @Test func cancelAllStopsRemainingSources() async throws {
         let tmp = try TempDir()
         defer { tmp.remove() }

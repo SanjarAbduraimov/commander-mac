@@ -26,8 +26,8 @@ public struct MoveOperation: Sendable {
         var renames: [URL] = []
         var copies: [URL] = []
         for source in sources {
-            if canonicalPath(source.deletingLastPathComponent()) == canonicalPath(destination) { continue }
-            if isSameOrAncestor(source, of: destination) {
+            if isSameDirectory(source.deletingLastPathComponent(), destination) { continue }
+            if isSameOrInside(destination, source) {
                 let decision = await delegate.decide(OperationFailure(url: source, reason: .destinationInsideSource))
                 if decision == .cancelAll { return .cancelled }
                 continue
@@ -79,6 +79,12 @@ public struct MoveOperation: Sendable {
                 case .keepBoth:
                     target = destination.appendingPathComponent(UniqueName.keepBoth(name, exists: taken))
                 case .replace:
+                    if isSameOrInside(source, target) {
+                        let refusal = await delegate.decide(OperationFailure(url: target, reason: .targetContainsSource))
+                        if refusal == .cancelAll { return .cancelAll }
+                        skip = true
+                        break
+                    }
                     let removal = await attempt(target, delegate: delegate, cancel: cancel) {
                         try FileManager.default.removeItem(at: target)
                     }

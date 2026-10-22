@@ -44,7 +44,7 @@ private final class CopyRun {
     func run(_ sources: [URL]) async -> (outcome: OperationOutcome, copied: [URL]) {
         var accepted: [URL] = []
         for source in sources {
-            if isSameOrAncestor(source, of: destination) {
+            if isSameOrInside(destination, source) {
                 // Copying a folder into itself would recurse forever; retry cannot help, so it is a skip.
                 let decision = await delegate.decide(OperationFailure(url: source, reason: .destinationInsideSource))
                 if decision == .cancelAll { return (.cancelled, []) }
@@ -77,7 +77,7 @@ private final class CopyRun {
         let taken: (String) -> Bool = { pathExists(self.destination.appendingPathComponent($0)) }
         var target = destination.appendingPathComponent(name)
 
-        if canonicalPath(source.deletingLastPathComponent()) == canonicalPath(destination) {
+        if isSameDirectory(source.deletingLastPathComponent(), destination) {
             // Replace would delete the source itself, so a copy into its own folder is always a duplicate.
             target = destination.appendingPathComponent(UniqueName.duplicate(name, exists: taken))
         } else if pathExists(target) {
@@ -88,6 +88,10 @@ private final class CopyRun {
             case .keepBoth:
                 target = destination.appendingPathComponent(UniqueName.keepBoth(name, exists: taken))
             case .replace:
+                if isSameOrInside(source, target) {
+                    let decision = await delegate.decide(OperationFailure(url: target, reason: .targetContainsSource))
+                    return decision == .cancelAll ? .cancelAll : .skipped
+                }
                 let removal = await attempt(target, delegate: delegate, cancel: cancel) {
                     try FileManager.default.removeItem(at: target)
                 }

@@ -43,6 +43,8 @@ public struct ConflictResolution: Sendable {
 public struct OperationFailure: Error, Equatable, Sendable {
     public enum Reason: Equatable, Sendable {
         case permissionDenied, fileBusy, diskFull, destinationInsideSource
+        /// Replace was chosen, but the item to replace contains the source (copying /A/foo/foo into /A).
+        case targetContainsSource
         case other(String)
     }
 
