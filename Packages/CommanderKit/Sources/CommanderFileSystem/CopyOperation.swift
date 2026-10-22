@@ -185,12 +185,6 @@ private final class CopyRun {
         delegate.progress(progress)
     }
 
-    private func isSameOrAncestor(_ source: URL, of destination: URL) -> Bool {
-        let sourceParts = URL(fileURLWithPath: canonicalPath(source)).pathComponents
-        let destinationParts = URL(fileURLWithPath: canonicalPath(destination)).pathComponents
-        return destinationParts.starts(with: sourceParts)
-    }
-
     /// Files and bytes under `path`, without following symlinks.
     static func totals(_ path: String) -> (files: Int, bytes: Int64) {
         var info = stat()

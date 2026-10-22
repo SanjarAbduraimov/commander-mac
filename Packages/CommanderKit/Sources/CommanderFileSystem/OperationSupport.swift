@@ -64,6 +64,12 @@ func pathExists(_ url: URL) -> Bool {
     return lstat(url.path, &info) == 0
 }
 
+func isSameOrAncestor(_ source: URL, of destination: URL) -> Bool {
+    let sourceParts = URL(fileURLWithPath: canonicalPath(source)).pathComponents
+    let destinationParts = URL(fileURLWithPath: canonicalPath(destination)).pathComponents
+    return destinationParts.starts(with: sourceParts)
+}
+
 /// Resolves symlinks and /private aliases so two spellings of one directory compare equal.
 func canonicalPath(_ url: URL) -> String {
     guard let resolved = realpath(url.path, nil) else { return url.standardizedFileURL.path }
