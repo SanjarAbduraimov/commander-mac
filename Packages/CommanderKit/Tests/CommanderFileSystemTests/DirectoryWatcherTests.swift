@@ -49,10 +49,17 @@ struct DirectoryWatcherTests {
         defer { watcher.stop() }
         try await warmUp(calls)
 
+        let start = ContinuousClock.now
         for i in 0..<50 { try tmp.file("burst-\(i).txt") }
+        let elapsed = start.duration(to: .now)
         try await Task.sleep(for: .seconds(1))
+
+        // One callback per 150 ms latency window the burst spanned, plus the immediate first one
+        // (NoDefer) and a trailing one. Under a busy disk the burst spans more windows, so the bound follows it.
+        let windows = Int((elapsed / .milliseconds(150)).rounded(.up))
         #expect(calls.value >= 1)
-        #expect(calls.value <= 3)
+        #expect(calls.value <= max(3, windows + 2))
+        #expect(calls.value < 50)
     }
 
     @Test func changesInSubfolderAreIgnored() async throws {
