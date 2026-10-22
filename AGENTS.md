@@ -4,11 +4,12 @@ Total Commander uslubidagi ikki panelli, klaviatura bilan tez ishlaydigan, yengi
 
 ## Joriy holat
 
-**Brainstorming bosqichi. Mahsulot kodi hali yo'q.**
+**1-bosqich (yadro): A qismi — CommanderKit (Core + FileSystem) tayyor, B qismi — App UI hali yo'q.**
 
-- Kelishilgan barcha qarorlar va keyingi qadam: `docs/brainstorm/2026-10-21-commander-decisions.md` — har sessiya boshida shu faylni o'qing.
-- Interaktiv dizayn maketi: `docs/design/prototype/index.html` (brauzerda to'g'ridan-to'g'ri ochiladi). Tanlangan layout — **A · Native balance**.
-- Keyingi qadam: 1-bosqich (yadro) dizayn bo'limlarini tasdiqlash → spec → implementation plan.
+- Asosiy manba — spec: `docs/superpowers/specs/2026-10-21-phase1-core-design.md`. Brainstorm tarixi va ochiq savollar: `docs/brainstorm/2026-10-21-commander-decisions.md` — har sessiya boshida o'qing.
+- Bajarilgan plan: `docs/superpowers/plans/2026-10-21-phase1a-commanderkit.md` (`Packages/CommanderKit`, 122 test).
+- Interaktiv dizayn maketi: `docs/design/prototype/index.html`. Tanlangan layout — **A · Native balance**.
+- Keyingi qadam: 1-bosqich B plan'i (App UI: XcodeGen, AppKit oyna va panellar, Settings). Unda operatsiyalarni alohida executor'da ishga tushirish shart (CommanderKit review'idagi I5).
 
 ## Ish tartibi
 

@@ -126,7 +126,9 @@ Open · Open With ▸ (ilovalar, Other…, Always open with this app) · Quick L
 
 ## Ochiq savollar
 - Spec tasdiqlandi: `docs/superpowers/specs/2026-10-21-phase1-core-design.md` (endi asosiy manba shu).
-- Plan A (CommanderKit) foydalanuvchi ko'rib chiqishi va bajarish usulini tanlashi kutilmoqda: `docs/superpowers/plans/2026-10-21-phase1a-commanderkit.md`. Bajarishdan oldin Xcode o'rnatilishi shart (CLT'da `Testing`/`XCTest` yo'q — tekshirilgan).
+- Plan A (CommanderKit) bajarildi (2026-10-22, branch `phase1a-commanderkit`, 122 test, Xcode 26.3). Yakuniy review'dagi Critical/Important topilmalar tuzatildi.
+- Ochiq: boshqa diskka move'da Cancel bosilsa — to'liq nusxalangan manbalar o'chirilsinmi (hozirgi kod) yoki hammasi muvaffaqiyatli tugamaguncha hech biri o'chirilmasinmi (spec matni)?
+- Keyingi: 1-bosqich B plan'i — App UI.
 
 ### Asboblar — **tasdiqlandi**
 - 2026-10-21 holati: Xcode o'rnatilmagan, faqat Command Line Tools (Swift 6.2.1, x86_64), XcodeGen yo'q.
