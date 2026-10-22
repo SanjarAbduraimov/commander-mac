@@ -136,6 +136,9 @@ private final class CopyRun {
                 case .cancelAll: return .cancelAll
                 }
             }
+            // Applied after the children: writing them would reset the mtime, and a read-only
+            // folder would block them. Best effort; a volume without ACLs or xattrs still keeps the files.
+            copyfile(source.path, target.path, nil, copyfile_flags_t(COPYFILE_METADATA | COPYFILE_NOFOLLOW))
             return result
         }
 

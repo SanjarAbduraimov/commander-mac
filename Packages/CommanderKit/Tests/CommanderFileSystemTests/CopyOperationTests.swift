@@ -35,6 +35,22 @@ struct CopyOperationTests {
         #expect(try read(tmp.url.appendingPathComponent("src/a.txt")) == "A")
     }
 
+    @Test func folderPermissionsAndDatesAreKept() async throws {
+        let tmp = try TempDir()
+        defer { tmp.remove() }
+        let folder = try tmp.dir("src/private")
+        try tmp.file("src/private/key", bytes: 4)
+        let modified = Date(timeIntervalSince1970: 1_600_000_000)
+        try FileManager.default.setAttributes([.posixPermissions: 0o700, .modificationDate: modified], ofItemAtPath: folder.path)
+        let dst = try tmp.dir("dst")
+
+        _ = await CopyOperation(sources: [folder], destination: dst, delegate: RecordingDelegate()).run()
+
+        let copied = try FileManager.default.attributesOfItem(atPath: dst.appendingPathComponent("private").path)
+        #expect((copied[.posixPermissions] as? Int) == 0o700)
+        #expect((copied[.modificationDate] as? Date) == modified)
+    }
+
     @Test func reportsProgressTotals() async throws {
         let tmp = try TempDir()
         defer { tmp.remove() }
