@@ -5,6 +5,7 @@ import SwiftUI
 
 struct AppearanceView: View {
     @Bindable var model: SettingsViewModel
+    let singlePane: Binding<Bool>
     private let families = NSFontManager.shared.availableFontFamilies
 
     var body: some View {
@@ -15,6 +16,7 @@ struct AppearanceView: View {
                 Text("Dark").tag(Theme.dark)
             }
             .pickerStyle(.segmented)
+            Toggle("Single pane", isOn: singlePane)
 
             Picker("File name", selection: $model.appearance.fontName) {
                 Text("System").tag(String?.none)

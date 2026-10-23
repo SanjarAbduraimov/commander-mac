@@ -206,4 +206,16 @@ final class SmokeTests: XCTestCase {
         while !FileManager.default.fileExists(atPath: copied), Date() < deadline { RunLoop.current.run(until: Date().addingTimeInterval(0.1)) }
         XCTAssertTrue(FileManager.default.fileExists(atPath: copied))
     }
+
+    func testSinglePaneHidesRightPane() {
+        let app = launch()
+        let right = app.groups["pane.right"]
+        XCTAssertTrue(right.waitForExistence(timeout: 5))
+
+        app.typeKey("\\", modifierFlags: .command)
+        XCTAssertTrue(right.waitForNonExistence(timeout: 5))
+        app.typeKey("\\", modifierFlags: .command)
+
+        XCTAssertTrue(right.waitForExistence(timeout: 5))
+    }
 }

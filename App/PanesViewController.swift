@@ -9,9 +9,12 @@ final class PanesViewController: NSViewController, NSSplitViewDelegate {
     let right: PaneViewController
     let selectionBar: SelectionBarView
     let footer: FooterView
+    private let model: WindowModel
     private let split = NSSplitView()
+    private var shownSinglePane: Bool?
 
     init(model: WindowModel) {
+        self.model = model
         left = PaneViewController(model: model, side: .left)
         right = PaneViewController(model: model, side: .right)
         selectionBar = SelectionBarView(model: model)
@@ -44,14 +47,29 @@ final class PanesViewController: NSViewController, NSSplitViewDelegate {
 
     override func viewDidAppear() {
         super.viewDidAppear()
-        split.layoutSubtreeIfNeeded()
-        split.setPosition(split.bounds.width / 2, ofDividerAt: 0)
+        applyLayout()
         selectionBar.render()
         footer.render()
     }
 
+    /// Single-pane mode hides the right pane; leaving it splits the width in half again.
+    func applyLayout() {
+        let single = model.isSinglePane
+        guard single != shownSinglePane else { return }
+        shownSinglePane = single
+        right.view.isHidden = single
+        split.adjustSubviews()
+        split.layoutSubtreeIfNeeded()
+        if !single { split.setPosition((split.bounds.width / 2).rounded(), ofDividerAt: 0) }
+    }
+
+    func splitView(_ splitView: NSSplitView, shouldHideDividerAt dividerIndex: Int) -> Bool {
+        model.isSinglePane
+    }
+
     /// Window resizes grow both panes alike instead of only the first one.
     func splitView(_ splitView: NSSplitView, resizeSubviewsWithOldSize oldSize: NSSize) {
+        guard !model.isSinglePane else { return splitView.adjustSubviews() }
         let ratio = oldSize.width > 0 ? left.view.frame.width / oldSize.width : 0.5
         splitView.adjustSubviews()
         splitView.setPosition((splitView.bounds.width * ratio).rounded(), ofDividerAt: 0)

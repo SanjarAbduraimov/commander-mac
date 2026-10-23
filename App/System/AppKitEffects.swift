@@ -19,6 +19,7 @@ final class AppKitEffects: WindowEffects {
             windowController.pane(side).render()
             windowController.panes.selectionBar.render()
         case .window, .settings:
+            windowController.panes.applyLayout()
             windowController.pane(.left).render()
             windowController.pane(.right).render()
             windowController.panes.selectionBar.render()

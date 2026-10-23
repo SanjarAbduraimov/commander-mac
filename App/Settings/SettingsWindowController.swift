@@ -9,14 +9,19 @@ final class SettingsWindowController: NSWindowController {
     static func show(model: WindowModel) {
         if shared == nil {
             let viewModel = SettingsViewModel(settings: model.settings) { [model] in model.updateSettings($0) }
-            shared = SettingsWindowController(viewModel: viewModel)
+            // Single-pane mode lives in the session, not in AppSettings, so it talks to the window model directly.
+            let singlePane = Binding(
+                get: { model.isSinglePane },
+                set: { if $0 != model.isSinglePane { model.perform(.toggleSinglePane) } }
+            )
+            shared = SettingsWindowController(viewModel: viewModel, singlePane: singlePane)
         }
         shared?.showWindow(nil)
         shared?.window?.makeKeyAndOrderFront(nil)
     }
 
-    private init(viewModel: SettingsViewModel) {
-        let window = NSWindow(contentViewController: NSHostingController(rootView: SettingsView(model: viewModel)))
+    private init(viewModel: SettingsViewModel, singlePane: Binding<Bool>) {
+        let window = NSWindow(contentViewController: NSHostingController(rootView: SettingsView(model: viewModel, singlePane: singlePane)))
         window.title = "Settings"
         window.styleMask = [.titled, .closable]
         window.center()
@@ -31,10 +36,11 @@ final class SettingsWindowController: NSWindowController {
 
 struct SettingsView: View {
     @Bindable var model: SettingsViewModel
+    let singlePane: Binding<Bool>
 
     var body: some View {
         TabView {
-            AppearanceView(model: model).tabItem { Label("Appearance", systemImage: "paintbrush") }
+            AppearanceView(model: model, singlePane: singlePane).tabItem { Label("Appearance", systemImage: "paintbrush") }
             BehaviorView(model: model).tabItem { Label("Behavior", systemImage: "gearshape") }
             ShortcutsView(model: model).tabItem { Label("Shortcuts", systemImage: "keyboard") }
         }
