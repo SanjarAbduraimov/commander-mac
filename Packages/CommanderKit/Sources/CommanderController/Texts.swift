@@ -5,6 +5,17 @@ func byteText(_ count: Int64) -> String {
     ByteCountFormatter.string(fromByteCount: count, countStyle: .file)
 }
 
+public enum PaneText {
+    /// "12 items · 3 marked · 4.8 MB" — the size is the marked files', or every listed file's when none is marked.
+    public static func status(_ tab: TabState) -> String {
+        let count = tab.items.count
+        var text = count == 1 ? "1 item" : "\(count) items"
+        let sized = tab.marked.isEmpty ? tab.items : tab.items.filter { tab.marked.contains($0.name) }
+        if !tab.marked.isEmpty { text += " · \(tab.marked.count) marked" }
+        return text + " · " + byteText(sized.reduce(0) { $0 + ($1.size ?? 0) })
+    }
+}
+
 public enum OperationText {
     public static func summary(_ state: OperationState) -> String {
         let verb = switch state.kind {
