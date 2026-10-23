@@ -14,8 +14,11 @@ final class KeyRouter {
         self.model = model
     }
 
+    /// A sheet (Copy To, Connect to Server, an alert) counts as typing: menu shortcuts like ⌘⌫ must not reach the
+    /// marked files behind it while the user edits a field in the sheet.
     var currentContext: FocusContext {
-        window?.firstResponder is NSText ? .textField : .table
+        guard let window else { return .table }
+        return window.attachedSheet != nil || window.firstResponder is NSText ? .textField : .table
     }
 
     func install(in window: NSWindow) {

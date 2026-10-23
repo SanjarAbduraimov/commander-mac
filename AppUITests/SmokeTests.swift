@@ -250,4 +250,19 @@ final class SmokeTests: XCTestCase {
         while !FileManager.default.fileExists(atPath: moved), Date() < deadline { RunLoop.current.run(until: Date().addingTimeInterval(0.1)) }
         XCTAssertTrue(FileManager.default.fileExists(atPath: moved))
     }
+
+    func testShortcutsBehindSheetDoNotTouchFiles() {
+        let app = launch()
+        XCTAssertTrue(app.tables["table.left"].staticTexts["alpha.txt"].waitForExistence(timeout: 5))
+
+        app.typeKey(.F5, modifierFlags: .option)
+        let field = app.textFields["copyTo.path"]
+        XCTAssertTrue(field.waitForExistence(timeout: 5))
+        field.click()
+        app.typeKey(.delete, modifierFlags: .command)
+        sleep(1)
+
+        XCTAssertTrue(FileManager.default.fileExists(atPath: root.appendingPathComponent("left/alpha.txt").path))
+        app.typeKey(.escape, modifierFlags: [])
+    }
 }

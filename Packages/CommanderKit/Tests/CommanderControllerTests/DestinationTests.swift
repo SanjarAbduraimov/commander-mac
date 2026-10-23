@@ -110,10 +110,10 @@ struct DestinationTests {
         let h = try await FileHarness(files: ["sub/", "Second/", "sa.txt", ".secret/"])
         defer { h.tmp.remove() }
 
-        #expect(h.model.folderSuggestions(for: h.left.path + "/s") == [h.left.path + "/Second", h.left.path + "/sub"])
-        #expect(h.model.folderSuggestions(for: h.left.path + "/SU") == [h.left.path + "/sub"])
-        #expect(h.model.folderSuggestions(for: h.left.path + "/.s") == [h.left.path + "/.secret"])
-        #expect(h.model.folderSuggestions(for: h.left.path + "/nope/x").isEmpty)
+        #expect(await h.model.folderSuggestions(for: h.left.path + "/s") == [h.left.path + "/Second", h.left.path + "/sub"])
+        #expect(await h.model.folderSuggestions(for: h.left.path + "/SU") == [h.left.path + "/sub"])
+        #expect(await h.model.folderSuggestions(for: h.left.path + "/.s") == [h.left.path + "/.secret"])
+        #expect(await h.model.folderSuggestions(for: h.left.path + "/nope/x").isEmpty)
     }
 
     @Test func askDestinationSettingUsesSameDialog() async throws {
@@ -129,5 +129,18 @@ struct DestinationTests {
         #expect(request.kind == .copy)
         #expect(path(request.suggested) == path(h.right))
         #expect(!h.exists("right/a.txt"))
+    }
+
+    @Test func moveToSourceFolderIsRefused() async throws {
+        let h = try await FileHarness()
+        defer { h.tmp.remove() }
+        h.harness.effects.destinationAnswer = h.left
+
+        h.model.perform(.moveTo)
+        await h.model.waitUntilIdle()
+
+        #expect(h.harness.effects.beeps == 1)
+        #expect(h.harness.prompts.conflicts.isEmpty)
+        #expect(h.names(.left) == ["a.txt", "b.txt"])
     }
 }

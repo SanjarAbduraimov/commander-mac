@@ -9,13 +9,20 @@ DERIVED="$BUILD/DerivedData"
 STAGING="$BUILD/dmg-root"
 DMG="$BUILD/Commander.dmg"
 
-xcodegen generate >/dev/null
-xcodebuild -project Commander.xcodeproj -scheme Commander -configuration Release \
-    -derivedDataPath "$DERIVED" -destination 'generic/platform=macOS' \
-    ARCHS="arm64 x86_64" ONLY_ACTIVE_ARCH=NO build | grep -E "error:|BUILD" || true
-
 APP="$DERIVED/Build/Products/Release/Commander.app"
-test -d "$APP" || { echo "Build failed: $APP not found" >&2; exit 1; }
+# A failed build must not leave the previous app behind to be packaged.
+rm -rf "$APP"
+
+xcodegen generate >/dev/null
+LOG="$BUILD/make-dmg.log"
+mkdir -p "$BUILD"
+if ! xcodebuild -project Commander.xcodeproj -scheme Commander -configuration Release \
+    -derivedDataPath "$DERIVED" -destination 'generic/platform=macOS' \
+    ARCHS="arm64 x86_64" ONLY_ACTIVE_ARCH=NO build >"$LOG" 2>&1; then
+    grep -E "error:" "$LOG" >&2 || tail -20 "$LOG" >&2
+    echo "Build failed; full log: $LOG" >&2
+    exit 1
+fi
 codesign --verify --deep --strict "$APP"
 
 rm -rf "$STAGING" "$DMG"

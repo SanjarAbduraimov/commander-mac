@@ -6,9 +6,10 @@ import SwiftUI
 @MainActor
 final class CopyToState: ObservableObject {
     @Published var text: String {
-        didSet { if text != oldValue { suggestions = model.folderSuggestions(for: text) } }
+        didSet { if text != oldValue { refreshSuggestions() } }
     }
     @Published private(set) var suggestions: [String] = []
+    private var suggestionTask: Task<Void, Never>?
 
     let request: DestinationRequest
     private let model: WindowModel
@@ -17,6 +18,19 @@ final class CopyToState: ObservableObject {
         self.request = request
         self.model = model
         text = request.suggested.path
+    }
+
+    /// Waits for a pause in typing and drops results for text that has changed since.
+    private func refreshSuggestions() {
+        suggestionTask?.cancel()
+        let typed = text
+        suggestionTask = Task { [weak self, model] in
+            try? await Task.sleep(for: .milliseconds(120))
+            guard !Task.isCancelled else { return }
+            let found = await model.folderSuggestions(for: typed)
+            guard let self, !Task.isCancelled, self.text == typed else { return }
+            self.suggestions = found
+        }
     }
 
     var verb: String { request.kind == .move ? "Move" : "Copy" }

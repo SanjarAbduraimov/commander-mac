@@ -33,22 +33,28 @@ extension WindowModel {
     }
 
     /// Folders whose name starts with the last path component of `text` (case-insensitive), as full paths.
-    public func folderSuggestions(for text: String) -> [String] {
+    /// Read on the listing executor: the folder may be on a slow or dead network share.
+    public func folderSuggestions(for text: String) async -> [String] {
+        (try? await environment.listingExecutor.run { Self.folderSuggestions(for: text) }) ?? []
+    }
+
+    nonisolated static func folderSuggestions(for text: String) -> [String] {
         let expanded = (text as NSString).expandingTildeInPath
         guard expanded.hasPrefix("/") else { return [] }
         let parent = expanded.hasSuffix("/") ? expanded : (expanded as NSString).deletingLastPathComponent
         let prefix = expanded.hasSuffix("/") ? "" : (expanded as NSString).lastPathComponent
         guard let names = try? FileManager.default.contentsOfDirectory(atPath: parent) else { return [] }
-        let matches = names.filter { name in
-            guard prefix.hasPrefix(".") || !name.hasPrefix(".") else { return false }
-            guard name.lowercased().hasPrefix(prefix.lowercased()) else { return false }
+        let candidates = names
+            .filter { (prefix.hasPrefix(".") || !$0.hasPrefix(".")) && $0.lowercased().hasPrefix(prefix.lowercased()) }
+            .sorted { $0.localizedStandardCompare($1) == .orderedAscending }
+        var folders: [String] = []
+        // Stat only until ten folders are found, not every entry of a large folder.
+        for name in candidates where folders.count < 10 {
+            let path = (parent as NSString).appendingPathComponent(name)
             var isDirectory: ObjCBool = false
-            return FileManager.default.fileExists(atPath: (parent as NSString).appendingPathComponent(name), isDirectory: &isDirectory)
-                && isDirectory.boolValue
+            if FileManager.default.fileExists(atPath: path, isDirectory: &isDirectory), isDirectory.boolValue { folders.append(path) }
         }
-        return matches.sorted { $0.localizedStandardCompare($1) == .orderedAscending }
-            .prefix(10)
-            .map { (parent as NSString).appendingPathComponent($0) }
+        return folders
     }
 
     /// The other pane, or with one pane the latest destination (else the current folder).
@@ -67,7 +73,11 @@ extension WindowModel {
         track {
             guard let destination = await self.effects.chooseDestination(request) else { return }
             let target = destination.standardizedFileURL.pathComponents
-            if sources.contains(where: { target.starts(with: $0.standardizedFileURL.pathComponents) }) {
+            let intoSource = sources.contains { target.starts(with: $0.standardizedFileURL.pathComponents) }
+            // Moving items into the folder they are already in would only raise a conflict with themselves.
+            let alreadyThere = kind == .move
+                && sources.allSatisfy { $0.deletingLastPathComponent().standardizedFileURL.pathComponents == target }
+            if intoSource || alreadyThere {
                 self.effects.beep()
                 return
             }
