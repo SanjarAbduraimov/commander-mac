@@ -59,18 +59,12 @@ extension WindowModel {
     }
 
     public func dropOperation(_ urls: [URL], on side: PaneSide, intoFolder name: String?, forceCopy: Bool) -> DropOperation {
-        DropPolicy.operation(sources: urls, destination: dropDestination(side, name), forceCopy: forceCopy, sameVolume: environment.sameVolume)
+        dropOperation(urls, to: dropDestination(side, name), forceCopy: forceCopy)
     }
 
     @discardableResult
     public func drop(_ urls: [URL], on side: PaneSide, intoFolder name: String?, forceCopy: Bool) -> Bool {
-        let destination = dropDestination(side, name)
-        switch dropOperation(urls, on: side, intoFolder: name, forceCopy: forceCopy) {
-        case .copy: operations.start(.copy(sources: urls, destination: destination))
-        case .move: operations.start(.move(sources: urls, destination: destination))
-        case .none: return false
-        }
-        return true
+        drop(urls, to: dropDestination(side, name), forceCopy: forceCopy)
     }
 
     func performFileCommand(_ command: Command, on side: PaneSide, scope: CommandScope) {
