@@ -11,7 +11,7 @@ extension WindowModel {
 
     private static let targetCommands: Set<Command> = [
         .copyToOtherPane, .moveToOtherPane, .duplicate, .moveToTrash, .copyToClipboard, .cutToClipboard,
-        .copyPath, .copyName, .revealInFinder, .deleteImmediately,
+        .copyPath, .copyName, .revealInFinder, .deleteImmediately, .copyTo, .moveTo,
     ]
 
     public func perform(_ command: Command, scope: CommandScope = .targets) {
@@ -49,7 +49,9 @@ extension WindowModel {
              .newFolder, .rename, .moveToTrash, .copyPath, .copyName, .showPackageContents, .revealInFinder,
              .openInTerminal, .deleteImmediately:
             performFileCommand(command, on: side, scope: scope)
-        case .copyTo, .moveTo, .toggleSinglePane:
+        case .copyTo: chooseDestination(.copy, from: side, suggested: tab(side == .left ? .right : .left).path)
+        case .moveTo: chooseDestination(.move, from: side, suggested: tab(side == .left ? .right : .left).path)
+        case .toggleSinglePane:
             break
         }
     }

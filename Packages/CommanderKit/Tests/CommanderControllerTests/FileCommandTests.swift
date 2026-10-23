@@ -82,7 +82,7 @@ struct FileCommandTests {
         #expect(h.exists("other/a.txt"))
         #expect(!h.exists("right/a.txt"))
         let request = try #require(h.harness.effects.destinationRequests.first)
-        #expect(request.url.standardizedFileURL.path == h.right.standardizedFileURL.path)
+        #expect(request.suggested.standardizedFileURL.path == h.right.standardizedFileURL.path)
         #expect(request.kind == .copy && request.count == 1)
 
         h.harness.effects.destinationAnswer = nil

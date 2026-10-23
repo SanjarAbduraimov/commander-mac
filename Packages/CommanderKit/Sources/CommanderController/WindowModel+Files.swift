@@ -142,13 +142,10 @@ extension WindowModel {
             startTransfer(kind, sources: sources, destination: destination, from: side)
             return
         }
-        track {
-            guard let chosen = await self.effects.askDestination(default: destination, kind: kind, count: sources.count) else { return }
-            self.startTransfer(kind, sources: sources, destination: chosen, from: side)
-        }
+        chooseDestination(kind, from: side, suggested: destination)
     }
 
-    private func startTransfer(_ kind: OperationKind, sources: [URL], destination: URL, from side: PaneSide) {
+    func startTransfer(_ kind: OperationKind, sources: [URL], destination: URL, from side: PaneSide) {
         operations.start(kind == .move ? .move(sources: sources, destination: destination) : .copy(sources: sources, destination: destination))
         mutateTab(side) { $0.clearMarks() }
     }

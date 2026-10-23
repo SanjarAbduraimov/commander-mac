@@ -88,7 +88,7 @@ final class RecordingEffects: WindowEffects {
     private(set) var terminals: [URL] = []
     private(set) var settingsShown = 0
     private(set) var connectShown = 0
-    private(set) var destinationRequests: [(url: URL, kind: OperationKind, count: Int)] = []
+    private(set) var destinationRequests: [DestinationRequest] = []
     private(set) var alerts: [AlertMessage] = []
     private(set) var beeps = 0
 
@@ -100,8 +100,8 @@ final class RecordingEffects: WindowEffects {
     func openInTerminal(_ directory: URL) { terminals.append(directory) }
     func showSettings() { settingsShown += 1 }
     func showConnectToServer() { connectShown += 1 }
-    func askDestination(default url: URL, kind: OperationKind, count: Int) async -> URL? {
-        destinationRequests.append((url, kind, count))
+    func chooseDestination(_ request: DestinationRequest) async -> URL? {
+        destinationRequests.append(request)
         return destinationAnswer
     }
     func confirmDeleteImmediately(_ urls: [URL]) async -> Bool {

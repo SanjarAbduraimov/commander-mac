@@ -63,7 +63,7 @@ extension WindowModel {
         let sizeEntry: [MenuItemModel] = isEnabled(.calculateSize, context: .table) ? [entry(.calculateSize)] : []
         return [
             entry(.open), .separator,
-            entry(.copyToOtherPane), entry(.moveToOtherPane), .separator,
+            entry(.copyToOtherPane), entry(.moveToOtherPane), entry(.copyTo), entry(.moveTo), .separator,
             entry(.rename), entry(.duplicate), entry(.moveToTrash), entry(.deleteImmediately), .separator,
             entry(.copyPath), entry(.copyName),
         ] + sizeEntry + [.separator] + packageEntry + [entry(.revealInFinder), entry(.openInTerminal)]
