@@ -33,6 +33,7 @@ public final class WindowModel {
     private var versions: [PaneSide: Int] = [:]
     private var watches: [PaneSide: Watch] = [:]
     private var pending: [UUID: Task<Void, Never>] = [:]
+    private var loadTasks: [PaneSide: Task<Void, Never>] = [:]
     private var lastPublishedSession: Session?
     var pageSizes: [PaneSide: Int] = [:]
     var typeAheadInput = TypeAhead()
@@ -153,23 +154,38 @@ public final class WindowModel {
     }
 
     /// Keeps `waitUntilIdle` aware of work started from synchronous command handlers.
-    func track(_ body: @escaping @MainActor () async -> Void) {
+    @discardableResult
+    func track(_ body: @escaping @MainActor () async -> Void) -> Task<Void, Never> {
         let id = UUID()
-        pending[id] = Task {
+        let task = Task {
             await body()
             self.pending[id] = nil
+        }
+        pending[id] = task
+        return task
+    }
+
+    /// Re-lists the folder and returns once the latest listing of that pane is applied; a watcher reload that
+    /// starts meanwhile supersedes this one, so it is awaited too.
+    func reloadAndWait(_ side: PaneSide) async {
+        var task = load(side)
+        await task.value
+        while let latest = loadTasks[side], latest != task {
+            task = latest
+            await task.value
         }
     }
 
     // MARK: - Loading and watching
 
-    private func load(_ side: PaneSide) {
+    @discardableResult
+    private func load(_ side: PaneSide) -> Task<Void, Never> {
         generations[side, default: 0] += 1
         let generation = generations[side]!
         let path = tab(side).path
         let lister = environment.lister
         let executor = environment.listingExecutor
-        track {
+        let task = track {
             let outcome = (try? await executor.run { () -> ListingOutcome in
                 do {
                     return .items(try lister.list(path))
@@ -184,6 +200,8 @@ public final class WindowModel {
             guard self.generations[side] == generation, samePath(self.tab(side).path, path) else { return }
             self.apply(outcome, to: side, path: path)
         }
+        loadTasks[side] = task
+        return task
     }
 
     private func apply(_ outcome: ListingOutcome, to side: PaneSide, path: URL) {

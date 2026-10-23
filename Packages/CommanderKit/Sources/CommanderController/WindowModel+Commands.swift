@@ -44,7 +44,7 @@ extension WindowModel {
         case .copyToClipboard, .cutToClipboard, .paste, .duplicate, .copyToOtherPane, .moveToOtherPane,
              .newFolder, .rename, .moveToTrash, .copyPath, .copyName, .showPackageContents, .revealInFinder,
              .openInTerminal:
-            break
+            performFileCommand(command, on: side, scope: scope)
         }
     }
 
