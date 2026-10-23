@@ -7,11 +7,15 @@ import CommanderCore
 final class PanesViewController: NSViewController, NSSplitViewDelegate {
     let left: PaneViewController
     let right: PaneViewController
+    let selectionBar: SelectionBarView
+    let footer: FooterView
     private let split = NSSplitView()
 
     init(model: WindowModel) {
         left = PaneViewController(model: model, side: .left)
         right = PaneViewController(model: model, side: .right)
+        selectionBar = SelectionBarView(model: model)
+        footer = FooterView(model: model)
         super.init(nibName: nil, bundle: nil)
     }
 
@@ -29,7 +33,9 @@ final class PanesViewController: NSViewController, NSSplitViewDelegate {
         split.addArrangedSubview(left.view)
         split.addArrangedSubview(right.view)
 
-        let stack = NSStackView(views: [split])
+        let separator = NSBox()
+        separator.boxType = .separator
+        let stack = NSStackView(views: [split, selectionBar, separator, footer])
         stack.orientation = .vertical
         stack.spacing = 0
         stack.alignment = .width
@@ -40,6 +46,8 @@ final class PanesViewController: NSViewController, NSSplitViewDelegate {
         super.viewDidAppear()
         split.layoutSubtreeIfNeeded()
         split.setPosition(split.bounds.width / 2, ofDividerAt: 0)
+        selectionBar.render()
+        footer.render()
     }
 
     /// Window resizes grow both panes alike instead of only the first one.

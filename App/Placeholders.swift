@@ -2,14 +2,7 @@ import AppKit
 import CommanderController
 import CommanderCore
 
-// Stand-ins until the real AppKit pieces land (prompts: Task 14, pasteboard: Task 15, mounter: Task 16). Their answers are the safe ones: never overwrite, never delete permanently.
-
-@MainActor
-final class PlaceholderPrompts: OperationPrompts {
-    func resolve(_ conflict: Conflict) async -> ConflictResolution { ConflictResolution(decision: .skip) }
-    func decide(_ failure: OperationFailure) async -> ErrorDecision { .cancelAll }
-    func confirmPermanentDelete(_ urls: [URL]) async -> Bool { false }
-}
+// Stand-ins until the real AppKit pieces land (pasteboard: Task 15, mounter: Task 16).
 
 @MainActor
 final class PlaceholderPasteboard: FilePasteboard {

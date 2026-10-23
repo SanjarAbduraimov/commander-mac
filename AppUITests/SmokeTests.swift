@@ -78,6 +78,27 @@ final class SmokeTests: XCTestCase {
         XCTAssertTrue(waitFor(app.textFields["path.left"], value: path("nested/sub")))
     }
 
+    func testF5CopiesToOtherPane() {
+        let app = launch()
+        XCTAssertTrue(app.tables["table.left"].staticTexts["alpha.txt"].waitForExistence(timeout: 5))
+
+        app.typeKey(.F5, modifierFlags: [])
+
+        XCTAssertTrue(app.tables["table.right"].staticTexts["alpha.txt"].waitForExistence(timeout: 5))
+        XCTAssertTrue(FileManager.default.fileExists(atPath: root.appendingPathComponent("right/alpha.txt").path))
+    }
+
+    func testSpaceMarksAndShowsSelectionBar() throws {
+        let app = launch()
+        XCTAssertTrue(app.tables["table.left"].staticTexts["alpha.txt"].waitForExistence(timeout: 5))
+
+        app.typeKey(.space, modifierFlags: [])
+
+        XCTAssertTrue(app.staticTexts["1 marked in left pane"].waitForExistence(timeout: 5))
+        let shot = FileManager.default.temporaryDirectory.appendingPathComponent("selection.png")
+        try app.windows["Commander"].screenshot().pngRepresentation.write(to: shot)
+    }
+
     func testPathFieldEditingDoesNotTouchFiles() {
         let app = launch()
         XCTAssertTrue(app.tables["table.left"].staticTexts["alpha.txt"].waitForExistence(timeout: 5))

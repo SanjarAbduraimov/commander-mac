@@ -6,21 +6,31 @@ import CommanderCore
 final class AppKitEffects: WindowEffects {
     weak var windowController: MainWindowController?
     var onSettingsApplied: (() -> Void)?
+    let prompts: AlertPrompts
+
+    init(prompts: AlertPrompts) {
+        self.prompts = prompts
+    }
 
     func stateDidChange(_ change: StateChange) {
         guard let windowController else { return }
         switch change {
         case let .pane(side):
             windowController.pane(side).render()
+            windowController.panes.selectionBar.render()
         case .window, .settings:
             windowController.pane(.left).render()
             windowController.pane(.right).render()
+            windowController.panes.selectionBar.render()
+            windowController.panes.footer.render()
             if change == .settings { onSettingsApplied?() }
             // Keyboard focus follows the active pane, unless the user is typing in a text field.
             if let window = windowController.window, !(window.firstResponder is NSText) {
                 windowController.pane(windowController.activeSide).focusTable()
             }
-        case .sidebar, .operations:
+        case .operations:
+            windowController.panes.footer.render()
+        case .sidebar:
             break
         }
     }
@@ -48,8 +58,13 @@ final class AppKitEffects: WindowEffects {
 
     func showSettings() {}
     func showConnectToServer() {}
-    func askDestination(default url: URL, kind: OperationKind, count: Int) async -> URL? { nil }
-    func showAlert(_ alert: AlertMessage) {}
+    func askDestination(default url: URL, kind: OperationKind, count: Int) async -> URL? {
+        await prompts.askDestination(default: url, kind: kind, count: count)
+    }
+
+    func showAlert(_ alert: AlertMessage) {
+        prompts.showAlert(alert)
+    }
 
     func beep() {
         NSSound.beep()

@@ -25,8 +25,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         let options = LaunchOptions(arguments: ProcessInfo.processInfo.arguments)
         let bootstrap = AppBootstrap.load(options, lister: DirectoryReader())
         let persistence = SettingsPersistence(store: bootstrap.store)
-        let effects = AppKitEffects()
-        let operations = OperationCenter(prompts: PlaceholderPrompts())
+        let prompts = AlertPrompts()
+        let effects = AppKitEffects(prompts: prompts)
+        let operations = OperationCenter(prompts: prompts)
         let model = WindowModel(
             state: bootstrap.state,
             settings: bootstrap.settings,
@@ -44,6 +45,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
         windowController = MainWindowController(model: model, sidebarWidth: bootstrap.session.sidebarWidth)
         effects.windowController = windowController
+        prompts.window = windowController.window
         keyRouter = KeyRouter(model: model)
         keyRouter.install(in: windowController.window!)
         mainMenu = MainMenu(model: model, keyRouter: keyRouter)

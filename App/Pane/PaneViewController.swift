@@ -18,6 +18,7 @@ final class PaneViewController: NSViewController, NSTextFieldDelegate {
     private let statusLabel = NSTextField(labelWithString: "")
     private let activeLine = NSBox()
     private let scrollView = NSScrollView()
+    private let banner = AccessBannerView()
 
     /// What the table currently shows, to reload only the rows a change touched.
     private var shownNames: [String] = []
@@ -87,7 +88,7 @@ final class PaneViewController: NSViewController, NSTextFieldDelegate {
 
         let pathRow = padded(pathField, height: 24)
         let statusRow = padded(statusLabel, height: 27)
-        let stack = NSStackView(views: [activeLine, tabBar, pathRow, scrollView, statusRow])
+        let stack = NSStackView(views: [activeLine, tabBar, pathRow, banner, scrollView, statusRow])
         stack.orientation = .vertical
         stack.spacing = 0
         stack.alignment = .width
@@ -120,6 +121,7 @@ final class PaneViewController: NSViewController, NSTextFieldDelegate {
         tabBar.update(titles: pane.tabs.map { Self.title(for: $0.path) }, active: pane.activeTabIndex)
         if pathField.currentEditor() == nil { pathField.stringValue = tab.path.path }
         statusLabel.stringValue = PaneText.status(tab)
+        banner.show(model.banner(side))
 
         let active = model.state.activeSide == side
         // Transparent rather than hidden: the stack view would drop a hidden line and shift the pane by 2 pt.
