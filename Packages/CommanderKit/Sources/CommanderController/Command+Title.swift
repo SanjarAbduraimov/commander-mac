@@ -1,0 +1,46 @@
+import CommanderCore
+
+extension Command {
+    public var title: String {
+        switch self {
+        case .moveUp: "Move Up"
+        case .moveDown: "Move Down"
+        case .moveToStart: "Go to First Item"
+        case .moveToEnd: "Go to Last Item"
+        case .pageUp: "Page Up"
+        case .pageDown: "Page Down"
+        case .markUp: "Mark and Move Up"
+        case .markDown: "Mark and Move Down"
+        case .toggleMark: "Mark / Unmark"
+        case .markAll: "Mark All"
+        case .open: "Open"
+        case .goUp: "Enclosing Folder"
+        case .goBack: "Back"
+        case .goForward: "Forward"
+        case .switchPane: "Switch Pane"
+        case .newTab: "New Tab"
+        case .closeTab: "Close Tab"
+        case .nextTab: "Next Tab"
+        case .previousTab: "Previous Tab"
+        case .focusPathField: "Go to Path…"
+        case .reload: "Reload"
+        case .toggleHiddenFiles: "Show / Hide Hidden Files"
+        case .copyToClipboard: "Copy"
+        case .cutToClipboard: "Cut"
+        case .paste: "Paste"
+        case .duplicate: "Duplicate"
+        case .copyToOtherPane: "Copy to Other Pane"
+        case .moveToOtherPane: "Move to Other Pane"
+        case .newFolder: "New Folder"
+        case .rename: "Rename"
+        case .moveToTrash: "Move to Trash"
+        case .connectToServer: "Connect to Server…"
+        case .openSettings: "Settings…"
+        case .copyPath: "Copy Path"
+        case .copyName: "Copy Name"
+        case .showPackageContents: "Show Package Contents"
+        case .revealInFinder: "Reveal in Finder"
+        case .openInTerminal: "Open in Terminal"
+        }
+    }
+}
