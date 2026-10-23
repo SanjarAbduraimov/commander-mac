@@ -8,11 +8,12 @@ public enum Command: String, CaseIterable, Codable, Sendable {
     case copyToOtherPane, moveToOtherPane, newFolder, rename, moveToTrash
     case connectToServer, openSettings
     case copyPath, copyName, showPackageContents, revealInFinder, openInTerminal
+    case unmarkAll, copyTo, moveTo, deleteImmediately, calculateSize, toggleSinglePane
 
     /// While a text field has focus, keys edit text; only these window-level commands still fire.
     public var isAllowedInTextField: Bool {
         switch self {
-        case .openSettings, .connectToServer, .newTab, .closeTab, .nextTab, .previousTab, .focusPathField: true
+        case .openSettings, .connectToServer, .newTab, .closeTab, .nextTab, .previousTab, .focusPathField, .toggleSinglePane: true
         default: false
         }
     }

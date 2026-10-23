@@ -1,3 +1,5 @@
+import Foundation
+
 public enum BackspaceAction: String, Codable, Sendable {
     case parent, historyBack
 }
@@ -13,6 +15,9 @@ public struct BehaviorSettings: Codable, Equatable, Sendable {
     public var forwardDeleteTrashes = true
     public var showHiddenByDefault = false
     public var restoreTabsOnLaunch = true
+    /// Used when `restoreTabsOnLaunch` is off; nil opens Home.
+    public var launchLeftFolder: URL? = nil
+    public var launchRightFolder: URL? = nil
 
     public init() {}
 
@@ -25,6 +30,8 @@ public struct BehaviorSettings: Codable, Equatable, Sendable {
         forwardDeleteTrashes = c.value(.forwardDeleteTrashes, default: d.forwardDeleteTrashes)
         showHiddenByDefault = c.value(.showHiddenByDefault, default: d.showHiddenByDefault)
         restoreTabsOnLaunch = c.value(.restoreTabsOnLaunch, default: d.restoreTabsOnLaunch)
+        launchLeftFolder = c.value(.launchLeftFolder, default: URL?.none)
+        launchRightFolder = c.value(.launchRightFolder, default: URL?.none)
     }
 }
 

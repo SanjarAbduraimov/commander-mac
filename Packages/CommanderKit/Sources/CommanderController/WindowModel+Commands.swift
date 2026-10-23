@@ -45,6 +45,8 @@ extension WindowModel {
              .newFolder, .rename, .moveToTrash, .copyPath, .copyName, .showPackageContents, .revealInFinder,
              .openInTerminal:
             performFileCommand(command, on: side, scope: scope)
+        case .unmarkAll, .copyTo, .moveTo, .deleteImmediately, .calculateSize, .toggleSinglePane:
+            break
         }
     }
 

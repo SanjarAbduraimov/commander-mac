@@ -21,6 +21,7 @@ public struct PaneSession: Codable, Equatable, Sendable {
 public struct Session: Codable, Equatable, Sendable {
     public static let currentVersion = 1
     static let recentServerLimit = 10
+    static let recentDestinationLimit = 10
 
     public var version = currentVersion
     public var left: PaneSession
@@ -29,6 +30,8 @@ public struct Session: Codable, Equatable, Sendable {
     public var sidebarWidth: Double = 200
     public var favorites: [URL]
     public var recentServers: [String] = []
+    public var recentDestinations: [URL] = []
+    public var singlePane = false
 
     public init() {
         let home = FileManager.default.homeDirectoryForCurrentUser
@@ -53,11 +56,20 @@ public struct Session: Codable, Equatable, Sendable {
         sidebarWidth = c.value(.sidebarWidth, default: d.sidebarWidth)
         favorites = c.value(.favorites, default: d.favorites)
         recentServers = c.value(.recentServers, default: d.recentServers)
+        recentDestinations = c.value(.recentDestinations, default: d.recentDestinations)
+        singlePane = c.value(.singlePane, default: d.singlePane)
     }
 
     public mutating func addRecentServer(_ address: String) {
         recentServers.removeAll { $0 == address }
         recentServers.insert(address, at: 0)
         recentServers = Array(recentServers.prefix(Self.recentServerLimit))
+    }
+
+    public mutating func addRecentDestination(_ url: URL) {
+        let url = url.standardizedFileURL
+        recentDestinations.removeAll { $0.standardizedFileURL.path == url.path }
+        recentDestinations.insert(url, at: 0)
+        recentDestinations = Array(recentDestinations.prefix(Self.recentDestinationLimit))
     }
 }

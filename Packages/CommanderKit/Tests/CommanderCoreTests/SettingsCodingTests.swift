@@ -66,4 +66,36 @@ struct SettingsCodingTests {
         #expect(session.recentServers.first == "smb://host5/share")
         #expect(session.recentServers.filter { $0 == "smb://host5/share" }.count == 1)
     }
+
+    @Test func sessionRecentDestinationsAndSinglePaneRoundTrip() throws {
+        var session = Session()
+        session.addRecentDestination(URL(fileURLWithPath: "/tmp/a", isDirectory: true))
+        session.singlePane = true
+        let decoded = try JSONDecoder().decode(Session.self, from: JSONEncoder().encode(session))
+        #expect(decoded == session)
+        let old = try decode(Session.self, #"{"left":{"tabPaths":["file:///tmp/"]}}"#)
+        #expect(old.recentDestinations.isEmpty)
+        #expect(old.singlePane == false)
+    }
+
+    @Test func addRecentDestinationDedupesAndCaps() {
+        var session = Session()
+        for i in 1...12 { session.addRecentDestination(URL(fileURLWithPath: "/d\(i)", isDirectory: true)) }
+        #expect(session.recentDestinations.count == 10)
+        #expect(session.recentDestinations.first?.path == "/d12")
+        session.addRecentDestination(URL(fileURLWithPath: "/x/../y"))
+        session.addRecentDestination(URL(fileURLWithPath: "/y", isDirectory: true))
+        #expect(session.recentDestinations.filter { $0.standardizedFileURL.path == "/y" }.count == 1)
+        #expect(session.recentDestinations.first?.path == "/y")
+    }
+
+    @Test func launchFoldersDecodeLeniently() throws {
+        let old = try decode(BehaviorSettings.self, #"{"spaceAdvances":false}"#)
+        #expect(old.launchLeftFolder == nil)
+        #expect(old.launchRightFolder == nil)
+        var behavior = BehaviorSettings()
+        behavior.launchLeftFolder = URL(fileURLWithPath: "/tmp/l", isDirectory: true)
+        let decoded = try JSONDecoder().decode(BehaviorSettings.self, from: JSONEncoder().encode(behavior))
+        #expect(decoded == behavior)
+    }
 }

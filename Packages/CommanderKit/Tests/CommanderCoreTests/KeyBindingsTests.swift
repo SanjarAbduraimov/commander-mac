@@ -87,4 +87,22 @@ struct KeyBindingsTests {
         #expect(keys.conflicts(assigning: chord("cmd+d"), to: .duplicate).isEmpty)
         #expect(keys.conflicts(assigning: chord("cmd+j"), to: .reload).isEmpty)
     }
+
+    @Test func phase1cDefaults() {
+        let expected: [(String, Command)] = [
+            ("escape", .unmarkAll), ("opt+f5", .copyTo), ("opt+f6", .moveTo),
+            ("cmd+shift+backspace", .deleteImmediately), ("opt+space", .calculateSize), ("cmd+\\", .toggleSinglePane),
+            ("cmd+a", .markAll), ("cmd+backspace", .moveToTrash), ("f5", .copyToOtherPane),
+        ]
+        let keys = bindings()
+        for (string, command) in expected {
+            #expect(keys.command(for: chord(string), in: .table) == command, "\(string)")
+        }
+    }
+
+    @Test func escapeIsNotATextFieldCommand() {
+        let keys = bindings()
+        #expect(keys.command(for: chord("escape"), in: .textField) == nil)
+        #expect(keys.command(for: chord("cmd+\\"), in: .textField) == .toggleSinglePane)
+    }
 }

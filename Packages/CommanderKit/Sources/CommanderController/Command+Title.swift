@@ -41,6 +41,12 @@ extension Command {
         case .showPackageContents: "Show Package Contents"
         case .revealInFinder: "Reveal in Finder"
         case .openInTerminal: "Open in Terminal"
+        case .unmarkAll: "Unmark All"
+        case .copyTo: "Copy To…"
+        case .moveTo: "Move To…"
+        case .deleteImmediately: "Delete Immediately…"
+        case .calculateSize: "Calculate Size"
+        case .toggleSinglePane: "Single Pane"
         }
     }
 }
