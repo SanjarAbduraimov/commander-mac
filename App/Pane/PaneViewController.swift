@@ -26,6 +26,7 @@ final class PaneViewController: NSViewController, NSTextFieldDelegate, NSDraggin
     private var shownMarked: Set<String> = []
     private var shownActive = false
     private var shownAppearance: AppearanceSettings?
+    private var shownFolderSizes: [String: Int64] = [:]
 
     init(model: WindowModel, side: PaneSide) {
         self.model = model
@@ -122,7 +123,8 @@ final class PaneViewController: NSViewController, NSTextFieldDelegate, NSDraggin
         let pane = side == .left ? model.state.left : model.state.right
         tabBar.update(titles: pane.tabs.map { Self.title(for: $0.path) }, active: pane.activeTabIndex)
         if pathField.currentEditor() == nil { pathField.stringValue = tab.path.path }
-        statusLabel.stringValue = PaneText.status(tab)
+        let folderSizes = model.folderSizes(side)
+        statusLabel.stringValue = PaneText.status(tab, folderSizes: folderSizes)
         banner.show(model.banner(side))
 
         let active = model.state.activeSide == side
@@ -139,7 +141,12 @@ final class PaneViewController: NSViewController, NSTextFieldDelegate, NSDraggin
             Self.signposter.endInterval("Render", interval)
         } else {
             reloadChangedRows(tab, names: names)
+            if folderSizes != shownFolderSizes {
+                let sizeColumn = table.column(withIdentifier: NSUserInterfaceItemIdentifier(FileTableController.Column.size.rawValue))
+                table.reloadData(forRowIndexes: IndexSet(integersIn: 0..<names.count), columnIndexes: IndexSet(integer: sizeColumn))
+            }
         }
+        shownFolderSizes = folderSizes
         showSortIndicator(tab.sort)
         shownNames = names
         shownCursor = tab.cursor

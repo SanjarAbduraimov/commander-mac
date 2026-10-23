@@ -74,8 +74,12 @@ final class AppKitEffects: WindowEffects {
     func showConnectToServer() {
         windowController?.showConnectToServer()
     }
-    func askDestination(default url: URL, kind: OperationKind, count: Int) async -> URL? {
-        await prompts.askDestination(default: url, kind: kind, count: count)
+    func chooseDestination(_ request: DestinationRequest) async -> URL? {
+        await prompts.askDestination(default: request.suggested, kind: request.kind, count: request.count)
+    }
+
+    func confirmDeleteImmediately(_ urls: [URL]) async -> Bool {
+        await prompts.confirmDeleteImmediately(urls)
     }
 
     func showAlert(_ alert: AlertMessage) {

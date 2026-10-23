@@ -26,7 +26,8 @@ final class MainMenu: NSObject, NSMenuItemValidation {
         main.addItem(submenu("File", [
             command(.newTab), command(.closeTab), .separator(),
             command(.newFolder), command(.rename), command(.duplicate), .separator(),
-            command(.copyToOtherPane), command(.moveToOtherPane), command(.moveToTrash), .separator(),
+            command(.copyToOtherPane), command(.moveToOtherPane), command(.copyTo), command(.moveTo), .separator(),
+            command(.moveToTrash), command(.deleteImmediately), .separator(),
             command(.connectToServer),
         ]))
         main.addItem(submenu("Edit", [
@@ -38,9 +39,13 @@ final class MainMenu: NSObject, NSMenuItemValidation {
             NSMenuItem(title: "Paste", action: #selector(NSText.paste(_:)), keyEquivalent: "v"),
             NSMenuItem(title: "Select All", action: #selector(NSText.selectAll(_:)), keyEquivalent: "a"),
             .separator(),
+            command(.unmarkAll), .separator(),
             command(.copyPath), command(.copyName),
         ]))
-        main.addItem(submenu("View", [command(.toggleHiddenFiles), command(.reload)]))
+        main.addItem(submenu("View", [
+            command(.toggleSinglePane), .separator(),
+            command(.toggleHiddenFiles), command(.calculateSize), command(.reload),
+        ]))
         main.addItem(submenu("Go", [command(.goBack), command(.goForward), command(.goUp), .separator(), command(.focusPathField)]))
         main.addItem(submenu("Window", [
             command(.nextTab), command(.previousTab), command(.switchPane), .separator(),

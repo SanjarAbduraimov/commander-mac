@@ -2,7 +2,8 @@ import AppKit
 import CommanderController
 import CommanderCore
 
-/// Shortcut hints when idle; one progress row per running operation (at most three) while working.
+/// Shortcut hints when idle; one progress row per running operation (at most three) while working,
+/// plus a row for a running folder-size calculation.
 @MainActor
 final class FooterView: NSView {
     private static let maxRows = 3
@@ -13,6 +14,7 @@ final class FooterView: NSView {
     private var rows: [UUID: OperationRow] = [:]
     private var showsHints = false
     private var shownHints: [FooterHint] = []
+    private lazy var sizeRow = SizeRow { [model] in model.cancelSizeCalculation() }
 
     init(model: WindowModel) {
         self.model = model
@@ -39,8 +41,28 @@ final class FooterView: NSView {
     }
 
     func render() {
+        sizeRow.removeFromSuperview()
+        renderOperations()
+        guard let progress = model.sizeProgress else { return }
+        if showsHints {
+            showsHints = false
+            clear()
+        }
+        sizeRow.update(progress)
+        stack.addArrangedSubview(sizeRow)
+    }
+
+    private func renderOperations() {
         let operations = model.operations.operations
-        guard !operations.isEmpty else { return renderHints() }
+        guard !operations.isEmpty else {
+            if !showsHints {
+                clear()
+                shownOperationIDs = []
+                rows = [:]
+            }
+            if model.sizeProgress == nil { renderHints() }
+            return
+        }
 
         let visible = Array(operations.prefix(Self.maxRows))
         let ids = visible.map(\.id)
@@ -99,6 +121,49 @@ final class FooterView: NSView {
 
     private func clear() {
         stack.arrangedSubviews.forEach { $0.removeFromSuperview() }
+    }
+}
+
+@MainActor
+private final class SizeRow: NSStackView {
+    private let progress = NSProgressIndicator()
+    private let label = NSTextField(labelWithString: "")
+    private let onCancel: () -> Void
+
+    init(onCancel: @escaping () -> Void) {
+        self.onCancel = onCancel
+        super.init(frame: .zero)
+        orientation = .horizontal
+        spacing = 8
+        progress.isIndeterminate = false
+        progress.style = .bar
+        progress.controlSize = .small
+        progress.widthAnchor.constraint(equalToConstant: 160).isActive = true
+        label.font = .systemFont(ofSize: 11)
+        label.setAccessibilityIdentifier("footer.size")
+        let cancel = NSButton(title: "Cancel", target: self, action: #selector(cancelPressed))
+        cancel.controlSize = .small
+        cancel.bezelStyle = .rounded
+        addArrangedSubview(progress)
+        addArrangedSubview(label)
+        addArrangedSubview(NSView())
+        addArrangedSubview(cancel)
+        heightAnchor.constraint(equalToConstant: 24).isActive = true
+    }
+
+    @available(*, unavailable)
+    required init?(coder: NSCoder) {
+        fatalError("init(coder:) is not used")
+    }
+
+    func update(_ state: SizeProgress) {
+        progress.maxValue = Double(max(state.total, 1))
+        progress.doubleValue = Double(state.done)
+        label.stringValue = SizeText.progress(state)
+    }
+
+    @objc private func cancelPressed() {
+        onCancel()
     }
 }
 

@@ -91,7 +91,7 @@ struct KeyBindingsTests {
     @Test func phase1cDefaults() {
         let expected: [(String, Command)] = [
             ("escape", .unmarkAll), ("opt+f5", .copyTo), ("opt+f6", .moveTo),
-            ("cmd+shift+backspace", .deleteImmediately), ("opt+space", .calculateSize), ("cmd+\\", .toggleSinglePane),
+            ("cmd+shift+backspace", .deleteImmediately), ("opt+shift+return", .calculateSize), ("cmd+\\", .toggleSinglePane),
             ("cmd+a", .markAll), ("cmd+backspace", .moveToTrash), ("f5", .copyToOtherPane),
         ]
         let keys = bindings()

@@ -162,4 +162,25 @@ final class SmokeTests: XCTestCase {
         XCTAssertTrue(FileManager.default.fileExists(atPath: root.appendingPathComponent("left/alpha.txt").path))
         XCTAssertTrue(app.textFields["path.left"].value(forKey: "hasKeyboardFocus") as? Bool ?? false)
     }
+
+    func testEscapeUnmarks() {
+        let app = launch()
+        XCTAssertTrue(app.tables["table.left"].staticTexts["alpha.txt"].waitForExistence(timeout: 5))
+
+        app.typeKey(.space, modifierFlags: [])
+        XCTAssertTrue(app.staticTexts["1 marked in left pane"].waitForExistence(timeout: 5))
+        app.typeKey(.escape, modifierFlags: [])
+
+        XCTAssertTrue(app.staticTexts["1 marked in left pane"].waitForNonExistence(timeout: 5))
+    }
+
+    func testCalculateSizeShowsFolderSize() throws {
+        try Data("abc".utf8).write(to: root.appendingPathComponent("nested/sub/three.txt"))
+        let app = launch(left: "nested")
+        XCTAssertTrue(app.tables["table.left"].staticTexts["sub"].waitForExistence(timeout: 5))
+
+        app.typeKey(.return, modifierFlags: [.option, .shift])
+
+        XCTAssertTrue(app.tables["table.left"].staticTexts["3 bytes"].waitForExistence(timeout: 5))
+    }
 }

@@ -21,7 +21,7 @@ public struct KeyBindings: Sendable {
             .rename: ["f2", "shift+f6"], .moveToTrash: ["cmd+backspace"],
             .connectToServer: ["cmd+k"], .openSettings: ["cmd+,"],
             .unmarkAll: ["escape"], .copyTo: ["opt+f5"], .moveTo: ["opt+f6"],
-            .deleteImmediately: ["cmd+shift+backspace"], .calculateSize: ["opt+space"], .toggleSinglePane: ["cmd+\\"],
+            .deleteImmediately: ["cmd+shift+backspace"], .calculateSize: ["opt+shift+return"], .toggleSinglePane: ["cmd+\\"],
         ]
         table[behavior.backspaceAction == .parent ? .goUp : .goBack, default: []].append("backspace")
         if behavior.forwardDeleteTrashes { table[.moveToTrash, default: []].append("forwardDelete") }

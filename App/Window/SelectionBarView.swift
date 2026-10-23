@@ -2,27 +2,31 @@ import AppKit
 import CommanderController
 import CommanderCore
 
-/// Shown while the active tab has marked items: a summary and the three bulk actions.
+/// Shown while the active tab has marked items: a summary and the bulk actions.
 @MainActor
 final class SelectionBarView: NSView {
+    private static let actions: [(command: Command, title: String)] = [
+        (.copyToOtherPane, "Copy"), (.moveToOtherPane, "Move"), (.moveToTrash, "Trash"),
+        (.calculateSize, "Size"), (.unmarkAll, "Clear"),
+    ]
+
     private let model: WindowModel
     private let summary = NSTextField(labelWithString: "")
-    private let buttons: [(Command, NSButton)]
+    private let buttons: [NSButton]
 
     init(model: WindowModel) {
         self.model = model
-        buttons = [(Command.copyToOtherPane, "Copy"), (.moveToOtherPane, "Move"), (.moveToTrash, "Trash")].map { command, title in
-            (command, NSButton(title: title, target: nil, action: nil))
-        }
+        buttons = Self.actions.map { NSButton(title: $0.title, target: nil, action: nil) }
         super.init(frame: .zero)
 
         summary.font = .systemFont(ofSize: 12, weight: .medium)
         let stack = NSStackView(views: [summary, NSView()])
-        for (index, (_, button)) in buttons.enumerated() {
+        for (index, button) in buttons.enumerated() {
             button.tag = index
             button.target = self
             button.action = #selector(buttonPressed(_:))
             button.bezelStyle = .rounded
+            button.setAccessibilityIdentifier("selection.\(Self.actions[index].command.rawValue)")
             stack.addArrangedSubview(button)
         }
         stack.orientation = .horizontal
@@ -51,14 +55,14 @@ final class SelectionBarView: NSView {
         }
         isHidden = false
         summary.stringValue = text
-        for (command, button) in buttons {
-            let title = button.tag == 0 ? "Copy" : button.tag == 1 ? "Move" : "Trash"
-            let keys = model.bindings.chords(for: command).first?.displayString
-            button.title = keys.map { "\(title)  \($0)" } ?? title
+        for (button, action) in zip(buttons, Self.actions) {
+            let keys = model.bindings.chords(for: action.command).first?.displayString
+            button.title = keys.map { "\(action.title)  \($0)" } ?? action.title
+            button.isHidden = action.command == .calculateSize && !model.isEnabled(.calculateSize, context: .table)
         }
     }
 
     @objc private func buttonPressed(_ sender: NSButton) {
-        model.perform(buttons[sender.tag].0)
+        model.perform(Self.actions[sender.tag].command)
     }
 }

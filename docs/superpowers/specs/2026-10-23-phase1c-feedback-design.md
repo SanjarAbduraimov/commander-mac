@@ -45,7 +45,7 @@ Implementation plan: `docs/superpowers/plans/2026-10-23-phase1c-feedback.md`.
 - Yangi buyruq **Delete Immediately…**, default **`⇧⌘⌫`**: tasdiq dialogi "Delete “N” immediately? You can't undo this action." (bir nechta bo'lsa "Delete N items immediately?" + birinchi 5 nom), tugmalar **Delete** (destructive) / **Cancel** (default, Esc). Tasdiqlansa — fonda, progress va Cancel bilan (mavjud `DeleteOperation`).
 
 ### 2.8 Papka hajmi
-- Yangi buyruq **Calculate Size**, default **`⌥Space`** (menyu, kontekst menyu, selection bar'da **Size** tugmasi).
+- Yangi buyruq **Calculate Size**, default **`⌥⇧↩`** (Total Commander'dagi Alt+Shift+Enter; `⌥Space` ni Raycast/Spotlight kabi ilovalar global ushlaydi) (menyu, kontekst menyu, selection bar'da **Size** tugmasi).
 - Belgilangan papkalar (belgilangan bo'lmasa — kursordagi papka) uchun fonda hisoblanadi; symlink'lar kuzatilmaydi; package'lar ham papka kabi hisoblanadi.
 - Footer'da "Calculating size… 2 of 5 folders" + **Cancel**; belgilash va navigatsiya to'xtamaydi.
 - Natija Size ustunida va status qatorida (belgilangan papkalar hajmi qo'shiladi). Natija papka yo'li bo'yicha eslab qolinadi; `⌘R` yoki shu panelda boshqa papkaga o'tish o'sha panel natijalarini tozalaydi.

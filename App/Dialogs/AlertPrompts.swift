@@ -54,6 +54,27 @@ final class AlertPrompts: OperationPrompts {
         return await present(alert) == .alertFirstButtonReturn
     }
 
+    func confirmDeleteImmediately(_ urls: [URL]) async -> Bool {
+        let alert = NSAlert()
+        alert.alertStyle = .critical
+        alert.messageText = urls.count == 1
+            ? "Delete “\(urls[0].lastPathComponent)” immediately?"
+            : "Delete \(urls.count) items immediately?"
+        var detail = "You can't undo this action."
+        if urls.count > 1 {
+            let names = urls.prefix(5).map(\.lastPathComponent).joined(separator: "\n")
+            let more = urls.count > 5 ? "\n…and \(urls.count - 5) more" : ""
+            detail += "\n\n\(names)\(more)"
+        }
+        alert.informativeText = detail
+        let delete = alert.addButton(withTitle: "Delete")
+        delete.hasDestructiveAction = true
+        delete.keyEquivalent = ""
+        let cancel = alert.addButton(withTitle: "Cancel")
+        cancel.keyEquivalent = "\r"
+        return await present(alert) == .alertFirstButtonReturn
+    }
+
     func askDestination(default url: URL, kind: OperationKind, count: Int) async -> URL? {
         let field = NSTextField(string: url.path)
         field.frame = NSRect(x: 0, y: 0, width: 380, height: 24)

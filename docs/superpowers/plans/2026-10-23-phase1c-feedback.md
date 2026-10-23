@@ -14,7 +14,7 @@
 
 - 1B plan'ining Global Constraints'i to'liq amal qiladi (`docs/superpowers/plans/2026-10-22-phase1b-app-ui.md`): Core/FileSystem/Controller AppKit import qilmaydi; har harakat `Command` → `WindowModel.perform`; fayl ishlari `OperationExecutor` da; UI matnlari inglizcha.
 - Branch: `phase1c-feedback`, `phase1b-app-ui` uchidan (1B hali `main` ga merge qilinmagan).
-- Default tugmalar: Unmark All `escape`; Copy To… `opt+f5`; Move To… `opt+f6`; Delete Immediately… `cmd+shift+backspace`; Calculate Size `opt+space`; Single Pane `cmd+\`. Mavjud default'lar o'zgarmaydi.
+- Default tugmalar: Unmark All `escape`; Copy To… `opt+f5`; Move To… `opt+f6`; Delete Immediately… `cmd+shift+backspace`; Calculate Size `opt+shift+return`; Single Pane `cmd+\`. Mavjud default'lar o'zgarmaydi.
 - Spring-loading kechikishi 0,7 s. Recent manzillar — 10 ta.
 - Test buyruqlari: `swift test --package-path Packages/CommanderKit` (hammasi yashil qolishi kerak); App: `xcodegen generate && xcodebuild test -project Commander.xcodeproj -scheme Commander -destination 'platform=macOS,arch=x86_64'`.
 - Foydalanuvchining clipboard'iga tegadigan avtomatik test yozilmaydi.

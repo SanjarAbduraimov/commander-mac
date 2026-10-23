@@ -57,8 +57,13 @@ final class FileTableController: NSObject, NSTableViewDataSource, NSTableViewDel
             cell.textField?.stringValue = item.name
             cell.textField?.font = font
             cell.imageView?.image = IconCache.shared.icon(for: item)
+            // Finder dims hidden items.
+            let alpha: CGFloat = item.isHidden ? 0.5 : 1
+            cell.textField?.alphaValue = alpha
+            cell.imageView?.alphaValue = alpha
         case .size:
-            cell.textField?.stringValue = item.size.map { ByteCountFormatter.string(fromByteCount: $0, countStyle: .file) } ?? "--"
+            let size = item.size ?? model.folderSize(side, item)
+            cell.textField?.stringValue = size.map { ByteCountFormatter.string(fromByteCount: $0, countStyle: .file) } ?? "--"
             cell.textField?.font = font
         case .modified:
             cell.textField?.stringValue = item.modified.formatted(Self.dateStyle)
