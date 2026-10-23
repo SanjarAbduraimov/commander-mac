@@ -35,7 +35,10 @@ extension WindowModel {
         }
         do {
             let mountPoint = try await environment.mounter.mount(url)
-            session.addRecentServer(url.absoluteString)
+            // session.json is plain text; the password stays with the mount (and the Keychain, if the user saved it).
+            var remembered = URLComponents(url: url, resolvingAgainstBaseURL: false)
+            remembered?.password = nil
+            session.addRecentServer(remembered?.url?.absoluteString ?? url.absoluteString)
             openPlace(mountPoint)
             await sidebar.refreshVolumes()
             publishSession()

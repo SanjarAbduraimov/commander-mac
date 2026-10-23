@@ -49,6 +49,15 @@ struct PlacesTests {
         #expect(h.effects.alerts.isEmpty)
     }
 
+    @Test func rememberedServerNeverKeepsPassword() async {
+        let h = await harness(mounter: FakeMounter { _ in root })
+
+        await h.model.connect(to: "smb://bob:secret@nas/share")
+
+        #expect(h.model.recentServers == ["smb://bob@nas/share"])
+        #expect(h.model.sessionSnapshot().recentServers.allSatisfy { !$0.contains("secret") })
+    }
+
     @Test func connectInvalidAddressAlerts() async {
         let h = await harness()
 
