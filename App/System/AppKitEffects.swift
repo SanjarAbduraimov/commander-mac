@@ -75,7 +75,8 @@ final class AppKitEffects: WindowEffects {
         windowController?.showConnectToServer()
     }
     func chooseDestination(_ request: DestinationRequest) async -> URL? {
-        await prompts.askDestination(default: request.suggested, kind: request.kind, count: request.count)
+        guard let windowController, let window = windowController.window else { return nil }
+        return await CopyToPresenter.run(request, model: windowController.model, over: window)
     }
 
     func confirmDeleteImmediately(_ urls: [URL]) async -> Bool {

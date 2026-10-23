@@ -75,30 +75,6 @@ final class AlertPrompts: OperationPrompts {
         return await present(alert) == .alertFirstButtonReturn
     }
 
-    func askDestination(default url: URL, kind: OperationKind, count: Int) async -> URL? {
-        let field = NSTextField(string: url.path)
-        field.frame = NSRect(x: 0, y: 0, width: 380, height: 24)
-        var text = url.path
-        while true {
-            let alert = NSAlert()
-            let noun = count == 1 ? "item" : "items"
-            alert.messageText = "\(kind == .move ? "Move" : "Copy") \(count) \(noun) to:"
-            field.stringValue = text
-            alert.accessoryView = field
-            alert.addButton(withTitle: "OK")
-            alert.addButton(withTitle: "Cancel")
-            alert.window.initialFirstResponder = field
-            guard await present(alert) == .alertFirstButtonReturn else { return nil }
-            text = field.stringValue
-            let path = (text.trimmingCharacters(in: .whitespaces) as NSString).expandingTildeInPath
-            var isDirectory: ObjCBool = false
-            if FileManager.default.fileExists(atPath: path, isDirectory: &isDirectory), isDirectory.boolValue {
-                return URL(fileURLWithPath: path, isDirectory: true)
-            }
-            NSSound.beep()
-        }
-    }
-
     func showAlert(_ message: AlertMessage) {
         let alert = NSAlert()
         alert.messageText = message.title

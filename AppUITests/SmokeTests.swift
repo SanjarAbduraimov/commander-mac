@@ -183,4 +183,27 @@ final class SmokeTests: XCTestCase {
 
         XCTAssertTrue(app.tables["table.left"].staticTexts["3 bytes"].waitForExistence(timeout: 5))
     }
+
+    func testCopyToChosenFolder() {
+        let app = launch()
+        XCTAssertTrue(app.tables["table.left"].staticTexts["alpha.txt"].waitForExistence(timeout: 5))
+
+        app.typeKey(.F5, modifierFlags: .option)
+        let field = app.textFields["copyTo.path"]
+        XCTAssertTrue(field.waitForExistence(timeout: 5))
+        field.click()
+        app.typeKey("a", modifierFlags: .command)
+        app.typeText(path("picked") + "/new")
+        app.typeKey(.return, modifierFlags: [])
+        XCTAssertTrue(app.buttons["Create & Copy"].firstMatch.waitForExistence(timeout: 5))
+        // The alert sits on the sheet, and accessibility also reports an off-screen copy of its buttons.
+        let create = app.buttons.matching(identifier: "Create & Copy").allElementsBoundByIndex.first { $0.isHittable }
+        XCTAssertNotNil(create)
+        create?.click()
+
+        let copied = root.appendingPathComponent("picked/new/alpha.txt").path
+        let deadline = Date().addingTimeInterval(5)
+        while !FileManager.default.fileExists(atPath: copied), Date() < deadline { RunLoop.current.run(until: Date().addingTimeInterval(0.1)) }
+        XCTAssertTrue(FileManager.default.fileExists(atPath: copied))
+    }
 }
