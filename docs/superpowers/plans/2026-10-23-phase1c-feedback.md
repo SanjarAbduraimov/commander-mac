@@ -400,3 +400,34 @@ func testDragHoverSpringsIntoFolder()      // right ichida "box/" → alpha.txt'
 - [ ] **Step 1:** `swift test --package-path Packages/CommanderKit` → hammasi PASS; `xcodebuild test …` → hammasi PASS.
 - [ ] **Step 2:** Hujjatlarni yangilash.
 - [ ] **Step 3: Commit** — `Record phase 1C status`
+
+---
+
+### Task 12: Ilova ikonkasi
+
+**Files:**
+- Create: `scripts/make-icon.swift` (AppKit/CoreGraphics bilan 1024 pt master chizadi va barcha o'lchamlarni yozadi), `App/Assets.xcassets/Contents.json`, `App/Assets.xcassets/AppIcon.appiconset/*`
+- Modify: `project.yml` (`ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon`)
+
+Dizayn: macOS squircle (824/1024 maydon, 185 radius, yumshoq soya), to'q indigo → ko'k gradient fon; ichida ikki vertikal panel — chap to'liq oq (faol panel), o'ng shaffof oq; panellar orasida kichik `›` belgisi. Hech qanday matn yo'q.
+
+- [ ] **Step 1:** `swift scripts/make-icon.swift App/Assets.xcassets/AppIcon.appiconset` → 10 ta PNG (16…1024) + `Contents.json`.
+- [ ] **Step 2:** 1024 va 32 px PNG'larni ko'zdan kechirish (kichik o'lchamda ham o'qiladi).
+- [ ] **Step 3:** `xcodegen generate` + build → `Commander.app/Contents/Resources/AppIcon.icns` mavjud; `CFBundleIconName == AppIcon`.
+- [ ] **Step 4: Commit** — `Add app icon`
+
+---
+
+### Task 13: Universal Release build va DMG
+
+**Files:**
+- Create: `scripts/make-dmg.sh`
+- Modify: `AGENTS.md` (Build va test: DMG buyrug'i), `.gitignore` (kerak bo'lsa)
+
+- `xcodebuild -project Commander.xcodeproj -scheme Commander -configuration Release -derivedDataPath build/DerivedData ARCHS="arm64 x86_64" ONLY_ACTIVE_ARCH=NO build`
+- `build/dmg-root/` ga `Commander.app` + `ln -s /Applications`; `hdiutil create -volname Commander -srcfolder build/dmg-root -format UDZO -ov build/Commander.dmg`.
+
+- [ ] **Step 1:** `scripts/make-dmg.sh` → `build/Commander.dmg`.
+- [ ] **Step 2:** `lipo -archs …/Commander` → `x86_64 arm64`; `codesign --verify` → OK.
+- [ ] **Step 3:** DMG'ni `hdiutil attach` qilib, ichidan ilovani nusxalab ishga tushirish → oyna ochiladi; `hdiutil detach`.
+- [ ] **Step 4: Commit** — `Add universal release DMG script`

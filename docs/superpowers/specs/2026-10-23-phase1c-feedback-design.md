@@ -1,6 +1,6 @@
 # Commander for Mac — 1-bosqich C (foydalanuvchi fikrlari) dizayni
 
-Sana: 2026-10-23. Holat: **tasdiqlash kutilmoqda**. Asos: `docs/superpowers/specs/2026-10-21-phase1-core-design.md` (1-bosqich spec'i). Bu hujjat o'sha spec'ni to'ldiradi; ziddiyat bo'lsa shu hujjat ustun.
+Sana: 2026-10-23. Holat: **tasdiqlandi** (2026-10-23). Asos: `docs/superpowers/specs/2026-10-21-phase1-core-design.md` (1-bosqich spec'i). Bu hujjat o'sha spec'ni to'ldiradi; ziddiyat bo'lsa shu hujjat ustun.
 Implementation plan: `docs/superpowers/plans/2026-10-23-phase1c-feedback.md`.
 
 ## 1. Maqsad
@@ -49,6 +49,14 @@ Implementation plan: `docs/superpowers/plans/2026-10-23-phase1c-feedback.md`.
 - Belgilangan papkalar (belgilangan bo'lmasa — kursordagi papka) uchun fonda hisoblanadi; symlink'lar kuzatilmaydi; package'lar ham papka kabi hisoblanadi.
 - Footer'da "Calculating size… 2 of 5 folders" + **Cancel**; belgilash va navigatsiya to'xtamaydi.
 - Natija Size ustunida va status qatorida (belgilangan papkalar hajmi qo'shiladi). Natija papka yo'li bo'yicha eslab qolinadi; `⌘R` yoki shu panelda boshqa papkaga o'tish o'sha panel natijalarini tozalaydi.
+
+### 2.9 Ilova ikonkasi
+- Minimalistik zamonaviy ikonka (macOS squircle shakli, ikki panel motivi). Dock, Finder, Launchpad, ⌘Tab va DMG'da ko'rinadi.
+- Ikonka kod bilan generatsiya qilinadi (`scripts/make-icon.swift`), natija `App/Assets.xcassets/AppIcon.appiconset` da.
+
+### 2.10 O'rnatiladigan DMG
+- `scripts/make-dmg.sh`: Release, **Universal (arm64 + x86_64)**, ad-hoc imzo; `build/Commander.dmg` — ichida `Commander.app` va `Applications` havolasi.
+- Developer ID va notarization yo'q: boshqa Mac'da birinchi ochish — o'ng tugma → Open (yoki `xattr -dr com.apple.quarantine /Applications/Commander.app`).
 
 ## 3. Doiradan tashqari
 - Get Info, Compare, Quick Look — 3-bosqichda qoladi (spec'dagi jadval: "Calculate folder size" 1C ga ko'chdi).
