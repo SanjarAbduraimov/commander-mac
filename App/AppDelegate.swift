@@ -25,6 +25,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         let options = LaunchOptions(arguments: ProcessInfo.processInfo.arguments)
         let bootstrap = AppBootstrap.load(options, lister: DirectoryReader())
         let persistence = SettingsPersistence(store: bootstrap.store)
+        AppKitEffects.applyTheme(bootstrap.settings.appearance.theme)
         let prompts = AlertPrompts()
         let effects = AppKitEffects(prompts: prompts)
         let operations = OperationCenter(prompts: prompts)
@@ -75,6 +76,35 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         NotificationCenter.default.addObserver(forName: NSApplication.didBecomeActiveNotification, object: nil, queue: .main) { _ in
             MainActor.assumeIsolated { model.appDidBecomeActive() }
         }
+    }
+
+    func applicationShouldTerminate(_ sender: NSApplication) -> NSApplication.TerminateReply {
+        guard let operations, !operations.isIdle else { return .terminateNow }
+        let count = operations.operations.count
+        let alert = NSAlert()
+        alert.messageText = count == 1 ? "1 operation is still running." : "\(count) operations are still running."
+        alert.informativeText = "Quitting will cancel them."
+        alert.addButton(withTitle: "Quit")
+        alert.addButton(withTitle: "Cancel")
+        guard alert.runModal() == .alertFirstButtonReturn else { return .terminateCancel }
+
+        operations.cancelAll()
+        // Cancelled copies delete their partial files; give them a moment, but never hang the quit.
+        Task { @MainActor in
+            let deadline = ContinuousClock.now + .seconds(5)
+            while !operations.isIdle, ContinuousClock.now < deadline {
+                try? await Task.sleep(for: .milliseconds(50))
+            }
+            NSApp.reply(toApplicationShouldTerminate: true)
+        }
+        return .terminateLater
+    }
+
+    func applicationWillTerminate(_ notification: Notification) {
+        guard let model, let persistence else { return }
+        persistence.update(model.sessionSnapshot())
+        persistence.update(model.settings)
+        persistence.flushSynchronously()
     }
 
     func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool {

@@ -117,6 +117,20 @@ final class SmokeTests: XCTestCase {
         XCTAssertTrue(app.staticTexts["Server Address"].waitForNonExistence(timeout: 5))
     }
 
+    func testCommandCommaOpensSettings() throws {
+        let app = launch()
+        XCTAssertTrue(app.windows["Commander"].waitForExistence(timeout: 5))
+
+        app.typeKey(",", modifierFlags: .command)
+
+        let settings = app.windows["Settings"]
+        XCTAssertTrue(settings.waitForExistence(timeout: 5))
+        let shot = FileManager.default.temporaryDirectory.appendingPathComponent("settings.png")
+        try settings.screenshot().pngRepresentation.write(to: shot)
+        settings.descendants(matching: .any).matching(NSPredicate(format: "label == %@", "Shortcuts")).firstMatch.click()
+        XCTAssertTrue(settings.staticTexts["Duplicates are detected before a shortcut is assigned."].waitForExistence(timeout: 5))
+    }
+
     func testSpaceMarksAndShowsSelectionBar() throws {
         let app = launch()
         XCTAssertTrue(app.tables["table.left"].staticTexts["alpha.txt"].waitForExistence(timeout: 5))

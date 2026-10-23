@@ -7,7 +7,7 @@ import CommanderCore
 final class MainWindowController: NSWindowController {
     let panes: PanesViewController
     let sidebar: SidebarViewController
-    private let model: WindowModel
+    let model: WindowModel
     private var resizeObserver: NSObjectProtocol?
 
     init(model: WindowModel, sidebarWidth: Double) {

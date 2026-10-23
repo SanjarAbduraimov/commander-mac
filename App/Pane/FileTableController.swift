@@ -133,7 +133,8 @@ final class FileTableController: NSObject, NSTableViewDataSource, NSTableViewDel
     }
 
     private func cellView(in tableView: NSTableView, column: Column) -> NSTableCellView {
-        let identifier = NSUserInterfaceItemIdentifier("cell." + column.rawValue)
+        // The icon size is baked into a cell's constraints, so cells are only reused within one icon size.
+        let identifier = NSUserInterfaceItemIdentifier("cell.\(column.rawValue).\(Int(model.settings.appearance.iconSize))")
         if let reused = tableView.makeView(withIdentifier: identifier, owner: nil) as? NSTableCellView { return reused }
 
         let cell = NSTableCellView()

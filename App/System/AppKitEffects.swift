@@ -23,7 +23,10 @@ final class AppKitEffects: WindowEffects {
             windowController.pane(.right).render()
             windowController.panes.selectionBar.render()
             windowController.panes.footer.render()
-            if change == .settings { onSettingsApplied?() }
+            if change == .settings {
+                Self.applyTheme(windowController.model.settings.appearance.theme)
+                onSettingsApplied?()
+            }
             // Keyboard focus follows the active pane, unless the user is typing in a text field.
             if let window = windowController.window, !(window.firstResponder is NSText) {
                 windowController.pane(windowController.activeSide).focusTable()
@@ -56,7 +59,18 @@ final class AppKitEffects: WindowEffects {
         NSWorkspace.shared.open([directory], withApplicationAt: terminal, configuration: NSWorkspace.OpenConfiguration())
     }
 
-    func showSettings() {}
+    func showSettings() {
+        guard let model = windowController?.model else { return }
+        SettingsWindowController.show(model: model)
+    }
+
+    static func applyTheme(_ theme: Theme) {
+        NSApp.appearance = switch theme {
+        case .system: nil
+        case .light: NSAppearance(named: .aqua)
+        case .dark: NSAppearance(named: .darkAqua)
+        }
+    }
     func showConnectToServer() {
         windowController?.showConnectToServer()
     }
