@@ -23,7 +23,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         let options = LaunchOptions(arguments: ProcessInfo.processInfo.arguments)
         let bootstrap = AppBootstrap.load(options, lister: DirectoryReader())
         let persistence = SettingsPersistence(store: bootstrap.store)
-        let effects = PlaceholderEffects()
+        let effects = AppKitEffects()
         let operations = OperationCenter(prompts: PlaceholderPrompts())
         let model = WindowModel(
             state: bootstrap.state,
@@ -40,7 +40,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         self.operations = operations
         self.persistence = persistence
 
-        windowController = MainWindowController()
+        windowController = MainWindowController(model: model, sidebarWidth: bootstrap.session.sidebarWidth)
+        effects.windowController = windowController
         windowController.showWindow(nil)
         NSApp.activate()
         model.start()
