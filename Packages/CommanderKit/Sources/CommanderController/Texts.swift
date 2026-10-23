@@ -7,12 +7,14 @@ func byteText(_ count: Int64) -> String {
 
 public enum PaneText {
     /// "12 items · 3 marked · 4.8 MB" — the size is the marked files', or every listed file's when none is marked.
-    public static func status(_ tab: TabState) -> String {
+    /// Folders count once their size has been calculated (`folderSizes` is keyed by standardized path).
+    public static func status(_ tab: TabState, folderSizes: [String: Int64] = [:]) -> String {
         let count = tab.items.count
         var text = count == 1 ? "1 item" : "\(count) items"
         let sized = tab.marked.isEmpty ? tab.items : tab.items.filter { tab.marked.contains($0.name) }
         if !tab.marked.isEmpty { text += " · \(tab.marked.count) marked" }
-        return text + " · " + byteText(sized.reduce(0) { $0 + ($1.size ?? 0) })
+        let bytes = sized.reduce(Int64(0)) { $0 + ($1.size ?? folderSizes[$1.url.standardizedFileURL.path] ?? 0) }
+        return text + " · " + byteText(bytes)
     }
 
     public static func selectionSummary(_ tab: TabState, side: PaneSide) -> String? {

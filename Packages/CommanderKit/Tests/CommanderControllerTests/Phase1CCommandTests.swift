@@ -66,4 +66,15 @@ struct Phase1CCommandTests {
         #expect(trash.map { entries[$0 + 1].command } == .deleteImmediately)
         #expect(entries.first { $0.command == .deleteImmediately }?.shortcut == "⇧⌘⌫")
     }
+
+    @Test func contextMenuOffersCalculateSizeOnFolders() async {
+        let model = await startedHarness().model
+        func commands(_ menu: [MenuItemModel]) -> [Command] {
+            menu.compactMap { if case let .entry(entry) = $0 { entry.command } else { nil } }
+        }
+
+        let folderMenu = commands(model.contextMenu(.left, row: "a"))
+        #expect(folderMenu.firstIndex(of: .calculateSize) == folderMenu.firstIndex(of: .copyName).map { $0 + 1 })
+        #expect(!commands(model.contextMenu(.left, row: "b.txt")).contains(.calculateSize))
+    }
 }

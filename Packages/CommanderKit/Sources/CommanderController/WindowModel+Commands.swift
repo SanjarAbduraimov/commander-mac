@@ -38,7 +38,10 @@ extension WindowModel {
         case .nextTab: mutatePane(side) { $0.selectNextTab() }
         case .previousTab: mutatePane(side) { $0.selectPreviousTab() }
         case .focusPathField: effects.focusPathField(side)
-        case .reload: reload(side)
+        case .reload:
+            clearSizes(side)
+            reload(side)
+        case .calculateSize: calculateSizes(side)
         case .toggleHiddenFiles: mutateTab(side) { $0.setShowHidden(!$0.showHidden) }
         case .openSettings: effects.showSettings()
         case .connectToServer: effects.showConnectToServer()
@@ -46,7 +49,7 @@ extension WindowModel {
              .newFolder, .rename, .moveToTrash, .copyPath, .copyName, .showPackageContents, .revealInFinder,
              .openInTerminal, .deleteImmediately:
             performFileCommand(command, on: side, scope: scope)
-        case .copyTo, .moveTo, .calculateSize, .toggleSinglePane:
+        case .copyTo, .moveTo, .toggleSinglePane:
             break
         }
     }
@@ -65,6 +68,7 @@ extension WindowModel {
         switch command {
         case .rename: return tab.cursorItem != nil
         case .unmarkAll: return !tab.marked.isEmpty
+        case .calculateSize: return tab.targets.contains { $0.kind == .directory || $0.kind == .package }
         case .showPackageContents: return tab.cursorItem?.kind == .package
         case .paste: return pasteboard.readFiles() != nil
         default: return true

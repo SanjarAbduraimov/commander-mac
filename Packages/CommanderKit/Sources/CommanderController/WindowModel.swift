@@ -41,6 +41,8 @@ public final class WindowModel {
     var typeAheadInput = TypeAhead()
     /// A name the cursor should land on once the folder's next listing arrives (a file opened by path, a new folder).
     var pendingCursor: [PaneSide: String] = [:]
+    var folderSizesBySide: [PaneSide: [String: Int64]] = [:]
+    var sizeRun: SizeRun?
 
     public init(
         state: WindowState, settings: AppSettings, session: Session, environment: WindowEnvironment,
@@ -154,6 +156,7 @@ public final class WindowModel {
     func locationChanged(_ side: PaneSide) {
         banners[side] = nil
         pendingCursor[side] = nil
+        clearSizes(side)
         load(side)
         updateWatch(side)
         changed(side)

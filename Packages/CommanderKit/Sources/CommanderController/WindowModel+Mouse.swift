@@ -60,12 +60,13 @@ extension WindowModel {
         }
         let targets = tab(side).targets
         let packageEntry: [MenuItemModel] = targets.count == 1 && targets[0].kind == .package ? [entry(.showPackageContents)] : []
+        let sizeEntry: [MenuItemModel] = isEnabled(.calculateSize, context: .table) ? [entry(.calculateSize)] : []
         return [
             entry(.open), .separator,
             entry(.copyToOtherPane), entry(.moveToOtherPane), .separator,
             entry(.rename), entry(.duplicate), entry(.moveToTrash), entry(.deleteImmediately), .separator,
-            entry(.copyPath), entry(.copyName), .separator,
-        ] + packageEntry + [entry(.revealInFinder), entry(.openInTerminal)]
+            entry(.copyPath), entry(.copyName),
+        ] + sizeEntry + [.separator] + packageEntry + [entry(.revealInFinder), entry(.openInTerminal)]
     }
 
     private func emptySpaceMenu(_ side: PaneSide) -> [MenuItemModel] {

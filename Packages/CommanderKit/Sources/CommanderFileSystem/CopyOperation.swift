@@ -194,16 +194,7 @@ private final class CopyRun {
 
     /// Files and bytes under `path`, without following symlinks.
     static func totals(_ path: String) -> (files: Int, bytes: Int64) {
-        var info = stat()
-        guard lstat(path, &info) == 0 else { return (0, 0) }
-        guard (info.st_mode & S_IFMT) == S_IFDIR else {
-            return (1, (info.st_mode & S_IFMT) == S_IFREG ? Int64(info.st_size) : 0)
-        }
-        let children = (try? FileManager.default.contentsOfDirectory(atPath: path)) ?? []
-        return children.reduce((0, 0)) { sum, child in
-            let sub = totals((path as NSString).appendingPathComponent(child))
-            return (sum.0 + sub.files, sum.1 + sub.bytes)
-        }
+        FolderSize.measure(path: path) { false } ?? (0, 0)
     }
 }
 
