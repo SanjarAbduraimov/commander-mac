@@ -10,6 +10,7 @@ public final class WindowModel {
     public let operations: OperationCenter
     public let sidebar: SidebarModel
     public var onSessionChange: ((Session) -> Void)?
+    public var onSettingsChange: ((AppSettings) -> Void)?
 
     let environment: WindowEnvironment
     let effects: any WindowEffects
@@ -81,6 +82,15 @@ public final class WindowModel {
 
     public func listingVersion(_ side: PaneSide) -> Int {
         versions[side, default: 0]
+    }
+
+    /// `showHiddenByDefault` only affects tabs opened from now on.
+    public func updateSettings(_ settings: AppSettings) {
+        self.settings = settings
+        bindings = KeyBindings(defaults: KeyBindings.defaults(for: settings.behavior), overrides: settings.shortcutOverrides)
+        effects.stateDidChange(.settings)
+        effects.stateDidChange(.window)
+        onSettingsChange?(settings)
     }
 
     public func reload(_ side: PaneSide) {
