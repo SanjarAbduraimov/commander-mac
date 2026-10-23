@@ -59,6 +59,7 @@ public protocol WindowEffects: AnyObject {
     func showSettings()
     func showConnectToServer()
     func askDestination(default url: URL, kind: OperationKind, count: Int) async -> URL?
+    func confirmDeleteImmediately(_ urls: [URL]) async -> Bool
     func showAlert(_ alert: AlertMessage)
     func beep()
 }

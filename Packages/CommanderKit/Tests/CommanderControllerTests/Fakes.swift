@@ -78,6 +78,8 @@ final class FakeTrasher: Trasher {
 @MainActor
 final class RecordingEffects: WindowEffects {
     var destinationAnswer: URL?
+    var deleteAnswer = false
+    private(set) var deleteRequests: [[URL]] = []
     private(set) var changes: [StateChange] = []
     private(set) var focusedPathFields: [PaneSide] = []
     private(set) var renames: [(side: PaneSide, name: String)] = []
@@ -101,6 +103,10 @@ final class RecordingEffects: WindowEffects {
     func askDestination(default url: URL, kind: OperationKind, count: Int) async -> URL? {
         destinationRequests.append((url, kind, count))
         return destinationAnswer
+    }
+    func confirmDeleteImmediately(_ urls: [URL]) async -> Bool {
+        deleteRequests.append(urls)
+        return deleteAnswer
     }
     func showAlert(_ alert: AlertMessage) { alerts.append(alert) }
     func beep() { beeps += 1 }

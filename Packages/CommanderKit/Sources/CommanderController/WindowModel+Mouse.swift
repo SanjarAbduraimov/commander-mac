@@ -63,7 +63,7 @@ extension WindowModel {
         return [
             entry(.open), .separator,
             entry(.copyToOtherPane), entry(.moveToOtherPane), .separator,
-            entry(.rename), entry(.duplicate), entry(.moveToTrash), .separator,
+            entry(.rename), entry(.duplicate), entry(.moveToTrash), entry(.deleteImmediately), .separator,
             entry(.copyPath), entry(.copyName), .separator,
         ] + packageEntry + [entry(.revealInFinder), entry(.openInTerminal)]
     }

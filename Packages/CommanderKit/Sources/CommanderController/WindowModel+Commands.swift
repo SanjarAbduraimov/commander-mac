@@ -11,7 +11,7 @@ extension WindowModel {
 
     private static let targetCommands: Set<Command> = [
         .copyToOtherPane, .moveToOtherPane, .duplicate, .moveToTrash, .copyToClipboard, .cutToClipboard,
-        .copyPath, .copyName, .revealInFinder,
+        .copyPath, .copyName, .revealInFinder, .deleteImmediately,
     ]
 
     public func perform(_ command: Command, scope: CommandScope = .targets) {
@@ -27,6 +27,7 @@ extension WindowModel {
         case .markDown: mutateTab(side) { $0.moveCursorMarking(by: 1) }
         case .toggleMark: mutateTab(side) { [advance = settings.behavior.spaceAdvances] in $0.toggleMark(advance: advance) }
         case .markAll: mutateTab(side) { $0.markAll() }
+        case .unmarkAll: mutateTab(side) { $0.clearMarks() }
         case .open: openCursorItem(side)
         case .goUp: mutatePane(side) { $0.activeTab.goUp() }
         case .goBack: mutatePane(side) { $0.activeTab.goBack() }
@@ -43,9 +44,9 @@ extension WindowModel {
         case .connectToServer: effects.showConnectToServer()
         case .copyToClipboard, .cutToClipboard, .paste, .duplicate, .copyToOtherPane, .moveToOtherPane,
              .newFolder, .rename, .moveToTrash, .copyPath, .copyName, .showPackageContents, .revealInFinder,
-             .openInTerminal:
+             .openInTerminal, .deleteImmediately:
             performFileCommand(command, on: side, scope: scope)
-        case .unmarkAll, .copyTo, .moveTo, .deleteImmediately, .calculateSize, .toggleSinglePane:
+        case .copyTo, .moveTo, .calculateSize, .toggleSinglePane:
             break
         }
     }
@@ -63,6 +64,7 @@ extension WindowModel {
         if Self.targetCommands.contains(command) { return !tab.targets.isEmpty }
         switch command {
         case .rename: return tab.cursorItem != nil
+        case .unmarkAll: return !tab.marked.isEmpty
         case .showPackageContents: return tab.cursorItem?.kind == .package
         case .paste: return pasteboard.readFiles() != nil
         default: return true

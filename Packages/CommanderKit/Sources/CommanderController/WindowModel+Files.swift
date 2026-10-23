@@ -86,6 +86,13 @@ extension WindowModel {
             guard !urls.isEmpty else { return }
             operations.start(.trash(urls))
             mutateTab(side) { $0.clearMarks() }
+        case .deleteImmediately:
+            guard !urls.isEmpty else { return }
+            track {
+                guard await self.effects.confirmDeleteImmediately(urls) else { return }
+                self.operations.start(.delete(urls))
+                self.mutateTab(side) { $0.clearMarks() }
+            }
         case .newFolder: createFolder(on: side)
         case .rename:
             if let name = tab.cursorItem?.name { effects.beginRename(side, name: name) }
