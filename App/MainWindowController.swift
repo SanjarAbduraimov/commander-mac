@@ -36,6 +36,8 @@ final class MainWindowController: NSWindowController {
         fatalError("init(coder:) is not used")
     }
 
+    var activeSide: PaneSide { panes.left.model.state.activeSide }
+
     func pane(_ side: PaneSide) -> PaneViewController {
         side == .left ? panes.left : panes.right
     }

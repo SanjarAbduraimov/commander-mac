@@ -10,6 +10,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private(set) var operations: OperationCenter!
     private(set) var persistence: SettingsPersistence!
     private var windowController: MainWindowController!
+    private var keyRouter: KeyRouter!
+    private var mainMenu: MainMenu!
 
     static func main() {
         let app = NSApplication.shared
@@ -42,6 +44,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
         windowController = MainWindowController(model: model, sidebarWidth: bootstrap.session.sidebarWidth)
         effects.windowController = windowController
+        keyRouter = KeyRouter(model: model)
+        keyRouter.install(in: windowController.window!)
+        mainMenu = MainMenu(model: model, keyRouter: keyRouter)
+        NSApp.mainMenu = mainMenu.build()
+        effects.onSettingsApplied = { [mainMenu] in mainMenu?.refreshKeyEquivalents() }
         windowController.showWindow(nil)
         NSApp.activate()
         model.start()

@@ -4,7 +4,7 @@ import CommanderCore
 import os
 
 @MainActor
-final class PaneViewController: NSViewController {
+final class PaneViewController: NSViewController, NSTextFieldDelegate {
     private static let signposter = OSSignposter(subsystem: "local.sanjar.commander", category: .pointsOfInterest)
 
     let model: WindowModel
@@ -13,6 +13,7 @@ final class PaneViewController: NSViewController {
     let pathField = NSTextField()
 
     private let tableController: FileTableController
+    private lazy var renameEditor = RenameEditor(model: model, side: side, table: table)
     private let tabBar = TabBarView()
     private let statusLabel = NSTextField(labelWithString: "")
     private let activeLine = NSBox()
@@ -59,8 +60,10 @@ final class PaneViewController: NSViewController {
         pathField.drawsBackground = false
         pathField.lineBreakMode = .byTruncatingHead
         pathField.setAccessibilityIdentifier("path.\(side.rawValue)")
+        pathField.delegate = self
 
         table.side = side
+        table.model = model
         table.headerView = NSTableHeaderView()
         table.usesAlternatingRowBackgroundColors = false
         table.selectionHighlightStyle = .none
@@ -151,6 +154,34 @@ final class PaneViewController: NSViewController {
         table.reloadData(forRowIndexes: rows, columnIndexes: IndexSet(integersIn: 0..<table.numberOfColumns))
         for row in rows {
             if let rowView = table.rowView(atRow: row, makeIfNecessary: false) { tableController.configure(rowView, row: row) }
+        }
+    }
+
+    func focusPathField() {
+        view.window?.makeFirstResponder(pathField)
+        pathField.selectText(nil)
+    }
+
+    func focusTable() {
+        view.window?.makeFirstResponder(table)
+    }
+
+    func beginRename(_ name: String) {
+        renameEditor.begin(name: name)
+    }
+
+    func control(_ control: NSControl, textView: NSTextView, doCommandBy commandSelector: Selector) -> Bool {
+        guard control === pathField else { return false }
+        switch commandSelector {
+        case #selector(NSResponder.insertNewline(_:)):
+            if model.goToPath(side, pathField.stringValue) { focusTable() }
+            return true
+        case #selector(NSResponder.cancelOperation(_:)):
+            pathField.stringValue = model.tab(side).path.path
+            focusTable()
+            return true
+        default:
+            return false
         }
     }
 

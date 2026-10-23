@@ -5,6 +5,7 @@ import CommanderCore
 @MainActor
 final class AppKitEffects: WindowEffects {
     weak var windowController: MainWindowController?
+    var onSettingsApplied: (() -> Void)?
 
     func stateDidChange(_ change: StateChange) {
         guard let windowController else { return }
@@ -14,13 +15,23 @@ final class AppKitEffects: WindowEffects {
         case .window, .settings:
             windowController.pane(.left).render()
             windowController.pane(.right).render()
+            if change == .settings { onSettingsApplied?() }
+            // Keyboard focus follows the active pane, unless the user is typing in a text field.
+            if let window = windowController.window, !(window.firstResponder is NSText) {
+                windowController.pane(windowController.activeSide).focusTable()
+            }
         case .sidebar, .operations:
             break
         }
     }
 
-    func focusPathField(_ side: PaneSide) {}
-    func beginRename(_ side: PaneSide, name: String) {}
+    func focusPathField(_ side: PaneSide) {
+        windowController?.pane(side).focusPathField()
+    }
+
+    func beginRename(_ side: PaneSide, name: String) {
+        windowController?.pane(side).beginRename(name)
+    }
 
     func open(_ url: URL) {
         NSWorkspace.shared.open(url)

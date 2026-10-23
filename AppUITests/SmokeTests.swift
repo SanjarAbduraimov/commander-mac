@@ -33,4 +33,47 @@ final class SmokeTests: XCTestCase {
 
         XCTAssertTrue(app.windows["Commander"].waitForExistence(timeout: 5))
     }
+
+    private func waitFor(_ element: XCUIElement, value: String, timeout: TimeInterval = 5) -> Bool {
+        let predicate = NSPredicate(format: "value == %@", value)
+        return XCTWaiter().wait(for: [XCTNSPredicateExpectation(predicate: predicate, object: element)], timeout: timeout) == .completed
+    }
+
+    private func path(_ relative: String) -> String {
+        root.appendingPathComponent(relative).resolvingSymlinksInPath().path
+    }
+
+    func testTabSwitchesActivePane() {
+        let app = launch()
+        let left = app.groups["pane.left"]
+        XCTAssertTrue(waitFor(left, value: "active"))
+
+        app.typeKey(.tab, modifierFlags: [])
+
+        XCTAssertTrue(waitFor(app.groups["pane.right"], value: "active"))
+        XCTAssertTrue(waitFor(left, value: "inactive"))
+    }
+
+    func testBackspaceGoesUp() {
+        let app = launch(left: "nested/sub")
+        let pathField = app.textFields["path.left"]
+        XCTAssertTrue(waitFor(pathField, value: path("nested/sub")))
+
+        app.typeKey(.delete, modifierFlags: [])
+
+        XCTAssertTrue(waitFor(pathField, value: path("nested")))
+    }
+
+    func testPathFieldEditingDoesNotTouchFiles() {
+        let app = launch()
+        XCTAssertTrue(app.tables["table.left"].staticTexts["alpha.txt"].waitForExistence(timeout: 5))
+
+        app.typeKey("l", modifierFlags: .command)
+        app.typeText("x")
+        app.typeKey(.delete, modifierFlags: .command)
+        app.typeKey(.delete, modifierFlags: [])
+
+        XCTAssertTrue(FileManager.default.fileExists(atPath: root.appendingPathComponent("left/alpha.txt").path))
+        XCTAssertTrue(app.textFields["path.left"].value(forKey: "hasKeyboardFocus") as? Bool ?? false)
+    }
 }
