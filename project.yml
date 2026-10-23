@@ -1,0 +1,58 @@
+name: Commander
+options:
+  deploymentTarget:
+    macOS: "15.0"
+  createIntermediateGroups: true
+packages:
+  CommanderKit:
+    path: Packages/CommanderKit
+settings:
+  base:
+    SWIFT_VERSION: "6.0"
+    ARCHS: x86_64
+    MACOSX_DEPLOYMENT_TARGET: "15.0"
+    CODE_SIGN_IDENTITY: "-"
+    CODE_SIGN_STYLE: Manual
+    DEVELOPMENT_TEAM: ""
+targets:
+  Commander:
+    type: application
+    platform: macOS
+    sources: [App]
+    dependencies:
+      - package: CommanderKit
+        product: CommanderController
+      - package: CommanderKit
+        product: CommanderCore
+      - package: CommanderKit
+        product: CommanderFileSystem
+    info:
+      path: App/Info.plist
+      properties:
+        CFBundleDisplayName: Commander
+        NSPrincipalClass: NSApplication
+        LSApplicationCategoryType: public.app-category.utilities
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: local.sanjar.commander
+        ENABLE_HARDENED_RUNTIME: NO
+        ENABLE_APP_SANDBOX: NO
+  CommanderUITests:
+    type: bundle.ui-testing
+    platform: macOS
+    sources: [AppUITests]
+    dependencies:
+      - target: Commander
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: local.sanjar.commander.uitests
+        TEST_TARGET_NAME: Commander
+        GENERATE_INFOPLIST_FILE: YES
+schemes:
+  Commander:
+    build:
+      targets:
+        Commander: all
+        CommanderUITests: [test]
+    test:
+      targets: [CommanderUITests]

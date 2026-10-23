@@ -42,4 +42,8 @@ Talab: to'liq Xcode (Command Line Tools'da `Testing` moduli yo'q). Barcha buyruq
 - Benchmark: `CK_BENCHMARK=1 swift test --package-path Packages/CommanderKit -c release --filter DirectoryReaderBenchmark`
 - Faqat kompilyatsiya (Xcode'siz ham ishlaydi): `swift build --package-path Packages/CommanderKit`
 
-App target (XcodeGen) hali yaratilmagan — yaratilganda build va run buyruqlarini shu yerga qo'shing.
+- Controller testlari: `swift test --package-path Packages/CommanderKit --filter <Suite>` (CommanderController ham shu package'da)
+- Xcode loyihasini generatsiya qilish: `xcodegen generate`
+- App build: `xcodebuild -project Commander.xcodeproj -scheme Commander -destination 'platform=macOS,arch=x86_64' build`
+- UI smoke testlar: `xcodebuild test -project Commander.xcodeproj -scheme Commander -destination 'platform=macOS,arch=x86_64'` (birinchi marta macOS UI automation uchun Touch ID / parol so'raydi)
+- Eslatma: ad-hoc imzo har build'da o'zgaradi — Full Disk Access ruxsatini qayta berish kerak bo'lishi mumkin.
