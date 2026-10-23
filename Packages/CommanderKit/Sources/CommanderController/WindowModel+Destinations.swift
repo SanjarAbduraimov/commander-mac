@@ -51,6 +51,12 @@ extension WindowModel {
             .map { (parent as NSString).appendingPathComponent($0) }
     }
 
+    /// The other pane, or with one pane the latest destination (else the current folder).
+    func suggestedDestination(from side: PaneSide) -> URL {
+        if isSinglePane { return session.recentDestinations.first ?? tab(side).path }
+        return tab(side == .left ? .right : .left).path
+    }
+
     func chooseDestination(_ kind: OperationKind, from side: PaneSide, suggested: URL) {
         let sources = tab(side).targets.map(\.url)
         guard !sources.isEmpty else {

@@ -62,4 +62,39 @@ struct RestoreTests {
         let tabs = state.left.tabs + state.right.tabs
         #expect(tabs.allSatisfy { $0.showHidden })
     }
+
+    @Test func launchFoldersUsedWhenNotRestoring() throws {
+        let tmp = try TempDir()
+        defer { tmp.remove() }
+        var behavior = BehaviorSettings()
+        behavior.restoreTabsOnLaunch = false
+        behavior.launchLeftFolder = try tmp.dir("a")
+
+        let state = WindowState.restored(from: Session(), behavior: behavior, lister: DirectoryReader())
+
+        #expect(state.left.tabs.map(\.path.standardizedFileURL.path) == [tmp.url.appendingPathComponent("a").standardizedFileURL.path])
+        #expect(state.right.tabs.map(\.path) == [home])
+    }
+
+    @Test func missingLaunchFolderFallsBackToParent() throws {
+        let tmp = try TempDir()
+        defer { tmp.remove() }
+        var behavior = BehaviorSettings()
+        behavior.restoreTabsOnLaunch = false
+        behavior.launchRightFolder = try tmp.dir("a").appendingPathComponent("gone")
+
+        let state = WindowState.restored(from: Session(), behavior: behavior, lister: DirectoryReader())
+
+        #expect(state.right.tabs.map(\.path.standardizedFileURL.path) == [tmp.url.appendingPathComponent("a").standardizedFileURL.path])
+    }
+
+    @Test func singlePaneRestoresLeftAsActive() {
+        var session = Session()
+        session.singlePane = true
+        session.activeSide = .right
+
+        let state = WindowState.restored(from: session, behavior: BehaviorSettings(), lister: DirectoryReader())
+
+        #expect(state.activeSide == .left)
+    }
 }

@@ -137,6 +137,10 @@ extension WindowModel {
     private func transfer(_ kind: OperationKind, from side: PaneSide) {
         let sources = tab(side).targets.map(\.url)
         guard !sources.isEmpty else { return }
+        if isSinglePane {
+            chooseDestination(kind, from: side, suggested: suggestedDestination(from: side))
+            return
+        }
         let destination = tab(side == .left ? .right : .left).path
         guard settings.behavior.askDestinationForCopyMove else {
             startTransfer(kind, sources: sources, destination: destination, from: side)

@@ -49,10 +49,9 @@ extension WindowModel {
              .newFolder, .rename, .moveToTrash, .copyPath, .copyName, .showPackageContents, .revealInFinder,
              .openInTerminal, .deleteImmediately:
             performFileCommand(command, on: side, scope: scope)
-        case .copyTo: chooseDestination(.copy, from: side, suggested: tab(side == .left ? .right : .left).path)
-        case .moveTo: chooseDestination(.move, from: side, suggested: tab(side == .left ? .right : .left).path)
-        case .toggleSinglePane:
-            break
+        case .copyTo: chooseDestination(.copy, from: side, suggested: suggestedDestination(from: side))
+        case .moveTo: chooseDestination(.move, from: side, suggested: suggestedDestination(from: side))
+        case .toggleSinglePane: toggleSinglePane()
         }
     }
 
@@ -69,6 +68,7 @@ extension WindowModel {
         if Self.targetCommands.contains(command) { return !tab.targets.isEmpty }
         switch command {
         case .rename: return tab.cursorItem != nil
+        case .switchPane: return !isSinglePane
         case .unmarkAll: return !tab.marked.isEmpty
         case .calculateSize: return tab.targets.contains { $0.kind == .directory || $0.kind == .package }
         case .showPackageContents: return tab.cursorItem?.kind == .package
@@ -115,6 +115,13 @@ extension WindowModel {
             pane.selectTab(at: index)
             pane.closeActiveTab()
         }
+    }
+
+    private func toggleSinglePane() {
+        session.singlePane.toggle()
+        if isSinglePane { activate(.left) }
+        effects.stateDidChange(.window)
+        publishSession()
     }
 
     private func pageStep(_ side: PaneSide) -> Int {

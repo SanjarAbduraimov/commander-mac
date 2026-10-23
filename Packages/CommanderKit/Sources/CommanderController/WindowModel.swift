@@ -82,6 +82,8 @@ public final class WindowModel {
         banners[side]
     }
 
+    public var isSinglePane: Bool { session.singlePane }
+
     public func listingVersion(_ side: PaneSide) -> Int {
         versions[side, default: 0]
     }
@@ -100,7 +102,7 @@ public final class WindowModel {
     }
 
     public func activate(_ side: PaneSide) {
-        guard state.activeSide != side else { return }
+        guard state.activeSide != side, !(isSinglePane && side == .right) else { return }
         state.activeSide = side
         effects.stateDidChange(.window)
         publishSession()

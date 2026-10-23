@@ -126,12 +126,15 @@ extension WindowState {
 
         guard behavior.restoreTabsOnLaunch else {
             let home = FileManager.default.homeDirectoryForCurrentUser
-            return WindowState(left: PaneState(tabs: [tab(home)]), right: PaneState(tabs: [tab(home)]))
+            func launch(_ folder: URL?) -> PaneState {
+                PaneState(tabs: [tab(folder.map(lister.nearestExistingDirectory(from:)) ?? home)])
+            }
+            return WindowState(left: launch(behavior.launchLeftFolder), right: launch(behavior.launchRightFolder))
         }
         func pane(_ saved: PaneSession) -> PaneState {
             PaneState(tabs: saved.tabPaths.map { tab(lister.nearestExistingDirectory(from: $0)) }, activeTabIndex: saved.activeTab)
         }
-        return WindowState(left: pane(session.left), right: pane(session.right), activeSide: session.activeSide)
+        return WindowState(left: pane(session.left), right: pane(session.right), activeSide: session.singlePane ? .left : session.activeSide)
     }
 
     subscript(side: PaneSide) -> PaneState {
