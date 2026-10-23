@@ -32,7 +32,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             state: bootstrap.state,
             settings: bootstrap.settings,
             session: bootstrap.session,
-            environment: .live(mounter: PlaceholderMounter()),
+            environment: .live(mounter: NetFSMounter()),
             effects: effects,
             pasteboard: SystemPasteboard(),
             operations: operations
@@ -54,12 +54,26 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         windowController.showWindow(nil)
         NSApp.activate()
         model.start()
+        observeSystem(model)
 
         for warning in bootstrap.warnings {
             let alert = NSAlert()
             alert.messageText = warning.title
             alert.informativeText = warning.detail ?? ""
             alert.beginSheetModal(for: windowController.window!)
+        }
+    }
+
+    private func observeSystem(_ model: WindowModel) {
+        let workspace = NSWorkspace.shared.notificationCenter
+        for name in [NSWorkspace.didMountNotification, NSWorkspace.didUnmountNotification, NSWorkspace.didRenameVolumeNotification] {
+            workspace.addObserver(forName: name, object: nil, queue: .main) { _ in
+                Task { @MainActor in await model.sidebar.refreshVolumes() }
+            }
+        }
+        // SMB shares send no change events; coming back to the app is when their folders get re-read.
+        NotificationCenter.default.addObserver(forName: NSApplication.didBecomeActiveNotification, object: nil, queue: .main) { _ in
+            MainActor.assumeIsolated { model.appDidBecomeActive() }
         }
     }
 

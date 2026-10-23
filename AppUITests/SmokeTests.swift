@@ -100,6 +100,23 @@ final class SmokeTests: XCTestCase {
         XCTAssertFalse(FileManager.default.fileExists(atPath: root.appendingPathComponent("left/alpha.txt").path))
     }
 
+    func testSidebarOpensPlaceAndCommandKShowsConnectSheet() throws {
+        let app = launch()
+        let applications = app.outlines["sidebar"].staticTexts["Applications"]
+        XCTAssertTrue(applications.waitForExistence(timeout: 5))
+        XCTAssertTrue(app.outlines["sidebar"].staticTexts["Locations"].exists)
+
+        applications.click()
+        XCTAssertTrue(waitFor(app.textFields["path.left"], value: "/Applications"))
+
+        app.typeKey("k", modifierFlags: .command)
+        XCTAssertTrue(app.staticTexts["Server Address"].waitForExistence(timeout: 5))
+        let shot = FileManager.default.temporaryDirectory.appendingPathComponent("sidebar.png")
+        try app.windows["Commander"].screenshot().pngRepresentation.write(to: shot)
+        app.typeKey(.escape, modifierFlags: [])
+        XCTAssertTrue(app.staticTexts["Server Address"].waitForNonExistence(timeout: 5))
+    }
+
     func testSpaceMarksAndShowsSelectionBar() throws {
         let app = launch()
         XCTAssertTrue(app.tables["table.left"].staticTexts["alpha.txt"].waitForExistence(timeout: 5))

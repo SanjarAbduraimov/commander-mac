@@ -31,7 +31,7 @@ final class AppKitEffects: WindowEffects {
         case .operations:
             windowController.panes.footer.render()
         case .sidebar:
-            break
+            windowController.sidebar.reload()
         }
     }
 
@@ -57,7 +57,9 @@ final class AppKitEffects: WindowEffects {
     }
 
     func showSettings() {}
-    func showConnectToServer() {}
+    func showConnectToServer() {
+        windowController?.showConnectToServer()
+    }
     func askDestination(default url: URL, kind: OperationKind, count: Int) async -> URL? {
         await prompts.askDestination(default: url, kind: kind, count: count)
     }
