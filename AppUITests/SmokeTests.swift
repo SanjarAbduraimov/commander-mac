@@ -43,6 +43,14 @@ final class SmokeTests: XCTestCase {
         root.appendingPathComponent(relative).resolvingSymlinksInPath().path
     }
 
+    func testLaunchShowsBothPanes() {
+        let app = launch()
+
+        XCTAssertTrue(waitFor(app.textFields["path.left"], value: path("left")))
+        XCTAssertTrue(waitFor(app.textFields["path.right"], value: path("right")))
+        XCTAssertTrue(app.tables["table.left"].staticTexts["alpha.txt"].waitForExistence(timeout: 5))
+    }
+
     func testTabSwitchesActivePane() {
         let app = launch()
         let left = app.groups["pane.left"]
