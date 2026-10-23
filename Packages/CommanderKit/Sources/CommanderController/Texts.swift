@@ -14,6 +14,43 @@ public enum PaneText {
         if !tab.marked.isEmpty { text += " · \(tab.marked.count) marked" }
         return text + " · " + byteText(sized.reduce(0) { $0 + ($1.size ?? 0) })
     }
+
+    public static func selectionSummary(_ tab: TabState, side: PaneSide) -> String? {
+        tab.marked.isEmpty ? nil : "\(tab.marked.count) marked in \(side.rawValue) pane"
+    }
+}
+
+public struct FooterHint: Equatable, Sendable {
+    public let keys: String
+    public let title: String
+
+    public init(keys: String, title: String) {
+        self.keys = keys
+        self.title = title
+    }
+}
+
+public enum FooterHints {
+    public static func items(bindings: KeyBindings, behavior: BehaviorSettings) -> [FooterHint] {
+        func hint(_ command: Command, _ title: String) -> FooterHint? {
+            bindings.chords(for: command).first.map { FooterHint(keys: $0.displayString, title: title) }
+        }
+        let backspace: FooterHint? = switch bindings.command(for: KeyChord("backspace"), in: .table) {
+        case .goUp: FooterHint(keys: "⌫", title: "Parent folder")
+        case .goBack: FooterHint(keys: "⌫", title: "Back")
+        default: nil
+        }
+        return [
+            hint(.toggleMark, behavior.spaceAdvances ? "Mark & next" : "Mark"),
+            hint(.switchPane, "Switch pane"),
+            backspace,
+            hint(.copyToOtherPane, "Copy"),
+            hint(.moveToOtherPane, "Move"),
+            hint(.newFolder, "New folder"),
+            hint(.rename, "Rename"),
+            hint(.moveToTrash, "Trash"),
+        ].compactMap { $0 }
+    }
 }
 
 public enum OperationText {

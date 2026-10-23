@@ -34,6 +34,10 @@ public final class WindowModel {
     private var watches: [PaneSide: Watch] = [:]
     private var pending: [UUID: Task<Void, Never>] = [:]
     private var lastPublishedSession: Session?
+    var pageSizes: [PaneSide: Int] = [:]
+    var typeAheadInput = TypeAhead()
+    /// A name the cursor should land on once the folder's next listing arrives (a file opened by path, a new folder).
+    var pendingCursor: [PaneSide: String] = [:]
 
     public init(
         state: WindowState, settings: AppSettings, session: Session, environment: WindowEnvironment,
@@ -130,6 +134,7 @@ public final class WindowModel {
     /// The active tab now shows a different folder (navigation, tab switch): list it and watch it.
     func locationChanged(_ side: PaneSide) {
         banners[side] = nil
+        pendingCursor[side] = nil
         load(side)
         updateWatch(side)
         changed(side)
@@ -205,6 +210,7 @@ public final class WindowModel {
 
     private func show(_ items: [FileItem], on side: PaneSide) {
         state[side].activeTab.apply(listing: items)
+        if let name = pendingCursor.removeValue(forKey: side) { state[side].activeTab.setCursor(name: name) }
         versions[side, default: 0] += 1
         changed(side)
     }
