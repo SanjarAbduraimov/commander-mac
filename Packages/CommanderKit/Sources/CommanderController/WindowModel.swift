@@ -8,6 +8,7 @@ public final class WindowModel {
     public private(set) var settings: AppSettings
     public private(set) var bindings: KeyBindings
     public let operations: OperationCenter
+    public let sidebar: SidebarModel
     public var onSessionChange: ((Session) -> Void)?
 
     let environment: WindowEnvironment
@@ -51,10 +52,15 @@ public final class WindowModel {
         self.effects = effects
         self.pasteboard = pasteboard
         self.operations = operations
+        sidebar = SidebarModel(favorites: session.favorites, volumes: environment.volumes, executor: environment.listingExecutor)
         bindings = KeyBindings(defaults: KeyBindings.defaults(for: settings.behavior), overrides: settings.shortcutOverrides)
 
         operations.onChange = { [weak self] in self?.effects.stateDidChange(.operations) }
         operations.onFinish = { [weak self] directories in self?.reloadPanes(showingAnyOf: directories) }
+        sidebar.onChange = { [weak self] in
+            self?.effects.stateDidChange(.sidebar)
+            self?.publishSession()
+        }
     }
 
     public func start() {
@@ -62,6 +68,7 @@ public final class WindowModel {
             load(side)
             updateWatch(side)
         }
+        track { await self.sidebar.refreshVolumes() }
     }
 
     public func tab(_ side: PaneSide) -> TabState {
@@ -99,6 +106,7 @@ public final class WindowModel {
         snapshot.left = PaneSession(tabPaths: state.left.tabs.map(\.path), activeTab: state.left.activeTabIndex)
         snapshot.right = PaneSession(tabPaths: state.right.tabs.map(\.path), activeTab: state.right.activeTabIndex)
         snapshot.activeSide = state.activeSide
+        snapshot.favorites = sidebar.favorites
         return snapshot
     }
 

@@ -7,6 +7,15 @@ public struct VolumeInfo: Equatable, Sendable {
     public let availableCapacity: Int64?
     public let isEjectable: Bool
     public let isNetwork: Bool
+
+    public init(name: String, url: URL, totalCapacity: Int64?, availableCapacity: Int64?, isEjectable: Bool, isNetwork: Bool) {
+        self.name = name
+        self.url = url
+        self.totalCapacity = totalCapacity
+        self.availableCapacity = availableCapacity
+        self.isEjectable = isEjectable
+        self.isNetwork = isNetwork
+    }
 }
 
 public enum Volumes {
