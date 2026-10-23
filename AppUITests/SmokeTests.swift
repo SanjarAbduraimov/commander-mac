@@ -64,6 +64,20 @@ final class SmokeTests: XCTestCase {
         XCTAssertTrue(waitFor(pathField, value: path("nested")))
     }
 
+    func testClickActivatesAndDoubleClickOpensFolder() {
+        let app = launch(left: "nested")
+        let folder = app.tables["table.left"].staticTexts["sub"]
+        XCTAssertTrue(folder.waitForExistence(timeout: 5))
+        app.typeKey(.tab, modifierFlags: [])
+        XCTAssertTrue(waitFor(app.groups["pane.right"], value: "active"))
+
+        folder.click()
+        XCTAssertTrue(waitFor(app.groups["pane.left"], value: "active"))
+        folder.doubleClick()
+
+        XCTAssertTrue(waitFor(app.textFields["path.left"], value: path("nested/sub")))
+    }
+
     func testPathFieldEditingDoesNotTouchFiles() {
         let app = launch()
         XCTAssertTrue(app.tables["table.left"].staticTexts["alpha.txt"].waitForExistence(timeout: 5))

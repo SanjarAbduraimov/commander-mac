@@ -79,6 +79,16 @@ final class FileTableController: NSObject, NSTableViewDataSource, NSTableViewDel
         false
     }
 
+    func tableView(_ tableView: NSTableView, didClick tableColumn: NSTableColumn) {
+        let sortColumn: SortColumn? = switch Column(rawValue: tableColumn.identifier.rawValue) {
+        case .name: .name
+        case .size: .size
+        case .modified: .modified
+        case .mark, nil: nil
+        }
+        if let sortColumn { model.sortColumnClicked(side, sortColumn) }
+    }
+
     func configure(_ rowView: NSTableRowView, row: Int) {
         guard let rowView = rowView as? FileRowView, tab.items.indices.contains(row) else { return }
         let name = tab.items[row].name

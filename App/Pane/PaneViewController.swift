@@ -136,12 +136,22 @@ final class PaneViewController: NSViewController, NSTextFieldDelegate {
         } else {
             reloadChangedRows(tab, names: names)
         }
+        showSortIndicator(tab.sort)
         shownNames = names
         shownCursor = tab.cursor
         shownMarked = tab.marked
         shownActive = active
         shownAppearance = appearance
         if let index = tab.cursorIndex { table.scrollRowToVisible(index) }
+    }
+
+    private func showSortIndicator(_ sort: FileSort) {
+        for column in table.tableColumns {
+            let isSorted = column.identifier.rawValue == sort.column.rawValue
+            let image = isSorted ? NSImage(named: sort.ascending ? "NSAscendingSortIndicator" : "NSDescendingSortIndicator") : nil
+            table.setIndicatorImage(image, in: column)
+            if isSorted { table.highlightedTableColumn = column }
+        }
     }
 
     private func reloadChangedRows(_ tab: TabState, names: [String]) {

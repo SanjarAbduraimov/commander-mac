@@ -91,7 +91,7 @@ final class MainMenu: NSObject, NSMenuItemValidation {
 
     /// Plain keys (Space, Tab, ⌫, Return, arrows) get no menu equivalent: a menu would grab them before a
     /// text field could type them. F-keys and chords with a modifier are safe to show and to bind.
-    private static func keyEquivalent(_ chord: KeyChord) -> (key: String, modifiers: NSEvent.ModifierFlags)? {
+    static func keyEquivalent(_ chord: KeyChord) -> (key: String, modifiers: NSEvent.ModifierFlags)? {
         var modifiers: NSEvent.ModifierFlags = []
         if chord.modifiers.contains(.control) { modifiers.insert(.control) }
         if chord.modifiers.contains(.option) { modifiers.insert(.option) }
