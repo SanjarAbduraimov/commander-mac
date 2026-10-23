@@ -29,7 +29,8 @@ Total Commander uslubidagi ikki panelli, klaviatura bilan tez ishlaydigan, yengi
 | Open With ▸, "Always open with", Settings → File associations | 2 |
 | `F4` Edit | 2 |
 | ZIP Compress / Extract, Quick Look (`F3`, Preview), Share ▸ / Telegram, "Open in Commander" (Services, Finder Sync, `NSFileViewer`) | 3 |
-| Get Info, Calculate folder size, Compare (2 fayl) | 3 |
+| Get Info, Compare (2 fayl) | 3 |
+| Calculate folder size | 1C — `docs/superpowers/specs/2026-10-23-phase1c-feedback-design.md` |
 | SFTP / FTP | 4 |
 
 1-bosqichda bu buyruqlar uchun menyu bandi va tugma **ko'rsatilmaydi** (o'chiq holda ham emas).

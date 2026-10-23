@@ -129,7 +129,9 @@ Open · Open With ▸ (ilovalar, Other…, Always open with this app) · Quick L
 - Plan A (CommanderKit) bajarildi va `main` ga merge qilindi (2026-10-22, 122 test, Xcode 26.3). Yakuniy review'dagi Critical/Important topilmalar tuzatildi.
 - Hal qilindi (A): boshqa diskka move'da Cancel — to'liq nusxalangan manbalar o'chiriladi (Finder kabi); spec yangilandi.
 - Plan B (App UI) bajarildi (2026-10-23, `phase1b-app-ui` branch'ida): CommanderController (244 test) + AppKit ilova, 11 XCUITest smoke. SMB ulanish — NetFS orqali (`NSWorkspace.open` mount nuqtasini qaytarmaydi). Cold start ~1,05 s (maqsad 1 s) — alohida optimizatsiya taski.
-- Keyingi: qo'lda tekshiruvlar va merge, so'ng 2-bosqich (fayl operatsiyalari) spec'i.
+- 1C (foydalanuvchi fikrlari) bajarildi (2026-10-24, `phase1c-feedback` branch'ida): Esc — Unmark All, Copy To…/Move To… dialogi (New Folder, Recent/Tabs/Favorites), yashirin fayllar xira, drag & drop manzilini ko'rsatish + spring-loading (qatorlar, "↑ Enclosing folder", breadcrumbs, tablar), On launch papkalari, bitta panel rejimi (`⌘\`), `⇧⌘⌫` butunlay o'chirish, Calculate Size. "Calculate folder size" 3-bosqichdan 1C ga ko'chdi; uning default tugmasi `⌥⇧↩` (`⌥Space` ni Raycast global ushlaydi).
+- Qo'shimcha: ilova ikonkasi va o'rnatiladigan Universal DMG (`scripts/make-dmg.sh`).
+- Keyingi: foydalanuvchi qo'lda sinaydi, 1B+1C `main` ga merge; so'ng 2-bosqich (fayl operatsiyalari) spec'i.
 
 ### Asboblar — **tasdiqlandi**
 - 2026-10-21 holati: Xcode o'rnatilmagan, faqat Command Line Tools (Swift 6.2.1, x86_64), XcodeGen yo'q.
