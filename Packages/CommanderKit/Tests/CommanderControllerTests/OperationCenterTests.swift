@@ -4,7 +4,9 @@ import Foundation
 import Testing
 @testable import CommanderController
 
-@MainActor
+/// Serialized: the cancel tests cancel from a main-actor callback, and a parallel test writing a 200 MB
+/// file on the main actor would delay that hop until the copy has already finished.
+@MainActor @Suite(.serialized)
 struct OperationCenterTests {
     private let bigFileBytes = 200_000_000
 
