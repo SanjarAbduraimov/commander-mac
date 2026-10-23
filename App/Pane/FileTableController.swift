@@ -89,6 +89,42 @@ final class FileTableController: NSObject, NSTableViewDataSource, NSTableViewDel
         if let sortColumn { model.sortColumnClicked(side, sortColumn) }
     }
 
+    // MARK: Drop
+
+    func tableView(_ tableView: NSTableView, validateDrop info: NSDraggingInfo, proposedRow row: Int, proposedDropOperation dropOperation: NSTableView.DropOperation) -> NSDragOperation {
+        let urls = Self.fileURLs(info)
+        var folder = folderName(row: row, dropOperation: dropOperation)
+        if folder == nil { tableView.setDropRow(-1, dropOperation: .on) }
+        if folder != nil, model.dropOperation(urls, on: side, intoFolder: folder, forceCopy: forceCopy(info)) == .none {
+            folder = nil
+            tableView.setDropRow(-1, dropOperation: .on)
+        }
+        switch model.dropOperation(urls, on: side, intoFolder: folder, forceCopy: forceCopy(info)) {
+        case .copy: return .copy
+        case .move: return .move
+        case .none: return []
+        }
+    }
+
+    func tableView(_ tableView: NSTableView, acceptDrop info: NSDraggingInfo, row: Int, dropOperation: NSTableView.DropOperation) -> Bool {
+        model.drop(Self.fileURLs(info), on: side, intoFolder: folderName(row: row, dropOperation: dropOperation), forceCopy: forceCopy(info))
+    }
+
+    private func folderName(row: Int, dropOperation: NSTableView.DropOperation) -> String? {
+        guard dropOperation == .on, tab.items.indices.contains(row), tab.items[row].isNavigable else { return nil }
+        return tab.items[row].name
+    }
+
+    /// ⌥ forces a copy, and so does a source that does not allow moving its files.
+    private func forceCopy(_ info: NSDraggingInfo) -> Bool {
+        NSEvent.modifierFlags.contains(.option) || !info.draggingSourceOperationMask.contains(.move)
+    }
+
+    private static func fileURLs(_ info: NSDraggingInfo) -> [URL] {
+        let options: [NSPasteboard.ReadingOptionKey: Any] = [.urlReadingFileURLsOnly: true]
+        return info.draggingPasteboard.readObjects(forClasses: [NSURL.self], options: options) as? [URL] ?? []
+    }
+
     func configure(_ rowView: NSTableRowView, row: Int) {
         guard let rowView = rowView as? FileRowView, tab.items.indices.contains(row) else { return }
         let name = tab.items[row].name

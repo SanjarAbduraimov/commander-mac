@@ -88,6 +88,18 @@ final class SmokeTests: XCTestCase {
         XCTAssertTrue(FileManager.default.fileExists(atPath: root.appendingPathComponent("right/alpha.txt").path))
     }
 
+    func testDragBetweenPanesMovesOnSameVolume() {
+        let app = launch()
+        let alpha = app.tables["table.left"].staticTexts["alpha.txt"]
+        XCTAssertTrue(alpha.waitForExistence(timeout: 5))
+
+        alpha.press(forDuration: 0.3, thenDragTo: app.tables["table.right"])
+
+        XCTAssertTrue(app.tables["table.right"].staticTexts["alpha.txt"].waitForExistence(timeout: 5))
+        XCTAssertTrue(FileManager.default.fileExists(atPath: root.appendingPathComponent("right/alpha.txt").path))
+        XCTAssertFalse(FileManager.default.fileExists(atPath: root.appendingPathComponent("left/alpha.txt").path))
+    }
+
     func testSpaceMarksAndShowsSelectionBar() throws {
         let app = launch()
         XCTAssertTrue(app.tables["table.left"].staticTexts["alpha.txt"].waitForExistence(timeout: 5))

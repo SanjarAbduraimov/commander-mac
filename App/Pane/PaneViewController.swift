@@ -4,7 +4,7 @@ import CommanderCore
 import os
 
 @MainActor
-final class PaneViewController: NSViewController, NSTextFieldDelegate {
+final class PaneViewController: NSViewController, NSTextFieldDelegate, NSDraggingSource {
     private static let signposter = OSSignposter(subsystem: "local.sanjar.commander", category: .pointsOfInterest)
 
     let model: WindowModel
@@ -76,6 +76,8 @@ final class PaneViewController: NSViewController, NSTextFieldDelegate {
         FileTableController.makeColumns(in: table)
         table.dataSource = tableController
         table.delegate = tableController
+        table.registerForDraggedTypes([.fileURL])
+        table.onBeginDrag = { [weak self] row, event in self?.beginDrag(row: row, event: event) }
 
         scrollView.documentView = table
         scrollView.hasVerticalScroller = true
@@ -194,6 +196,44 @@ final class PaneViewController: NSViewController, NSTextFieldDelegate {
             return true
         default:
             return false
+        }
+    }
+
+    /// Dragging a marked row drags every marked item; any other row is dragged alone.
+    private func beginDrag(row: Int, event: NSEvent) {
+        let tab = model.tab(side)
+        guard tab.items.indices.contains(row) else { return }
+        let dragged = tab.items[row]
+        let items = tab.marked.contains(dragged.name) ? tab.items.filter { tab.marked.contains($0.name) } : [dragged]
+        let rowRect = table.rect(ofRow: row)
+        let draggingItems = items.enumerated().map { index, item in
+            let draggingItem = NSDraggingItem(pasteboardWriter: item.url as NSURL)
+            let frame = NSRect(x: rowRect.minX + 24, y: rowRect.minY + CGFloat(index) * 4, width: 240, height: rowRect.height)
+            draggingItem.imageComponentsProvider = {
+                let icon = NSDraggingImageComponent(key: .icon)
+                icon.contents = IconCache.shared.icon(for: item)
+                icon.frame = NSRect(x: 0, y: 0, width: rowRect.height, height: rowRect.height)
+                let label = NSDraggingImageComponent(key: .label)
+                label.contents = Self.labelImage(item.name)
+                label.frame = NSRect(x: rowRect.height + 4, y: 0, width: 200, height: rowRect.height)
+                return [icon, label]
+            }
+            draggingItem.draggingFrame = frame
+            return draggingItem
+        }
+        table.beginDraggingSession(with: draggingItems, event: event, source: self)
+    }
+
+    func draggingSession(_ session: NSDraggingSession, sourceOperationMaskFor context: NSDraggingContext) -> NSDragOperation {
+        context == .outsideApplication ? [.copy, .move, .link, .generic] : [.copy, .move]
+    }
+
+    private static func labelImage(_ text: String) -> NSImage {
+        let string = NSAttributedString(string: text, attributes: [.font: NSFont.systemFont(ofSize: 13), .foregroundColor: NSColor.labelColor])
+        let size = NSSize(width: min(string.size().width + 4, 200), height: string.size().height)
+        return NSImage(size: size, flipped: false) { _ in
+            string.draw(at: .zero)
+            return true
         }
     }
 

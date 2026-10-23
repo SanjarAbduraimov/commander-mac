@@ -34,7 +34,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             session: bootstrap.session,
             environment: .live(mounter: PlaceholderMounter()),
             effects: effects,
-            pasteboard: PlaceholderPasteboard(),
+            pasteboard: SystemPasteboard(),
             operations: operations
         )
         model.onSessionChange = { persistence.update($0) }
