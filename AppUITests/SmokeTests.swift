@@ -46,8 +46,8 @@ final class SmokeTests: XCTestCase {
     func testLaunchShowsBothPanes() {
         let app = launch()
 
-        XCTAssertTrue(waitFor(app.textFields["path.left"], value: path("left")))
-        XCTAssertTrue(waitFor(app.textFields["path.right"], value: path("right")))
+        XCTAssertTrue(waitFor(app.groups["path.left"], value: path("left")))
+        XCTAssertTrue(waitFor(app.groups["path.right"], value: path("right")))
         XCTAssertTrue(app.tables["table.left"].staticTexts["alpha.txt"].waitForExistence(timeout: 5))
     }
 
@@ -64,7 +64,7 @@ final class SmokeTests: XCTestCase {
 
     func testBackspaceGoesUp() {
         let app = launch(left: "nested/sub")
-        let pathField = app.textFields["path.left"]
+        let pathField = app.groups["path.left"]
         XCTAssertTrue(waitFor(pathField, value: path("nested/sub")))
 
         app.typeKey(.delete, modifierFlags: [])
@@ -83,7 +83,7 @@ final class SmokeTests: XCTestCase {
         XCTAssertTrue(waitFor(app.groups["pane.left"], value: "active"))
         folder.doubleClick()
 
-        XCTAssertTrue(waitFor(app.textFields["path.left"], value: path("nested/sub")))
+        XCTAssertTrue(waitFor(app.groups["path.left"], value: path("nested/sub")))
     }
 
     func testF5CopiesToOtherPane() {
@@ -115,7 +115,7 @@ final class SmokeTests: XCTestCase {
         XCTAssertTrue(app.outlines["sidebar"].staticTexts["Locations"].exists)
 
         applications.click()
-        XCTAssertTrue(waitFor(app.textFields["path.left"], value: "/Applications"))
+        XCTAssertTrue(waitFor(app.groups["path.left"], value: "/Applications"))
 
         app.typeKey("k", modifierFlags: .command)
         XCTAssertTrue(app.staticTexts["Server Address"].waitForExistence(timeout: 5))
@@ -160,7 +160,7 @@ final class SmokeTests: XCTestCase {
         app.typeKey(.delete, modifierFlags: [])
 
         XCTAssertTrue(FileManager.default.fileExists(atPath: root.appendingPathComponent("left/alpha.txt").path))
-        XCTAssertTrue(app.textFields["path.left"].value(forKey: "hasKeyboardFocus") as? Bool ?? false)
+        XCTAssertTrue(app.textFields["pathEdit.left"].value(forKey: "hasKeyboardFocus") as? Bool ?? false)
     }
 
     func testEscapeUnmarks() {
@@ -217,5 +217,37 @@ final class SmokeTests: XCTestCase {
         app.typeKey("\\", modifierFlags: .command)
 
         XCTAssertTrue(right.waitForExistence(timeout: 5))
+    }
+
+    func testBreadcrumbClickGoesToAncestor() {
+        let app = launch(left: "nested/sub")
+        let bar = app.groups["path.left"]
+        XCTAssertTrue(waitFor(bar, value: path("nested/sub")))
+
+        bar.buttons["nested"].click()
+
+        XCTAssertTrue(waitFor(bar, value: path("nested")))
+    }
+
+    func testDragHoverSpringsIntoFolder() throws {
+        try FileManager.default.createDirectory(at: root.appendingPathComponent("right/box"), withIntermediateDirectories: true)
+        let app = launch()
+        let alpha = app.tables["table.left"].staticTexts["alpha.txt"]
+        let box = app.tables["table.right"].staticTexts["box"]
+        XCTAssertTrue(alpha.waitForExistence(timeout: 5) && box.waitForExistence(timeout: 5))
+
+        // Window-relative points: an element's coordinate resolves late, and the "box" row is gone once the hover opens it.
+        let window = app.windows["Commander"]
+        let origin = window.coordinate(withNormalizedOffset: .zero)
+        func point(_ element: XCUIElement) -> XCUICoordinate {
+            origin.withOffset(CGVector(dx: element.frame.midX - window.frame.minX, dy: element.frame.midY - window.frame.minY))
+        }
+        point(alpha).press(forDuration: 0.3, thenDragTo: point(box), withVelocity: .default, thenHoldForDuration: 1.5)
+
+        XCTAssertTrue(waitFor(app.groups["path.right"], value: path("right/box")))
+        let moved = root.appendingPathComponent("right/box/alpha.txt").path
+        let deadline = Date().addingTimeInterval(5)
+        while !FileManager.default.fileExists(atPath: moved), Date() < deadline { RunLoop.current.run(until: Date().addingTimeInterval(0.1)) }
+        XCTAssertTrue(FileManager.default.fileExists(atPath: moved))
     }
 }

@@ -11,6 +11,10 @@ final class FileRowView: NSTableRowView {
         didSet { if isMarked != oldValue { needsDisplay = true } }
     }
 
+    var isDropTarget = false {
+        didSet { if isDropTarget != oldValue { needsDisplay = true } }
+    }
+
     override func drawBackground(in dirtyRect: NSRect) {
         super.drawBackground(in: dirtyRect)
         if isCursor {
@@ -21,6 +25,14 @@ final class FileRowView: NSTableRowView {
         } else if isMarked {
             Palette.markedBackground.setFill()
             bounds.fill()
+        }
+        if isDropTarget {
+            Palette.cursorBackground.setFill()
+            bounds.fill()
+            Palette.accent.setStroke()
+            let ring = NSBezierPath(roundedRect: bounds.insetBy(dx: 1, dy: 1), xRadius: 4, yRadius: 4)
+            ring.lineWidth = 2
+            ring.stroke()
         }
     }
 }

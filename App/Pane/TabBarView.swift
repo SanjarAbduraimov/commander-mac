@@ -1,9 +1,14 @@
 import AppKit
+import CommanderController
 
 final class TabBarView: NSView {
     var onSelect: ((Int) -> Void)?
     var onClose: ((Int) -> Void)?
     var onAdd: (() -> Void)?
+    /// Tabs accept dropped files into their folder and spring-load (switch to that tab) while hovered.
+    weak var model: WindowModel?
+    var dropDestination: ((Int) -> URL?)?
+    var onSpringLoad: (@MainActor @Sendable (Int) -> Void)?
 
     private let stack = NSStackView()
     private var shown: (titles: [String], active: Int)?
@@ -34,8 +39,14 @@ final class TabBarView: NSView {
         stack.arrangedSubviews.forEach { $0.removeFromSuperview() }
 
         for (index, title) in titles.enumerated() {
-            let tab = NSButton(title: title, target: self, action: #selector(selectTab(_:)))
+            let tab = DropButton(frame: .zero)
+            tab.title = title
+            tab.target = self
+            tab.action = #selector(selectTab(_:))
             tab.tag = index
+            tab.model = model
+            tab.destination = { [weak self] in self?.dropDestination?(index) }
+            tab.onSpringLoad = { [weak self] in self?.onSpringLoad?(index) }
             tab.bezelStyle = .recessed
             tab.setButtonType(.pushOnPushOff)
             tab.state = index == active ? .on : .off

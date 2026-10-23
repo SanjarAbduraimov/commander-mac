@@ -14,6 +14,9 @@ final class PaneViewController: NSViewController, NSTextFieldDelegate, NSDraggin
 
     private let tableController: FileTableController
     private lazy var renameEditor = RenameEditor(model: model, side: side, table: table)
+    private lazy var breadcrumbs = BreadcrumbBar(model: model, side: side)
+    private let parentStrip = ParentDropStrip(frame: .zero)
+    private var parentStripHide: Task<Void, Never>?
     private let tabBar = TabBarView()
     private let statusLabel = NSTextField(labelWithString: "")
     private let activeLine = NSBox()
@@ -56,13 +59,26 @@ final class PaneViewController: NSViewController, NSTextFieldDelegate, NSDraggin
             model.activate(side)
             model.perform(.newTab)
         }
+        tabBar.model = model
+        tabBar.dropDestination = { [model, side] in model.tabPath(side, at: $0) }
+        tabBar.onSpringLoad = { [model, side] in model.springLoadTab(side, at: $0) }
+
+        breadcrumbs.onEdit = { [weak self] in self?.focusPathField() }
+        parentStrip.model = model
+        parentStrip.destination = { [model, side] in
+            let path = model.tab(side).path
+            return path.path == "/" ? nil : path.deletingLastPathComponent()
+        }
+        parentStrip.onSpringLoad = { [model, side] in model.springLoadParent(side) }
+        parentStrip.onDragHover = { [weak self] in self?.dragHover($0) }
 
         pathField.font = .monospacedSystemFont(ofSize: 11, weight: .regular)
         pathField.isBordered = false
         pathField.drawsBackground = false
         pathField.lineBreakMode = .byTruncatingHead
-        pathField.setAccessibilityIdentifier("path.\(side.rawValue)")
+        pathField.setAccessibilityIdentifier("pathEdit.\(side.rawValue)")
         pathField.delegate = self
+        pathField.isHidden = true
 
         table.side = side
         table.model = model
@@ -79,6 +95,9 @@ final class PaneViewController: NSViewController, NSTextFieldDelegate, NSDraggin
         table.delegate = tableController
         table.registerForDraggedTypes([.fileURL])
         table.onBeginDrag = { [weak self] row, event in self?.beginDrag(row: row, event: event) }
+        table.onDragExit = { [weak self] in self?.tableController.endDrag() }
+        table.draggingDestinationFeedbackStyle = .none
+        tableController.onDropHighlight = { [weak self] in self?.showDropHighlight($0) }
 
         scrollView.documentView = table
         scrollView.hasVerticalScroller = true
@@ -90,6 +109,14 @@ final class PaneViewController: NSViewController, NSTextFieldDelegate, NSDraggin
         statusLabel.setAccessibilityIdentifier("status.\(side.rawValue)")
 
         let pathRow = padded(pathField, height: 24)
+        breadcrumbs.translatesAutoresizingMaskIntoConstraints = false
+        pathRow.addSubview(breadcrumbs)
+        NSLayoutConstraint.activate([
+            breadcrumbs.leadingAnchor.constraint(equalTo: pathRow.leadingAnchor, constant: 6),
+            breadcrumbs.trailingAnchor.constraint(equalTo: pathRow.trailingAnchor, constant: -6),
+            breadcrumbs.topAnchor.constraint(equalTo: pathRow.topAnchor),
+            breadcrumbs.bottomAnchor.constraint(equalTo: pathRow.bottomAnchor),
+        ])
         let statusRow = padded(statusLabel, height: 27)
         let stack = NSStackView(views: [activeLine, tabBar, pathRow, banner, scrollView, statusRow])
         stack.orientation = .vertical
@@ -103,6 +130,16 @@ final class PaneViewController: NSViewController, NSTextFieldDelegate, NSDraggin
             stack.topAnchor.constraint(equalTo: root.topAnchor),
             stack.bottomAnchor.constraint(equalTo: root.bottomAnchor),
             activeLine.heightAnchor.constraint(equalToConstant: 2),
+        ])
+
+        // Over the column header, so showing it mid-drag doesn't shift the rows under the cursor.
+        parentStrip.translatesAutoresizingMaskIntoConstraints = false
+        root.addSubview(parentStrip)
+        NSLayoutConstraint.activate([
+            parentStrip.leadingAnchor.constraint(equalTo: scrollView.leadingAnchor),
+            parentStrip.trailingAnchor.constraint(equalTo: scrollView.trailingAnchor),
+            parentStrip.topAnchor.constraint(equalTo: scrollView.topAnchor),
+            parentStrip.heightAnchor.constraint(equalToConstant: 28),
         ])
 
         // Clicking anywhere in the pane makes it active; the recognizer must not swallow the click.
@@ -123,6 +160,7 @@ final class PaneViewController: NSViewController, NSTextFieldDelegate, NSDraggin
         let pane = side == .left ? model.state.left : model.state.right
         tabBar.update(titles: pane.tabs.map { Self.title(for: $0.path) }, active: pane.activeTabIndex)
         if pathField.currentEditor() == nil { pathField.stringValue = tab.path.path }
+        breadcrumbs.show(tab.path)
         let folderSizes = model.folderSizes(side)
         statusLabel.stringValue = PaneText.status(tab, folderSizes: folderSizes)
         banner.show(model.banner(side))
@@ -179,8 +217,45 @@ final class PaneViewController: NSViewController, NSTextFieldDelegate, NSDraggin
     }
 
     func focusPathField() {
+        breadcrumbs.isHidden = true
+        pathField.isHidden = false
         view.window?.makeFirstResponder(pathField)
         pathField.selectText(nil)
+    }
+
+    func controlTextDidEndEditing(_ notification: Notification) {
+        guard notification.object as? NSTextField === pathField else { return }
+        // `selectText` ends and restarts editing; only a real end (no editor left) brings the breadcrumbs back.
+        DispatchQueue.main.async { [weak self] in
+            guard let self, self.pathField.currentEditor() == nil else { return }
+            self.pathField.isHidden = true
+            self.breadcrumbs.isHidden = false
+        }
+    }
+
+    private func showDropHighlight(_ highlight: FileTableController.DropHighlight) {
+        scrollView.wantsLayer = true
+        scrollView.layer?.borderColor = Palette.accent.cgColor
+        scrollView.layer?.borderWidth = highlight == .table ? 2 : 0
+        for row in 0..<table.numberOfRows {
+            if let rowView = table.rowView(atRow: row, makeIfNecessary: false) { tableController.configure(rowView, row: row) }
+        }
+        dragHover(highlight != .none)
+    }
+
+    /// The strip shows while a drag is over the table or the strip; hiding waits a moment so moving from one
+    /// to the other doesn't make it vanish under the cursor.
+    private func dragHover(_ inside: Bool) {
+        parentStripHide?.cancel()
+        if inside {
+            parentStrip.isHidden = model.tab(side).path.path == "/"
+        } else {
+            parentStripHide = Task { [weak self] in
+                try? await Task.sleep(for: .milliseconds(250))
+                guard !Task.isCancelled else { return }
+                self?.parentStrip.isHidden = true
+            }
+        }
     }
 
     func focusTable() {

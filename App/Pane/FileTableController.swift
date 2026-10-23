@@ -11,8 +11,18 @@ final class FileTableController: NSObject, NSTableViewDataSource, NSTableViewDel
     private static let dateStyle = Date.FormatStyle(date: .numeric, time: .shortened)
     private static let markImage = NSImage(systemSymbolName: "checkmark.circle.fill", accessibilityDescription: "Marked")
 
+    enum DropHighlight: Equatable {
+        case none, table, row(String)
+    }
+
+    var onDropHighlight: ((DropHighlight) -> Void)?
+    private(set) var dropHighlight = DropHighlight.none {
+        didSet { if dropHighlight != oldValue { onDropHighlight?(dropHighlight) } }
+    }
+
     private let model: WindowModel
     private let side: PaneSide
+    private let springLoader = SpringLoader()
 
     init(model: WindowModel, side: PaneSide) {
         self.model = model
@@ -96,23 +106,32 @@ final class FileTableController: NSObject, NSTableViewDataSource, NSTableViewDel
 
     // MARK: Drop
 
+    /// A folder row that can take the drop is highlighted and spring-loads; anywhere else the whole table is the target.
     func tableView(_ tableView: NSTableView, validateDrop info: NSDraggingInfo, proposedRow row: Int, proposedDropOperation dropOperation: NSTableView.DropOperation) -> NSDragOperation {
-        let urls = Self.fileURLs(info)
+        let urls = DragFiles.urls(info)
+        let forceCopy = DragFiles.forceCopy(info)
         var folder = folderName(row: row, dropOperation: dropOperation)
-        if folder == nil { tableView.setDropRow(-1, dropOperation: .on) }
-        if folder != nil, model.dropOperation(urls, on: side, intoFolder: folder, forceCopy: forceCopy(info)) == .none {
-            folder = nil
+        if folder != nil, model.dropOperation(urls, on: side, intoFolder: folder, forceCopy: forceCopy) == .none { folder = nil }
+        if let folder {
+            dropHighlight = .row(folder)
+            springLoader.hover(folder) { [model, side] in model.springLoad(side, into: folder) }
+        } else {
             tableView.setDropRow(-1, dropOperation: .on)
+            dropHighlight = .table
+            springLoader.cancel()
         }
-        switch model.dropOperation(urls, on: side, intoFolder: folder, forceCopy: forceCopy(info)) {
-        case .copy: return .copy
-        case .move: return .move
-        case .none: return []
-        }
+        return DragFiles.dragOperation(model.dropOperation(urls, on: side, intoFolder: folder, forceCopy: forceCopy))
     }
 
     func tableView(_ tableView: NSTableView, acceptDrop info: NSDraggingInfo, row: Int, dropOperation: NSTableView.DropOperation) -> Bool {
-        model.drop(Self.fileURLs(info), on: side, intoFolder: folderName(row: row, dropOperation: dropOperation), forceCopy: forceCopy(info))
+        let folder: String? = if case let .row(name) = dropHighlight { name } else { nil }
+        endDrag()
+        return model.drop(DragFiles.urls(info), on: side, intoFolder: folder, forceCopy: DragFiles.forceCopy(info))
+    }
+
+    func endDrag() {
+        dropHighlight = .none
+        springLoader.cancel()
     }
 
     private func folderName(row: Int, dropOperation: NSTableView.DropOperation) -> String? {
@@ -120,21 +139,12 @@ final class FileTableController: NSObject, NSTableViewDataSource, NSTableViewDel
         return tab.items[row].name
     }
 
-    /// ⌥ forces a copy, and so does a source that does not allow moving its files.
-    private func forceCopy(_ info: NSDraggingInfo) -> Bool {
-        NSEvent.modifierFlags.contains(.option) || !info.draggingSourceOperationMask.contains(.move)
-    }
-
-    private static func fileURLs(_ info: NSDraggingInfo) -> [URL] {
-        let options: [NSPasteboard.ReadingOptionKey: Any] = [.urlReadingFileURLsOnly: true]
-        return info.draggingPasteboard.readObjects(forClasses: [NSURL.self], options: options) as? [URL] ?? []
-    }
-
     func configure(_ rowView: NSTableRowView, row: Int) {
         guard let rowView = rowView as? FileRowView, tab.items.indices.contains(row) else { return }
         let name = tab.items[row].name
         rowView.isMarked = tab.marked.contains(name)
         rowView.isCursor = model.state.activeSide == side && tab.cursor == name
+        rowView.isDropTarget = dropHighlight == .row(name)
     }
 
     private func cellView(in tableView: NSTableView, column: Column) -> NSTableCellView {

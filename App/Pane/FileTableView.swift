@@ -7,6 +7,8 @@ final class FileTableView: NSTableView {
     weak var model: WindowModel?
     /// Called once a press on a row has moved far enough to be a drag (Task 15 starts the drag session).
     var onBeginDrag: ((_ row: Int, _ event: NSEvent) -> Void)?
+    /// A drag left the table or ended (dropped, or cancelled with Esc).
+    var onDragExit: (() -> Void)?
 
     private var pendingRename: Task<Void, Never>?
 
@@ -52,6 +54,16 @@ final class FileTableView: NSTableView {
             scheduleRename(of: name)
         }
         trackDrag(from: event, row: row)
+    }
+
+    override func draggingExited(_ sender: NSDraggingInfo?) {
+        super.draggingExited(sender)
+        onDragExit?()
+    }
+
+    override func draggingEnded(_ sender: NSDraggingInfo) {
+        super.draggingEnded(sender)
+        onDragExit?()
     }
 
     override func scrollWheel(with event: NSEvent) {
