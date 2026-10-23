@@ -4,12 +4,13 @@ Total Commander uslubidagi ikki panelli, klaviatura bilan tez ishlaydigan, yengi
 
 ## Joriy holat
 
-**1-bosqich (yadro): A qismi — CommanderKit (Core + FileSystem) tayyor, B qismi — App UI hali yo'q.**
+**1-bosqich (yadro): A (CommanderKit) va B (App UI) kodi tayyor — B `phase1b-app-ui` branch'ida, qo'lda tekshiruv va `main` ga merge kutilmoqda.**
 
 - Asosiy manba — spec: `docs/superpowers/specs/2026-10-21-phase1-core-design.md`. Brainstorm tarixi va ochiq savollar: `docs/brainstorm/2026-10-21-commander-decisions.md` — har sessiya boshida o'qing.
-- Bajarilgan plan: `docs/superpowers/plans/2026-10-21-phase1a-commanderkit.md` (`Packages/CommanderKit`, 122 test).
+- Bajarilgan plan'lar: `docs/superpowers/plans/2026-10-21-phase1a-commanderkit.md` (Core + FileSystem) va `docs/superpowers/plans/2026-10-22-phase1b-app-ui.md` (CommanderController + `App/`). Testlar: `swift test` — 244, XCUITest smoke — 11.
 - Interaktiv dizayn maketi: `docs/design/prototype/index.html`. Tanlangan layout — **A · Native balance**.
-- Keyingi qadam: 1-bosqich B plan'i (App UI: XcodeGen, AppKit oyna va panellar, Settings). Unda operatsiyalarni alohida executor'da ishga tushirish shart (CommanderKit review'idagi I5).
+- O'lchovlar (2026-10-23, MacBook Pro Intel, Release, `sudo purge`siz): bo'sh holatda RAM 63 MB (maqsad ≤100 ✅); 5 000 faylli papkani o'qish — benchmark ≤100 ms ✅; ishga tushish xctrace App Launch bo'yicha `applicationDidFinishLaunching` oxirigacha ~1,04–1,08 s (3 o'lchov, birinchisi 1,53 s) — maqsad ≤1 s dan biroz oshadi, ~0,5 s `applicationDidFinishLaunching` ichida (asosan AppKit oyna qurilishi, sidebar ikonkalari). Optimizatsiya alohida task.
+- Keyingi qadam: qo'lda tekshiruvlar (plan'dagi Task 11–17 "Qo'lda tekshirish" bandlari), so'ng merge; keyin 2-bosqich spec'i.
 
 ## Ish tartibi
 

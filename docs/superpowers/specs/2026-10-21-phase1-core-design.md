@@ -1,6 +1,6 @@
 # Commander for Mac — 1-bosqich (yadro) dizayni
 
-Sana: 2026-10-21. Holat: **tasdiqlandi** (2026-10-21). Implementation plan: `docs/superpowers/plans/2026-10-21-phase1a-commanderkit.md` (A — CommanderKit); B — App UI plan'i keyin yoziladi.
+Sana: 2026-10-21. Holat: **tasdiqlandi** (2026-10-21). Implementation plan'lar: `docs/superpowers/plans/2026-10-21-phase1a-commanderkit.md` (A — CommanderKit) va `docs/superpowers/plans/2026-10-22-phase1b-app-ui.md` (B — App UI).
 Manba: `docs/brainstorm/2026-10-21-commander-decisions.md` (bu spec tasdiqlangach asosiy manba shu fayl bo'ladi).
 Dizayn maketi: `docs/design/prototype/index.html`, layout **A · Native balance**.
 
@@ -130,7 +130,7 @@ Barcha tugmalar Settings → Shortcuts'da qayta tayinlanadi. Quyidagilar fokus *
 - Kursor va belgilangan qatorlar vizual jihatdan turlicha (maketdagidek).
 
 ### SMB
-- `⌘K` → `smb://server/share` kiritiladi → `NSWorkspace` orqali macOS mount qiladi (login oynasi macOS'niki) → `/Volumes/<share>` sidebar'da paydo bo'ladi va faol panelda ochiladi.
+- `⌘K` → `smb://server/share` kiritiladi → NetFS (`NetFSMountURLAsync`) orqali macOS mount qiladi (login oynasi macOS'niki) → `/Volumes/<share>` sidebar'da paydo bo'ladi va faol panelda ochiladi.
 - Oxirgi 10 ta manzil `⌘K` oynasida eslab qolinadi.
 
 ## 8. Fayl tizimi
