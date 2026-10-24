@@ -296,33 +296,78 @@ final class PaneViewController: NSViewController, NSTextFieldDelegate, NSDraggin
         let dragged = tab.items[row]
         let items = tab.marked.contains(dragged.name) ? tab.items.filter { tab.marked.contains($0.name) } : [dragged]
         let rowRect = table.rect(ofRow: row)
-        let draggingItems = items.enumerated().map { index, item in
+        let image = Self.dragImage(icon: IconCache.shared.icon(for: dragged), name: dragged.name, count: items.count)
+        let frame = NSRect(x: rowRect.minX + 4, y: rowRect.midY - image.size.height / 2, width: image.size.width, height: image.size.height)
+        // One composed image on the grabbed row; the other items stay invisible so they don't pile up as overlapping copies.
+        let draggingItems = items.map { item in
             let draggingItem = NSDraggingItem(pasteboardWriter: item.url as NSURL)
-            let frame = NSRect(x: rowRect.minX + 24, y: rowRect.minY + CGFloat(index) * 4, width: 240, height: rowRect.height)
-            draggingItem.imageComponentsProvider = {
-                let icon = NSDraggingImageComponent(key: .icon)
-                icon.contents = IconCache.shared.icon(for: item)
-                icon.frame = NSRect(x: 0, y: 0, width: rowRect.height, height: rowRect.height)
-                let label = NSDraggingImageComponent(key: .label)
-                label.contents = Self.labelImage(item.name)
-                label.frame = NSRect(x: rowRect.height + 4, y: 0, width: 200, height: rowRect.height)
-                return [icon, label]
-            }
             draggingItem.draggingFrame = frame
+            if item.name == dragged.name {
+                draggingItem.imageComponentsProvider = {
+                    let component = NSDraggingImageComponent(key: .icon)
+                    component.contents = image
+                    component.frame = NSRect(origin: .zero, size: image.size)
+                    return [component]
+                }
+            } else {
+                draggingItem.imageComponentsProvider = { [] }
+            }
             return draggingItem
         }
-        table.beginDraggingSession(with: draggingItems, event: event, source: self)
+        let session = table.beginDraggingSession(with: draggingItems, event: event, source: self)
+        session.draggingFormation = .none
+        session.animatesToStartingPositionsOnCancelOrFail = true
     }
 
     func draggingSession(_ session: NSDraggingSession, sourceOperationMaskFor context: NSDraggingContext) -> NSDragOperation {
         context == .outsideApplication ? [.copy, .move, .link, .generic] : [.copy, .move]
     }
 
-    private static func labelImage(_ text: String) -> NSImage {
-        let string = NSAttributedString(string: text, attributes: [.font: NSFont.systemFont(ofSize: 13), .foregroundColor: NSColor.labelColor])
-        let size = NSSize(width: min(string.size().width + 4, 200), height: string.size().height)
+    /// Icon (stacked when several items), the grabbed item's name on a rounded plate, and a Finder-style count badge.
+    private static func dragImage(icon: NSImage, name: String, count: Int) -> NSImage {
+        let iconSide: CGFloat = 32
+        let stackOffset: CGFloat = count > 1 ? 4 : 0
+        let badgeHeight: CGFloat = 18
+        let inset = badgeHeight / 2
+
+        let paragraph = NSMutableParagraphStyle()
+        paragraph.lineBreakMode = .byTruncatingMiddle
+        let label = NSAttributedString(string: name, attributes: [
+            .font: NSFont.systemFont(ofSize: 12, weight: .medium),
+            .foregroundColor: NSColor.white,
+            .paragraphStyle: paragraph,
+        ])
+        let labelWidth = min(ceil(label.size().width), 220)
+        let labelHeight = ceil(label.size().height)
+        let plate = NSSize(width: labelWidth + 12, height: labelHeight + 4)
+
+        let badge = NSAttributedString(string: "\(count)", attributes: [
+            .font: NSFont.systemFont(ofSize: 11, weight: .bold),
+            .foregroundColor: NSColor.white,
+        ])
+        let badgeWidth = max(badgeHeight, ceil(badge.size().width) + 10)
+
+        let iconBlock = iconSide + stackOffset
+        let size = NSSize(width: iconBlock + 6 + plate.width + inset, height: max(iconBlock, plate.height) + inset)
         return NSImage(size: size, flipped: false) { _ in
-            string.draw(at: .zero)
+            let iconOrigin = NSPoint(x: 0, y: (size.height - inset - iconBlock) / 2)
+            if count > 1 {
+                icon.draw(in: NSRect(x: iconOrigin.x + stackOffset, y: iconOrigin.y + stackOffset, width: iconSide, height: iconSide), from: .zero, operation: .sourceOver, fraction: 0.5)
+            }
+            icon.draw(in: NSRect(x: iconOrigin.x, y: iconOrigin.y, width: iconSide, height: iconSide))
+
+            let plateRect = NSRect(x: iconBlock + 6, y: (size.height - inset - plate.height) / 2, width: plate.width, height: plate.height)
+            NSColor.controlAccentColor.withAlphaComponent(0.9).setFill()
+            NSBezierPath(roundedRect: plateRect, xRadius: plate.height / 2, yRadius: plate.height / 2).fill()
+            label.draw(with: NSRect(x: plateRect.minX + 6, y: plateRect.minY + 2, width: labelWidth, height: labelHeight), options: [.usesLineFragmentOrigin, .truncatesLastVisibleLine])
+
+            if count > 1 {
+                let badgeRect = NSRect(x: iconBlock - badgeWidth / 2, y: size.height - badgeHeight, width: badgeWidth, height: badgeHeight)
+                NSColor.systemRed.setFill()
+                NSBezierPath(roundedRect: badgeRect, xRadius: badgeHeight / 2, yRadius: badgeHeight / 2).fill()
+                let textSize = badge.size()
+                badge.draw(at: NSPoint(x: badgeRect.midX - textSize.width / 2, y: badgeRect.midY - textSize.height / 2))
+            }
             return true
         }
     }
