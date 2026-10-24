@@ -43,8 +43,8 @@ public final class WindowModel {
     var pendingCursor: [PaneSide: String] = [:]
     var folderSizesBySide: [PaneSide: [String: Int64]] = [:]
     var sizeRun: SizeRun?
-    /// Standardized paths of the items on the clipboard from ⌘X, shown as cut until pasted or replaced.
-    var cutPaths: Set<String> = []
+    /// Names of the items on the clipboard from ⌘X, by standardized folder path; shown as cut until pasted or replaced.
+    var cutNamesByFolder: [String: Set<String>] = [:]
 
     public init(
         state: WindowState, settings: AppSettings, session: Session, environment: WindowEnvironment,

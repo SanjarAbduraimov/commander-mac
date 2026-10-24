@@ -77,4 +77,14 @@ struct CutTests {
         #expect(model.isCut(item(model, .right, "b.txt")))
         #expect(harness.effects.changes.contains(.pane(.right)))
     }
+
+    @Test func cutNamesAreGroupedByFolder() async {
+        let model = await startedHarness().model
+        model.mutateTab(.left) { $0.toggleMark(name: "b.txt"); $0.toggleMark(name: "c.txt") }
+
+        model.perform(.cutToClipboard)
+
+        #expect(model.cutNames(in: root) == ["b.txt", "c.txt"])
+        #expect(model.cutNames(in: root.appendingPathComponent("a")).isEmpty)
+    }
 }

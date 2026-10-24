@@ -29,6 +29,7 @@ final class FileTableController: NSObject, NSTableViewDataSource, NSTableViewDel
     private var shownColumns: [ColumnSetting] = []
     /// Set while columns are rebuilt from settings, so AppKit's resize/move callbacks don't write back.
     private var isApplyingColumns = false
+    private var pendingColumnStore: Task<Void, Never>?
 
     init(model: WindowModel, side: PaneSide) {
         self.model = model
@@ -134,7 +135,13 @@ final class FileTableController: NSObject, NSTableViewDataSource, NSTableViewDel
             return ColumnSetting(id: id, width: Double(column.width.rounded()))
         }
         shownColumns = columns
-        model.setColumns(columns)
+        // A resize drag reports every mouse move; settings (both panes, menus, disk) update once it settles.
+        pendingColumnStore?.cancel()
+        pendingColumnStore = Task { [weak self] in
+            try? await Task.sleep(for: .milliseconds(250))
+            guard !Task.isCancelled, let self else { return }
+            self.model.setColumns(columns)
+        }
     }
 
     func numberOfRows(in tableView: NSTableView) -> Int {

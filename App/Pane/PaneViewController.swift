@@ -177,7 +177,7 @@ final class PaneViewController: NSViewController, NSTextFieldDelegate, NSDraggin
 
         let names = tab.items.map(\.name)
         let appearance = model.settings.appearance
-        let cut = Set(tab.items.filter(model.isCut).map(\.name))
+        let cut = model.cutNames(in: tab.path)
         tableController.applyColumns(to: table)
         if names != shownNames || active != shownActive || appearance != shownAppearance {
             let interval = Self.signposter.beginInterval("Render")

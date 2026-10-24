@@ -15,7 +15,11 @@ final class CopyToState: ObservableObject {
     /// Folders in the browser: the ones inside the typed folder, or those matching the typed name.
     @Published private(set) var folders: [String] = []
     @Published var selection: Int?
+    /// The text `folders` was listed for; until a new listing arrives, keys must not act on the old list.
+    private var foldersText: String?
     private var foldersTask: Task<Void, Never>?
+    /// Set by the path field: clicks in the lists hand keyboard focus back to it.
+    var focusField: (() -> Void)?
 
     let request: DestinationRequest
     private let model: WindowModel
@@ -37,18 +41,26 @@ final class CopyToState: ObservableObject {
             let found = await model.folderSuggestions(for: typed, limit: nil)
             guard let self, !Task.isCancelled, self.text == typed else { return }
             self.folders = found
+            self.foldersText = typed
         }
     }
 
+    private var foldersAreCurrent: Bool { foldersText == text }
+
+    func select(_ index: Int) {
+        selection = index
+        focusField?()
+    }
+
     func moveSelection(by step: Int) {
-        guard !folders.isEmpty else { return }
+        guard foldersAreCurrent, !folders.isEmpty else { return }
         let next = selection.map { $0 + step } ?? (step > 0 ? 0 : folders.count - 1)
         selection = min(max(next, 0), folders.count - 1)
     }
 
     /// Returns false when nothing is selected, so Return falls through to Copy / Move.
     func enterSelection() -> Bool {
-        guard let selection, folders.indices.contains(selection) else { return false }
+        guard foldersAreCurrent, let selection, folders.indices.contains(selection) else { return false }
         enter(folders[selection])
         return true
     }
@@ -134,7 +146,8 @@ struct CopyToView: View {
                     .background(RoundedRectangle(cornerRadius: 4).fill(index == state.selection ? Color.accentColor.opacity(0.3) : .clear))
                     .contentShape(Rectangle())
                     .onTapGesture(count: 2) { state.enter(folder) }
-                    .onTapGesture { state.selection = index }
+                    // Simultaneous, so a single click selects at once instead of waiting out the double-click time.
+                    .simultaneousGesture(TapGesture().onEnded { state.select(index) })
                     .id(folder)
                 }
             }
@@ -188,7 +201,13 @@ private struct PathTextField: NSViewRepresentable {
         field.cell?.isScrollable = true
         field.delegate = context.coordinator
         field.setAccessibilityIdentifier("copyTo.path")
-        DispatchQueue.main.async { field.window?.makeFirstResponder(field) }
+        let focus = { [weak field] in
+            guard let field else { return }
+            if field.currentEditor() == nil { field.window?.makeFirstResponder(field) }
+            field.currentEditor()?.selectedRange = NSRange(location: (field.stringValue as NSString).length, length: 0)
+        }
+        state.focusField = focus
+        DispatchQueue.main.async(execute: focus)
         return field
     }
 
