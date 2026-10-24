@@ -35,14 +35,40 @@ public struct BehaviorSettings: Codable, Equatable, Sendable {
     }
 }
 
+/// Table columns besides Name, which is always shown first.
+public enum ColumnID: String, Codable, CaseIterable, Sendable {
+    case ext, size, modified, created, kind
+}
+
+public struct ColumnSetting: Codable, Equatable, Sendable {
+    public var id: ColumnID
+    public var width: Double
+
+    public init(id: ColumnID, width: Double) {
+        self.id = id
+        self.width = width
+    }
+}
+
 public struct AppearanceSettings: Codable, Equatable, Sendable {
+    public static let defaultColumnWidths: [ColumnID: Double] = [.ext: 60, .size: 72, .modified: 135, .created: 135, .kind: 120]
+
     public var theme: Theme = .system
     public var fontName: String? = nil
     public var fontSize: Double = 13
     public var iconSize: Double = 16
     public var rowHeight: Double = 22
+    public var columns: [ColumnSetting] = [.ext, .size, .modified].map {
+        ColumnSetting(id: $0, width: AppearanceSettings.defaultColumnWidths[$0]!)
+    }
 
     public init() {}
+
+    /// Read entry by entry: unknown or repeated columns (and "name", which is not configurable) are dropped.
+    private struct StoredColumn: Decodable {
+        let id: String
+        let width: Double?
+    }
 
     public init(from decoder: Decoder) throws {
         let c = try decoder.container(keyedBy: CodingKeys.self)
@@ -52,6 +78,13 @@ public struct AppearanceSettings: Codable, Equatable, Sendable {
         fontSize = c.value(.fontSize, default: d.fontSize)
         iconSize = c.value(.iconSize, default: d.iconSize)
         rowHeight = c.value(.rowHeight, default: d.rowHeight)
+        if let stored = c.value(.columns, default: [StoredColumn]?.none) {
+            var seen = Set<ColumnID>()
+            columns = stored.compactMap { entry in
+                guard let id = ColumnID(rawValue: entry.id), seen.insert(id).inserted else { return nil }
+                return ColumnSetting(id: id, width: entry.width ?? Self.defaultColumnWidths[id]!)
+            }
+        }
     }
 }
 

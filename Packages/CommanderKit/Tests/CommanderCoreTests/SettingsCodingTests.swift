@@ -98,4 +98,18 @@ struct SettingsCodingTests {
         let decoded = try JSONDecoder().decode(BehaviorSettings.self, from: JSONEncoder().encode(behavior))
         #expect(decoded == behavior)
     }
+
+    @Test func columnsDefaultAndRoundTrip() throws {
+        let settings = AppSettings()
+        #expect(settings.appearance.columns.map(\.id) == [.ext, .size, .modified])
+        #expect(settings.appearance.columns.map(\.width) == [60, 72, 135])
+        let decoded = try JSONDecoder().decode(AppSettings.self, from: JSONEncoder().encode(settings))
+        #expect(decoded == settings)
+    }
+
+    @Test func columnsDecodeLeniently() throws {
+        let json = #"{"appearance":{"columns":[{"id":"name","width":10},{"id":"kind","width":90},{"id":"kind","width":5},{"id":"bogus","width":1},{"id":"size"}]}}"#
+        let settings = try decode(AppSettings.self, json)
+        #expect(settings.appearance.columns == [ColumnSetting(id: .kind, width: 90), ColumnSetting(id: .size, width: 72)])
+    }
 }

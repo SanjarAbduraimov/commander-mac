@@ -87,3 +87,25 @@ public enum FailureText {
         }
     }
 }
+
+extension ColumnID {
+    public var title: String {
+        switch self {
+        case .ext: "Ext"
+        case .size: "Size"
+        case .modified: "Modified"
+        case .created: "Created"
+        case .kind: "Kind"
+        }
+    }
+
+    public var sortColumn: SortColumn {
+        switch self {
+        case .ext: .ext
+        case .size: .size
+        case .modified: .modified
+        case .created: .created
+        case .kind: .kind
+        }
+    }
+}
