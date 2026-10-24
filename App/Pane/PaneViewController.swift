@@ -26,6 +26,7 @@ final class PaneViewController: NSViewController, NSTextFieldDelegate, NSDraggin
     /// What the table currently shows, to reload only the rows a change touched.
     private var shownNames: [String] = []
     private var shownCursor: String?
+    private var shownPath: URL?
     private var shownMarked: Set<String> = []
     private var shownActive = false
     private var shownAppearance: AppearanceSettings?
@@ -194,12 +195,15 @@ final class PaneViewController: NSViewController, NSTextFieldDelegate, NSDraggin
         shownFolderSizes = folderSizes
         shownCut = cut
         showSortIndicator(tab.sort)
+        // Background refreshes (watcher, folder sizes) must not yank a wheel-scrolled view back to the cursor.
+        let followCursor = tab.cursor != shownCursor || tab.path != shownPath
         shownNames = names
         shownCursor = tab.cursor
         shownMarked = tab.marked
         shownActive = active
         shownAppearance = appearance
-        if let index = tab.cursorIndex { table.scrollRowToVisible(index) }
+        shownPath = tab.path
+        if followCursor, let index = tab.cursorIndex { table.scrollRowToVisible(index) }
     }
 
     private func showSortIndicator(_ sort: FileSort) {
