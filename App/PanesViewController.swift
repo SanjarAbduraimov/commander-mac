@@ -57,19 +57,21 @@ final class PanesViewController: NSViewController, NSSplitViewDelegate {
         let single = model.isSinglePane
         guard single != shownSinglePane else { return }
         shownSinglePane = single
-        right.view.isHidden = single
+        // Taking the pane out of the split view removes its divider too; a hidden subview kept it drawn.
+        if single {
+            split.removeArrangedSubview(right.view)
+            right.view.removeFromSuperview()
+        } else if right.view.superview == nil {
+            split.addArrangedSubview(right.view)
+        }
         split.adjustSubviews()
         split.layoutSubtreeIfNeeded()
         if !single { split.setPosition((split.bounds.width / 2).rounded(), ofDividerAt: 0) }
     }
 
-    func splitView(_ splitView: NSSplitView, shouldHideDividerAt dividerIndex: Int) -> Bool {
-        model.isSinglePane
-    }
-
     /// Window resizes grow both panes alike instead of only the first one.
     func splitView(_ splitView: NSSplitView, resizeSubviewsWithOldSize oldSize: NSSize) {
-        guard !model.isSinglePane else { return splitView.adjustSubviews() }
+        guard splitView.arrangedSubviews.count > 1 else { return splitView.adjustSubviews() }
         let ratio = oldSize.width > 0 ? left.view.frame.width / oldSize.width : 0.5
         splitView.adjustSubviews()
         splitView.setPosition((splitView.bounds.width * ratio).rounded(), ofDividerAt: 0)

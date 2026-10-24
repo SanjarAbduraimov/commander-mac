@@ -265,4 +265,22 @@ final class SmokeTests: XCTestCase {
         XCTAssertTrue(FileManager.default.fileExists(atPath: root.appendingPathComponent("left/alpha.txt").path))
         app.typeKey(.escape, modifierFlags: [])
     }
+
+    func testSinglePaneUsesFullWidth() {
+        let app = launch()
+        let left = app.groups["pane.left"]
+        XCTAssertTrue(app.tables["table.left"].waitForExistence(timeout: 5))
+        let half = left.frame.width
+        let splitters = app.splitters.count
+
+        app.typeKey("\\", modifierFlags: .command)
+        XCTAssertTrue(app.groups["pane.right"].waitForNonExistence(timeout: 5))
+        XCTAssertGreaterThan(left.frame.width, half * 1.8)
+        // The panes' divider must go too, not stay drawn in the middle of the single pane.
+        XCTAssertEqual(app.splitters.count, splitters - 1)
+
+        app.typeKey("\\", modifierFlags: .command)
+        XCTAssertTrue(app.groups["pane.right"].waitForExistence(timeout: 5))
+        XCTAssertEqual(left.frame.width, half, accuracy: 10)
+    }
 }
