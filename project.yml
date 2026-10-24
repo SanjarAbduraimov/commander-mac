@@ -32,6 +32,19 @@ targets:
         CFBundleDisplayName: Commander
         NSPrincipalClass: NSApplication
         LSApplicationCategoryType: public.app-category.utilities
+        NSServices:
+          - NSMenuItem:
+              default: Reveal in Commander
+            NSMessage: revealInCommander
+            NSPortName: Commander
+            NSRequiredContext: {}
+            NSSendFileTypes: [public.item]
+        # Lets the Dock and `open -a` hand files to Commander without making it the default app for anything.
+        CFBundleDocumentTypes:
+          - CFBundleTypeName: Any Item
+            CFBundleTypeRole: Viewer
+            LSHandlerRank: None
+            LSItemContentTypes: [public.item]
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: local.sanjar.commander

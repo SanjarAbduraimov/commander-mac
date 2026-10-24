@@ -12,6 +12,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var windowController: MainWindowController!
     private var keyRouter: KeyRouter!
     private var mainMenu: MainMenu!
+    /// Files handed over by the Dock or `open -a` before the window model exists (a cold launch).
+    private var pendingReveals: [URL] = []
 
     static func main() {
         let app = NSApplication.shared
@@ -56,6 +58,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         NSApp.activate()
         model.start()
         observeSystem(model)
+        NSApp.servicesProvider = self
+        NSUpdateDynamicServices()
+        pendingReveals.forEach(model.reveal)
+        pendingReveals = []
 
         for warning in bootstrap.warnings {
             let alert = NSAlert()
@@ -109,5 +115,26 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool {
         true
+    }
+
+    /// Dock drops and `open -a Commander <path>`.
+    func application(_ application: NSApplication, open urls: [URL]) {
+        guard let first = urls.first(where: \.isFileURL) else { return }
+        guard let model else {
+            pendingReveals = [first]
+            return
+        }
+        model.reveal(first)
+        NSApp.activate()
+    }
+
+    /// The "Reveal in Commander" service (Info.plist NSServices) from Finder's Quick Actions / Services menu.
+    @objc func revealInCommander(_ pasteboard: NSPasteboard, userData: String?, error: AutoreleasingUnsafeMutablePointer<NSString?>) {
+        let options: [NSPasteboard.ReadingOptionKey: Any] = [.urlReadingFileURLsOnly: true]
+        guard let url = (pasteboard.readObjects(forClasses: [NSURL.self], options: options) as? [URL])?.first else {
+            error.pointee = "No file was given to Commander." as NSString
+            return
+        }
+        application(NSApp, open: [url])
     }
 }
