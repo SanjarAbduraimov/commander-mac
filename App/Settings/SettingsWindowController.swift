@@ -8,7 +8,12 @@ final class SettingsWindowController: NSWindowController {
 
     static func show(model: WindowModel) {
         if shared == nil {
-            let viewModel = SettingsViewModel(settings: model.settings) { [model] in model.updateSettings($0) }
+            // Columns change from the table header, not from this window; keep the window's stale copy from undoing them.
+            let viewModel = SettingsViewModel(settings: model.settings) { [model] changed in
+                var settings = changed
+                settings.appearance.columns = model.settings.appearance.columns
+                model.updateSettings(settings)
+            }
             // Single-pane mode lives in the session, not in AppSettings, so it talks to the window model directly.
             let singlePane = Binding(
                 get: { model.isSinglePane },

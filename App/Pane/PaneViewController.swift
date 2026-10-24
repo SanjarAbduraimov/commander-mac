@@ -30,6 +30,7 @@ final class PaneViewController: NSViewController, NSTextFieldDelegate, NSDraggin
     private var shownActive = false
     private var shownAppearance: AppearanceSettings?
     private var shownFolderSizes: [String: Int64] = [:]
+    private var shownCut: Set<String> = []
 
     init(model: WindowModel, side: PaneSide) {
         self.model = model
@@ -86,11 +87,13 @@ final class PaneViewController: NSViewController, NSTextFieldDelegate, NSDraggin
         table.usesAlternatingRowBackgroundColors = false
         table.selectionHighlightStyle = .none
         table.allowsTypeSelect = false
-        table.allowsColumnReordering = false
+        table.allowsColumnReordering = true
         table.intercellSpacing = NSSize(width: 0, height: 0)
-        table.columnAutoresizingStyle = .firstColumnOnlyAutoresizingStyle
+        // Only Name has an autoresizing mask, so it alone grows and shrinks with the pane.
+        table.columnAutoresizingStyle = .uniformColumnAutoresizingStyle
         table.setAccessibilityIdentifier("table.\(side.rawValue)")
-        FileTableController.makeColumns(in: table)
+        tableController.applyColumns(to: table)
+        table.headerView?.menu = tableController.headerMenu()
         table.dataSource = tableController
         table.delegate = tableController
         table.registerForDraggedTypes([.fileURL])
@@ -101,6 +104,8 @@ final class PaneViewController: NSViewController, NSTextFieldDelegate, NSDraggin
 
         scrollView.documentView = table
         scrollView.hasVerticalScroller = true
+        // Many columns can be wider than the pane; Name stops shrinking at its minimum and the rest scrolls.
+        scrollView.hasHorizontalScroller = true
         scrollView.autohidesScrollers = true
         scrollView.borderType = .noBorder
 
@@ -172,19 +177,22 @@ final class PaneViewController: NSViewController, NSTextFieldDelegate, NSDraggin
 
         let names = tab.items.map(\.name)
         let appearance = model.settings.appearance
+        let cut = Set(tab.items.filter(model.isCut).map(\.name))
+        tableController.applyColumns(to: table)
         if names != shownNames || active != shownActive || appearance != shownAppearance {
             let interval = Self.signposter.beginInterval("Render")
             table.rowHeight = CGFloat(appearance.rowHeight)
             table.reloadData()
             Self.signposter.endInterval("Render", interval)
         } else {
-            reloadChangedRows(tab, names: names)
-            if folderSizes != shownFolderSizes {
-                let sizeColumn = table.column(withIdentifier: NSUserInterfaceItemIdentifier(FileTableController.Column.size.rawValue))
+            reloadChangedRows(tab, names: names, cut: cut)
+            let sizeColumn = table.column(withIdentifier: NSUserInterfaceItemIdentifier(FileTableController.Column.size.rawValue))
+            if folderSizes != shownFolderSizes, sizeColumn >= 0 {
                 table.reloadData(forRowIndexes: IndexSet(integersIn: 0..<names.count), columnIndexes: IndexSet(integer: sizeColumn))
             }
         }
         shownFolderSizes = folderSizes
+        shownCut = cut
         showSortIndicator(tab.sort)
         shownNames = names
         shownCursor = tab.cursor
@@ -203,8 +211,8 @@ final class PaneViewController: NSViewController, NSTextFieldDelegate, NSDraggin
         }
     }
 
-    private func reloadChangedRows(_ tab: TabState, names: [String]) {
-        var changed = shownMarked.symmetricDifference(tab.marked)
+    private func reloadChangedRows(_ tab: TabState, names: [String], cut: Set<String>) {
+        var changed = shownMarked.symmetricDifference(tab.marked).union(shownCut.symmetricDifference(cut))
         if shownCursor != tab.cursor {
             changed.formUnion([shownCursor, tab.cursor].compactMap { $0 })
         }

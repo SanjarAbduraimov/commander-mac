@@ -48,7 +48,7 @@ final class SmokeTests: XCTestCase {
 
         XCTAssertTrue(waitFor(app.groups["path.left"], value: path("left")))
         XCTAssertTrue(waitFor(app.groups["path.right"], value: path("right")))
-        XCTAssertTrue(app.tables["table.left"].staticTexts["alpha.txt"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.tables["table.left"].staticTexts["alpha"].waitForExistence(timeout: 5))
     }
 
     func testTabSwitchesActivePane() {
@@ -88,22 +88,22 @@ final class SmokeTests: XCTestCase {
 
     func testF5CopiesToOtherPane() {
         let app = launch()
-        XCTAssertTrue(app.tables["table.left"].staticTexts["alpha.txt"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.tables["table.left"].staticTexts["alpha"].waitForExistence(timeout: 5))
 
         app.typeKey(.F5, modifierFlags: [])
 
-        XCTAssertTrue(app.tables["table.right"].staticTexts["alpha.txt"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.tables["table.right"].staticTexts["alpha"].waitForExistence(timeout: 5))
         XCTAssertTrue(FileManager.default.fileExists(atPath: root.appendingPathComponent("right/alpha.txt").path))
     }
 
     func testDragBetweenPanesMovesOnSameVolume() {
         let app = launch()
-        let alpha = app.tables["table.left"].staticTexts["alpha.txt"]
+        let alpha = app.tables["table.left"].staticTexts["alpha"]
         XCTAssertTrue(alpha.waitForExistence(timeout: 5))
 
         alpha.press(forDuration: 0.3, thenDragTo: app.tables["table.right"])
 
-        XCTAssertTrue(app.tables["table.right"].staticTexts["alpha.txt"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.tables["table.right"].staticTexts["alpha"].waitForExistence(timeout: 5))
         XCTAssertTrue(FileManager.default.fileExists(atPath: root.appendingPathComponent("right/alpha.txt").path))
         XCTAssertFalse(FileManager.default.fileExists(atPath: root.appendingPathComponent("left/alpha.txt").path))
     }
@@ -141,7 +141,7 @@ final class SmokeTests: XCTestCase {
 
     func testSpaceMarksAndShowsSelectionBar() throws {
         let app = launch()
-        XCTAssertTrue(app.tables["table.left"].staticTexts["alpha.txt"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.tables["table.left"].staticTexts["alpha"].waitForExistence(timeout: 5))
 
         app.typeKey(.space, modifierFlags: [])
 
@@ -152,7 +152,7 @@ final class SmokeTests: XCTestCase {
 
     func testPathFieldEditingDoesNotTouchFiles() {
         let app = launch()
-        XCTAssertTrue(app.tables["table.left"].staticTexts["alpha.txt"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.tables["table.left"].staticTexts["alpha"].waitForExistence(timeout: 5))
 
         app.typeKey("l", modifierFlags: .command)
         app.typeText("x")
@@ -165,7 +165,7 @@ final class SmokeTests: XCTestCase {
 
     func testEscapeUnmarks() {
         let app = launch()
-        XCTAssertTrue(app.tables["table.left"].staticTexts["alpha.txt"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.tables["table.left"].staticTexts["alpha"].waitForExistence(timeout: 5))
 
         app.typeKey(.space, modifierFlags: [])
         XCTAssertTrue(app.staticTexts["1 marked in left pane"].waitForExistence(timeout: 5))
@@ -186,7 +186,7 @@ final class SmokeTests: XCTestCase {
 
     func testCopyToChosenFolder() {
         let app = launch()
-        XCTAssertTrue(app.tables["table.left"].staticTexts["alpha.txt"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.tables["table.left"].staticTexts["alpha"].waitForExistence(timeout: 5))
 
         app.typeKey(.F5, modifierFlags: .option)
         let field = app.textFields["copyTo.path"]
@@ -232,7 +232,7 @@ final class SmokeTests: XCTestCase {
     func testDragHoverSpringsIntoFolder() throws {
         try FileManager.default.createDirectory(at: root.appendingPathComponent("right/box"), withIntermediateDirectories: true)
         let app = launch()
-        let alpha = app.tables["table.left"].staticTexts["alpha.txt"]
+        let alpha = app.tables["table.left"].staticTexts["alpha"]
         let box = app.tables["table.right"].staticTexts["box"]
         XCTAssertTrue(alpha.waitForExistence(timeout: 5) && box.waitForExistence(timeout: 5))
 
@@ -253,7 +253,7 @@ final class SmokeTests: XCTestCase {
 
     func testShortcutsBehindSheetDoNotTouchFiles() {
         let app = launch()
-        XCTAssertTrue(app.tables["table.left"].staticTexts["alpha.txt"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.tables["table.left"].staticTexts["alpha"].waitForExistence(timeout: 5))
 
         app.typeKey(.F5, modifierFlags: .option)
         let field = app.textFields["copyTo.path"]
@@ -282,5 +282,33 @@ final class SmokeTests: XCTestCase {
         app.typeKey("\\", modifierFlags: .command)
         XCTAssertTrue(app.groups["pane.right"].waitForExistence(timeout: 5))
         XCTAssertEqual(left.frame.width, half, accuracy: 10)
+    }
+
+    func testHeaderMenuTogglesKindColumn() {
+        let app = launch()
+        let table = app.tables["table.left"]
+        XCTAssertTrue(table.staticTexts["alpha"].waitForExistence(timeout: 5))
+        XCTAssertTrue(table.buttons["Ext"].exists)
+        XCTAssertFalse(table.buttons["Kind"].exists)
+
+        table.buttons["Name"].rightClick()
+        app.menuItems["Kind"].click()
+        XCTAssertTrue(table.buttons["Kind"].waitForExistence(timeout: 5))
+
+        table.buttons["Name"].rightClick()
+        app.menuItems["Kind"].click()
+        XCTAssertTrue(table.buttons["Kind"].waitForNonExistence(timeout: 5))
+    }
+
+    func testCutShowsScissors() {
+        let app = launch()
+        let table = app.tables["table.left"]
+        XCTAssertTrue(table.staticTexts["alpha"].waitForExistence(timeout: 5))
+
+        app.typeKey("x", modifierFlags: .command)
+
+        XCTAssertTrue(table.images["Cut"].waitForExistence(timeout: 5))
+        app.typeKey("c", modifierFlags: .command)
+        XCTAssertTrue(table.images["Cut"].waitForNonExistence(timeout: 5))
     }
 }

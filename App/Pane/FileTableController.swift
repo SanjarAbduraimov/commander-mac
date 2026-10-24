@@ -3,13 +3,16 @@ import CommanderController
 import CommanderCore
 
 @MainActor
-final class FileTableController: NSObject, NSTableViewDataSource, NSTableViewDelegate {
+final class FileTableController: NSObject, NSTableViewDataSource, NSTableViewDelegate, NSMenuDelegate {
     enum Column: String, CaseIterable {
-        case mark, name, size, modified
+        case mark, name, ext, size, modified, created, kind
+
+        var configurable: ColumnID? { ColumnID(rawValue: rawValue) }
     }
 
     private static let dateStyle = Date.FormatStyle(date: .numeric, time: .shortened)
     private static let markImage = NSImage(systemSymbolName: "checkmark.circle.fill", accessibilityDescription: "Marked")
+    private static let cutImage = NSImage(systemSymbolName: "scissors", accessibilityDescription: "Cut")
 
     enum DropHighlight: Equatable {
         case none, table, row(String)
@@ -23,6 +26,9 @@ final class FileTableController: NSObject, NSTableViewDataSource, NSTableViewDel
     private let model: WindowModel
     private let side: PaneSide
     private let springLoader = SpringLoader()
+    private var shownColumns: [ColumnSetting] = []
+    /// Set while columns are rebuilt from settings, so AppKit's resize/move callbacks don't write back.
+    private var isApplyingColumns = false
 
     init(model: WindowModel, side: PaneSide) {
         self.model = model
@@ -36,19 +42,99 @@ final class FileTableController: NSObject, NSTableViewDataSource, NSTableViewDel
         return appearance.fontName.flatMap { NSFont(name: $0, size: appearance.fontSize) } ?? .systemFont(ofSize: appearance.fontSize)
     }
 
-    static func makeColumns(in table: NSTableView) {
-        let specs: [(Column, String, CGFloat, CGFloat)] = [
-            (.mark, "", 18, 18), (.name, "Name", 120, 120), (.size, "Size", 72, 56), (.modified, "Modified", 135, 100),
-        ]
-        for (column, title, width, minWidth) in specs {
-            let tableColumn = NSTableColumn(identifier: NSUserInterfaceItemIdentifier(column.rawValue))
-            tableColumn.title = title
-            tableColumn.width = width
-            tableColumn.minWidth = minWidth
-            if column == .mark { tableColumn.maxWidth = 18; tableColumn.resizingMask = [] }
-            if column == .size { tableColumn.headerCell.alignment = .right }
-            table.addTableColumn(tableColumn)
+    private var showsExtColumn: Bool { model.settings.appearance.columns.contains { $0.id == .ext } }
+
+    /// Mark and Name stay first; the rest follow the settings (shared by both panes). Rebuilt only when the
+    /// set or order changed, otherwise widths are updated in place.
+    func applyColumns(to table: NSTableView) {
+        let columns = model.settings.appearance.columns
+        guard columns != shownColumns else { return }
+        isApplyingColumns = true
+        defer { isApplyingColumns = false }
+        let wanted = [Column.mark.rawValue, Column.name.rawValue] + columns.map(\.id.rawValue)
+        if table.tableColumns.map(\.identifier.rawValue) != wanted {
+            for column in table.tableColumns { table.removeTableColumn(column) }
+            table.addTableColumn(Self.tableColumn(.mark, width: 18))
+            table.addTableColumn(Self.tableColumn(.name, width: 200))
+            for setting in columns { table.addTableColumn(Self.tableColumn(Column(rawValue: setting.id.rawValue)!, width: setting.width)) }
+            table.sizeToFit()
+        } else {
+            for setting in columns {
+                table.tableColumn(withIdentifier: NSUserInterfaceItemIdentifier(setting.id.rawValue))?.width = CGFloat(setting.width)
+            }
         }
+        shownColumns = columns
+    }
+
+    private static func tableColumn(_ column: Column, width: Double) -> NSTableColumn {
+        let tableColumn = NSTableColumn(identifier: NSUserInterfaceItemIdentifier(column.rawValue))
+        tableColumn.title = column.configurable?.title ?? (column == .name ? "Name" : "")
+        tableColumn.width = CGFloat(width)
+        switch column {
+        case .mark:
+            tableColumn.minWidth = 18
+            tableColumn.maxWidth = 18
+            tableColumn.resizingMask = []
+        case .name:
+            tableColumn.minWidth = 120
+            tableColumn.resizingMask = [.autoresizingMask, .userResizingMask]
+        default:
+            tableColumn.minWidth = 40
+            tableColumn.resizingMask = .userResizingMask
+        }
+        if column == .size { tableColumn.headerCell.alignment = .right }
+        return tableColumn
+    }
+
+    // MARK: Header menu, column moves and resizes
+
+    func headerMenu() -> NSMenu {
+        let menu = NSMenu()
+        menu.delegate = self
+        for id in ColumnID.allCases {
+            let item = NSMenuItem(title: id.title, action: #selector(toggleColumn(_:)), keyEquivalent: "")
+            item.target = self
+            item.representedObject = id.rawValue
+            menu.addItem(item)
+        }
+        return menu
+    }
+
+    func menuNeedsUpdate(_ menu: NSMenu) {
+        let shown = Set(model.settings.appearance.columns.map(\.id))
+        for item in menu.items {
+            let id = (item.representedObject as? String).flatMap(ColumnID.init(rawValue:))
+            item.state = id.map(shown.contains) == true ? .on : .off
+        }
+    }
+
+    @objc private func toggleColumn(_ sender: NSMenuItem) {
+        guard let id = (sender.representedObject as? String).flatMap(ColumnID.init(rawValue:)) else { return }
+        model.toggleColumn(id)
+    }
+
+    func tableView(_ tableView: NSTableView, shouldReorderColumn columnIndex: Int, toColumn newColumnIndex: Int) -> Bool {
+        columnIndex >= 2 && (newColumnIndex >= 2 || newColumnIndex == -1)
+    }
+
+    func tableViewColumnDidMove(_ notification: Notification) {
+        guard let table = notification.object as? NSTableView else { return }
+        storeColumns(of: table)
+    }
+
+    func tableViewColumnDidResize(_ notification: Notification) {
+        guard let table = notification.object as? NSTableView else { return }
+        storeColumns(of: table)
+    }
+
+    private func storeColumns(of table: NSTableView) {
+        guard !isApplyingColumns else { return }
+        let columns = table.tableColumns.compactMap { column -> ColumnSetting? in
+            guard let id = ColumnID(rawValue: column.identifier.rawValue) else { return nil }
+            return ColumnSetting(id: id, width: Double(column.width.rounded()))
+        }
+        shownColumns = columns
+        model.setColumns(columns)
     }
 
     func numberOfRows(in tableView: NSTableView) -> Int {
@@ -61,16 +147,28 @@ final class FileTableController: NSObject, NSTableViewDataSource, NSTableViewDel
         let cell = cellView(in: tableView, column: column)
         switch column {
         case .mark:
-            cell.imageView?.image = tab.marked.contains(item.name) ? Self.markImage : nil
-            cell.imageView?.contentTintColor = Palette.markSymbol
+            let isCut = model.isCut(item)
+            cell.imageView?.image = isCut ? Self.cutImage : tab.marked.contains(item.name) ? Self.markImage : nil
+            cell.imageView?.contentTintColor = isCut ? Palette.accent : Palette.markSymbol
         case .name:
-            cell.textField?.stringValue = item.name
-            cell.textField?.font = font
+            let isCut = model.isCut(item)
+            cell.textField?.stringValue = showsExtColumn ? item.baseName : item.name
+            cell.textField?.font = isCut ? NSFontManager.shared.convert(font, toHaveTrait: .italicFontMask) : font
+            cell.textField?.textColor = isCut ? Palette.accent : .labelColor
             cell.imageView?.image = IconCache.shared.icon(for: item)
-            // Finder dims hidden items.
+            // Finder dims hidden items; a cut item is told apart by italics and colour, so both can show at once.
             let alpha: CGFloat = item.isHidden ? 0.5 : 1
             cell.textField?.alphaValue = alpha
             cell.imageView?.alphaValue = alpha
+        case .ext:
+            cell.textField?.stringValue = item.ext
+            cell.textField?.font = font
+        case .created:
+            cell.textField?.stringValue = item.created?.formatted(Self.dateStyle) ?? "--"
+            cell.textField?.font = font
+        case .kind:
+            cell.textField?.stringValue = item.kindName
+            cell.textField?.font = font
         case .size:
             let size = item.size ?? model.folderSize(side, item)
             cell.textField?.stringValue = size.map { ByteCountFormatter.string(fromByteCount: $0, countStyle: .file) } ?? "--"
@@ -95,12 +193,8 @@ final class FileTableController: NSObject, NSTableViewDataSource, NSTableViewDel
     }
 
     func tableView(_ tableView: NSTableView, didClick tableColumn: NSTableColumn) {
-        let sortColumn: SortColumn? = switch Column(rawValue: tableColumn.identifier.rawValue) {
-        case .name: .name
-        case .size: .size
-        case .modified: .modified
-        case .mark, nil: nil
-        }
+        let column = Column(rawValue: tableColumn.identifier.rawValue)
+        let sortColumn: SortColumn? = column == .name ? .name : column?.configurable?.sortColumn
         if let sortColumn { model.sortColumnClicked(side, sortColumn) }
     }
 

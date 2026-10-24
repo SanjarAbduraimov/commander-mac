@@ -28,6 +28,8 @@ final class RenameEditor: NSObject, NSTextFieldDelegate {
 
         self.field = field
         originalName = name
+        // The cell may show the name without its extension (Ext column); rename always edits the full name.
+        field.stringValue = name
         field.isEditable = true
         field.isSelectable = true
         field.drawsBackground = true
@@ -76,6 +78,7 @@ final class RenameEditor: NSObject, NSTextFieldDelegate {
 
     private func finish() {
         guard let field else { return }
+        let row = originalName.flatMap { name in model.tab(side).items.firstIndex { $0.name == name } }
         self.field = nil
         originalName = nil
         isCommitting = false
@@ -83,6 +86,10 @@ final class RenameEditor: NSObject, NSTextFieldDelegate {
         field.isEditable = false
         field.isSelectable = false
         field.drawsBackground = false
-        if let table { table.window?.makeFirstResponder(table) }
+        if let table {
+            table.window?.makeFirstResponder(table)
+            // The field held the full name while editing; the cell may show it without the extension.
+            if let row { table.reloadData(forRowIndexes: [row], columnIndexes: IndexSet(integersIn: 0..<table.numberOfColumns)) }
+        }
     }
 }
