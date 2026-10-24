@@ -43,6 +43,8 @@ public final class WindowModel {
     var pendingCursor: [PaneSide: String] = [:]
     var folderSizesBySide: [PaneSide: [String: Int64]] = [:]
     var sizeRun: SizeRun?
+    /// Standardized paths of the items on the clipboard from ⌘X, shown as cut until pasted or replaced.
+    var cutPaths: Set<String> = []
 
     public init(
         state: WindowState, settings: AppSettings, session: Session, environment: WindowEnvironment,
@@ -110,6 +112,7 @@ public final class WindowModel {
     }
 
     public func appDidBecomeActive() {
+        refreshCut()
         for side in [PaneSide.left, .right] where environment.isNetworkPath(tab(side).path) {
             reload(side)
         }

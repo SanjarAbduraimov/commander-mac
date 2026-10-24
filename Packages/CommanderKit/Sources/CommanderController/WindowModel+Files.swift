@@ -93,20 +93,24 @@ extension WindowModel {
         case .copyToClipboard, .cutToClipboard:
             guard !urls.isEmpty else { return }
             pasteboard.writeFiles(urls, cut: command == .cutToClipboard)
+            setCut(command == .cutToClipboard ? urls : [])
         case .paste:
             guard let (sources, isCut) = pasteboard.readFiles() else { return }
             if isCut {
                 operations.start(.move(sources: sources, destination: tab.path))
                 pasteboard.clearCut()
+                setCut([])
             } else {
                 operations.start(.copy(sources: sources, destination: tab.path))
             }
         case .copyPath:
             guard !urls.isEmpty else { return }
             pasteboard.writeString(urls.map(\.path).joined(separator: "\n"))
+            setCut([])
         case .copyName:
             guard !urls.isEmpty else { return }
             pasteboard.writeString(tab.targets.map(\.name).joined(separator: "\n"))
+            setCut([])
         case .revealInFinder:
             guard !urls.isEmpty else { return }
             effects.revealInFinder(urls)
