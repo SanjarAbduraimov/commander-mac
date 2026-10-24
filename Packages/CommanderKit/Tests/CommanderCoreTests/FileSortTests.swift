@@ -60,4 +60,35 @@ struct FileSortTests {
         ])
         #expect(names(result) == ["b-link", "d", "a.app", "c-link"])
     }
+
+    @Test func extensionParts() {
+        #expect(item("archive.tar.gz").ext == "gz")
+        #expect(item("archive.tar.gz").baseName == "archive.tar")
+        #expect(item(".env").ext == "")
+        #expect(item(".env").baseName == ".env")
+        #expect(item("file.").ext == "")
+        #expect(item("file.").baseName == "file.")
+        #expect(item("a.b", .directory).ext == "")
+        #expect(item("Safari.app", .package).ext == "app")
+        #expect(item("Report.PDF").ext == "PDF")
+    }
+
+    @Test func sortsByExtensionThenName() {
+        let result = FileSort(column: .ext).sorted([item("b.txt"), item("c.pdf"), item("dir", .directory), item("a.PDF"), item("noext")])
+        #expect(names(result) == ["dir", "noext", "a.PDF", "c.pdf", "b.txt"])
+    }
+
+    @Test func sortsByKindAndCreated() {
+        func dated(_ name: String, created: TimeInterval?) -> FileItem {
+            FileItem(name: name, url: URL(fileURLWithPath: "/tmp/\(name)"), kind: .file, size: 0,
+                     modified: Date(timeIntervalSince1970: 0), isHidden: false,
+                     created: created.map { Date(timeIntervalSince1970: $0) })
+        }
+        let items = [dated("x.txt", created: 5), dated("y.pdf", created: nil), dated("z.txt", created: 1), dated("w", created: 2)]
+        #expect(items.map(\.kindName).allSatisfy { !$0.isEmpty })
+        #expect(items[3].kindName == "Document")
+        let byKind = names(FileSort(column: .kind).sorted(items))
+        #expect(byKind.firstIndex(of: "x.txt")! + 1 == byKind.firstIndex(of: "z.txt")!)
+        #expect(names(FileSort(column: .created).sorted(items)) == ["y.pdf", "z.txt", "w", "x.txt"])
+    }
 }

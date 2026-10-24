@@ -104,4 +104,19 @@ struct DirectoryReaderTests {
         #expect(reader.nearestExistingDirectory(from: a).path == a.path)
         #expect(reader.nearestExistingDirectory(from: URL(fileURLWithPath: "/nonexistent-\(UUID().uuidString)/x")).path == "/")
     }
+
+    @Test func readsCreatedAndKind() throws {
+        let tmp = try TempDir()
+        defer { tmp.remove() }
+        try tmp.file("a.pdf", bytes: 1)
+        try tmp.file("plain", bytes: 1)
+        try tmp.dir("sub")
+
+        let items = byName(try reader.list(tmp.url))
+        #expect(items["a.pdf"]?.created != nil)
+        #expect(items["a.pdf"]?.kindName.isEmpty == false)
+        #expect(items["a.pdf"]?.kindName != "Document")
+        #expect(items["plain"]?.kindName == "Document")
+        #expect(items["sub"]?.kindName == "Folder")
+    }
 }

@@ -11,6 +11,7 @@ public struct DirectoryReader: Sendable {
     // so it is asked only for directories that have an extension.
     private static let keys: [URLResourceKey] = [
         .nameKey, .isDirectoryKey, .isSymbolicLinkKey, .fileSizeKey, .contentModificationDateKey, .isHiddenKey,
+        .creationDateKey,
     ]
     private static let keySet = Set(keys)
 
@@ -70,7 +71,8 @@ public struct DirectoryReader: Sendable {
             kind: kind,
             size: hasSize ? Int64(values.fileSize ?? 0) : nil,
             modified: values.contentModificationDate ?? .distantPast,
-            isHidden: values.isHidden ?? url.lastPathComponent.hasPrefix(".")
+            isHidden: values.isHidden ?? url.lastPathComponent.hasPrefix("."),
+            created: values.creationDate
         )
     }
 

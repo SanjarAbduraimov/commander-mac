@@ -1,4 +1,6 @@
 import Foundation
+import Synchronization
+import UniformTypeIdentifiers
 
 public struct FileItem: Hashable, Sendable {
     public enum Kind: Hashable, Sendable {
@@ -12,14 +14,54 @@ public struct FileItem: Hashable, Sendable {
     public let size: Int64?
     public let modified: Date
     public let isHidden: Bool
+    public let created: Date?
 
-    public init(name: String, url: URL, kind: Kind, size: Int64?, modified: Date, isHidden: Bool) {
+    public init(
+        name: String, url: URL, kind: Kind, size: Int64?, modified: Date, isHidden: Bool,
+        created: Date? = nil
+    ) {
         self.name = name
         self.url = url
         self.kind = kind
         self.size = size
         self.modified = modified
         self.isHidden = isHidden
+        self.created = created
+    }
+
+    /// The system's description of the type ("PDF document", "Folder"). Looked up on demand and cached per
+    /// extension: only the Kind column and Kind sorting need it, so listing a folder doesn't pay for it.
+    public var kindName: String {
+        switch kind {
+        case .directory, .symlink(toDirectory: true): return "Folder"
+        case .symlink(toDirectory: false): return "Alias"
+        case .file, .package: break
+        }
+        let ext = ext.lowercased()
+        guard !ext.isEmpty else { return "Document" }
+        return Self.kindNames.withLock { cache in
+            if let cached = cache[ext] { return cached }
+            let description = UTType(filenameExtension: ext)?.localizedDescription ?? "\(ext.uppercased()) file"
+            cache[ext] = description
+            return description
+        }
+    }
+
+    private static let kindNames = Mutex<[String: String]>([:])
+
+    /// Folders have none; a leading dot (".env") or a trailing one ("file.") is part of the name, not an extension.
+    public var ext: String { Self.ext(of: name, kind: kind) }
+
+    public static func ext(of name: String, kind: Kind) -> String {
+        if kind == .directory || kind == .symlink(toDirectory: true) { return "" }
+        let ext = (name as NSString).pathExtension
+        guard !ext.isEmpty, name.count > ext.count + 1 else { return "" }
+        return ext
+    }
+
+    public var baseName: String {
+        let ext = ext
+        return ext.isEmpty ? name : String(name.dropLast(ext.count + 1))
     }
 
     public var isNavigable: Bool {
@@ -31,7 +73,7 @@ public struct FileItem: Hashable, Sendable {
 }
 
 public enum SortColumn: String, Codable, Sendable {
-    case name, size, modified
+    case name, size, modified, ext, created, kind
 }
 
 public struct FileSort: Codable, Hashable, Sendable {
@@ -65,6 +107,14 @@ public struct FileSort: Codable, Hashable, Sendable {
             return sa == sb ? .orderedSame : (sa < sb ? .orderedAscending : .orderedDescending)
         case .modified:
             return a.modified == b.modified ? .orderedSame : (a.modified < b.modified ? .orderedAscending : .orderedDescending)
+        case .ext:
+            return a.ext.caseInsensitiveCompare(b.ext)
+        case .created:
+            let ca = a.created ?? .distantPast
+            let cb = b.created ?? .distantPast
+            return ca == cb ? .orderedSame : (ca < cb ? .orderedAscending : .orderedDescending)
+        case .kind:
+            return a.kindName.localizedStandardCompare(b.kindName)
         }
     }
 }
