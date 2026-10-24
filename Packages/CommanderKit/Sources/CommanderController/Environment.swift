@@ -60,6 +60,7 @@ public protocol WindowEffects: AnyObject {
     func showConnectToServer()
     func chooseDestination(_ request: DestinationRequest) async -> URL?
     func confirmDeleteImmediately(_ urls: [URL]) async -> Bool
+    func showMultiRename(_ request: MultiRenameRequest)
     func showAlert(_ alert: AlertMessage)
     func beep()
 }

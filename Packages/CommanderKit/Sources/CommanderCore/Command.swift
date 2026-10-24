@@ -9,6 +9,7 @@ public enum Command: String, CaseIterable, Codable, Sendable {
     case connectToServer, openSettings
     case copyPath, copyName, showPackageContents, revealInFinder, openInTerminal
     case unmarkAll, copyTo, moveTo, deleteImmediately, calculateSize, toggleSinglePane
+    case multiRename, undoMultiRename
 
     /// While a text field has focus, keys edit text; only these window-level commands still fire.
     public var isAllowedInTextField: Bool {

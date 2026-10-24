@@ -80,6 +80,7 @@ final class RecordingEffects: WindowEffects {
     var destinationAnswer: URL?
     var deleteAnswer = false
     private(set) var deleteRequests: [[URL]] = []
+    private(set) var multiRenameRequests: [MultiRenameRequest] = []
     private(set) var changes: [StateChange] = []
     private(set) var focusedPathFields: [PaneSide] = []
     private(set) var renames: [(side: PaneSide, name: String)] = []
@@ -104,6 +105,7 @@ final class RecordingEffects: WindowEffects {
         destinationRequests.append(request)
         return destinationAnswer
     }
+    func showMultiRename(_ request: MultiRenameRequest) { multiRenameRequests.append(request) }
     func confirmDeleteImmediately(_ urls: [URL]) async -> Bool {
         deleteRequests.append(urls)
         return deleteAnswer

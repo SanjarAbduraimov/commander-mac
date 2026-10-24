@@ -47,6 +47,8 @@ extension Command {
         case .deleteImmediately: "Delete Immediately…"
         case .calculateSize: "Calculate Size"
         case .toggleSinglePane: "Single Pane"
+        case .multiRename: "Multi-Rename…"
+        case .undoMultiRename: "Undo Multi-Rename"
         }
     }
 }
