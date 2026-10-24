@@ -2,6 +2,20 @@ import CommanderCore
 import CommanderFileSystem
 import Foundation
 
+/// Path-field edits of the Copy To folder browser.
+public enum PathText {
+    public static func enter(_ folder: String) -> String {
+        folder.hasSuffix("/") ? folder : folder + "/"
+    }
+
+    /// The folder above the one the text names; "/" stays "/".
+    public static func parent(of text: String) -> String {
+        let trimmed = text.count > 1 && text.hasSuffix("/") ? String(text.dropLast()) : text
+        let parent = (trimmed as NSString).deletingLastPathComponent
+        return parent.isEmpty || parent == "/" ? "/" : parent + "/"
+    }
+}
+
 public struct DestinationRequest: Equatable, Sendable {
     public let kind: OperationKind
     public let count: Int
@@ -34,22 +48,25 @@ extension WindowModel {
 
     /// Folders whose name starts with the last path component of `text` (case-insensitive), as full paths.
     /// Read on the listing executor: the folder may be on a slow or dead network share.
-    public func folderSuggestions(for text: String) async -> [String] {
-        (try? await environment.listingExecutor.run { Self.folderSuggestions(for: text) }) ?? []
+    /// `limit: nil` lists every match (the Copy To folder browser).
+    public func folderSuggestions(for text: String, limit: Int? = 10) async -> [String] {
+        (try? await environment.listingExecutor.run { Self.folderSuggestions(for: text, limit: limit) }) ?? []
     }
 
-    nonisolated static func folderSuggestions(for text: String) -> [String] {
+    nonisolated static func folderSuggestions(for text: String, limit: Int?) -> [String] {
+        // expandingTildeInPath drops a trailing "/", which is what says "list inside this folder".
         let expanded = (text as NSString).expandingTildeInPath
         guard expanded.hasPrefix("/") else { return [] }
-        let parent = expanded.hasSuffix("/") ? expanded : (expanded as NSString).deletingLastPathComponent
-        let prefix = expanded.hasSuffix("/") ? "" : (expanded as NSString).lastPathComponent
+        let insideFolder = text.hasSuffix("/")
+        let parent = insideFolder ? expanded : (expanded as NSString).deletingLastPathComponent
+        let prefix = insideFolder ? "" : (expanded as NSString).lastPathComponent
         guard let names = try? FileManager.default.contentsOfDirectory(atPath: parent) else { return [] }
         let candidates = names
             .filter { (prefix.hasPrefix(".") || !$0.hasPrefix(".")) && $0.lowercased().hasPrefix(prefix.lowercased()) }
             .sorted { $0.localizedStandardCompare($1) == .orderedAscending }
         var folders: [String] = []
-        // Stat only until ten folders are found, not every entry of a large folder.
-        for name in candidates where folders.count < 10 {
+        // Stat only until enough folders are found, not every entry of a large folder.
+        for name in candidates where folders.count < (limit ?? .max) {
             let path = (parent as NSString).appendingPathComponent(name)
             var isDirectory: ObjCBool = false
             if FileManager.default.fileExists(atPath: path, isDirectory: &isDirectory), isDirectory.boolValue { folders.append(path) }

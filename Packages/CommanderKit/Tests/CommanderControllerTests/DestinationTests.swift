@@ -143,4 +143,26 @@ struct DestinationTests {
         #expect(h.harness.prompts.conflicts.isEmpty)
         #expect(h.names(.left) == ["a.txt", "b.txt"])
     }
+
+    @Test func suggestionsWithoutLimitListAll() async throws {
+        let h = try await FileHarness(files: (1...12).map { "d\($0)/" })
+        defer { h.tmp.remove() }
+
+        let all = await h.model.folderSuggestions(for: h.left.path + "/", limit: nil)
+        let limited = await h.model.folderSuggestions(for: h.left.path + "/")
+        #expect(all.count == 12)
+        #expect(limited.count == 10)
+    }
+
+    @Test func parentOfRootIsRoot() {
+        #expect(PathText.parent(of: "/") == "/")
+        #expect(PathText.parent(of: "/a/b/") == "/a/")
+        #expect(PathText.parent(of: "/a/b") == "/a/")
+        #expect(PathText.parent(of: "/a") == "/")
+    }
+
+    @Test func enterAddsSlash() {
+        #expect(PathText.enter("/a/b") == "/a/b/")
+        #expect(PathText.enter("/a/b/") == "/a/b/")
+    }
 }

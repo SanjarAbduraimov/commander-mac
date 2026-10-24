@@ -6,10 +6,16 @@ import SwiftUI
 @MainActor
 final class CopyToState: ObservableObject {
     @Published var text: String {
-        didSet { if text != oldValue { refreshSuggestions() } }
+        didSet {
+            guard text != oldValue else { return }
+            selection = nil
+            refreshFolders()
+        }
     }
-    @Published private(set) var suggestions: [String] = []
-    private var suggestionTask: Task<Void, Never>?
+    /// Folders in the browser: the ones inside the typed folder, or those matching the typed name.
+    @Published private(set) var folders: [String] = []
+    @Published var selection: Int?
+    private var foldersTask: Task<Void, Never>?
 
     let request: DestinationRequest
     private let model: WindowModel
@@ -17,20 +23,42 @@ final class CopyToState: ObservableObject {
     init(request: DestinationRequest, model: WindowModel) {
         self.request = request
         self.model = model
-        text = request.suggested.path
+        text = PathText.enter(request.suggested.path)
+        refreshFolders()
     }
 
     /// Waits for a pause in typing and drops results for text that has changed since.
-    private func refreshSuggestions() {
-        suggestionTask?.cancel()
+    private func refreshFolders() {
+        foldersTask?.cancel()
         let typed = text
-        suggestionTask = Task { [weak self, model] in
-            try? await Task.sleep(for: .milliseconds(120))
+        foldersTask = Task { [weak self, model] in
+            try? await Task.sleep(for: .milliseconds(80))
             guard !Task.isCancelled else { return }
-            let found = await model.folderSuggestions(for: typed)
+            let found = await model.folderSuggestions(for: typed, limit: nil)
             guard let self, !Task.isCancelled, self.text == typed else { return }
-            self.suggestions = found
+            self.folders = found
         }
+    }
+
+    func moveSelection(by step: Int) {
+        guard !folders.isEmpty else { return }
+        let next = selection.map { $0 + step } ?? (step > 0 ? 0 : folders.count - 1)
+        selection = min(max(next, 0), folders.count - 1)
+    }
+
+    /// Returns false when nothing is selected, so Return falls through to Copy / Move.
+    func enterSelection() -> Bool {
+        guard let selection, folders.indices.contains(selection) else { return false }
+        enter(folders[selection])
+        return true
+    }
+
+    func enter(_ folder: String) {
+        text = PathText.enter(folder)
+    }
+
+    func goUp() {
+        text = PathText.parent(of: (text as NSString).expandingTildeInPath)
     }
 
     var verb: String { request.kind == .move ? "Move" : "Copy" }
@@ -45,11 +73,6 @@ final class CopyToState: ObservableObject {
         guard !trimmed.isEmpty else { return nil }
         return URL(fileURLWithPath: (trimmed as NSString).expandingTildeInPath, isDirectory: true)
     }
-
-    /// Hides the list once the field already holds exactly the one suggestion.
-    var visibleSuggestions: [String] {
-        suggestions == [typedURL?.path ?? ""] ? [] : suggestions
-    }
 }
 
 struct CopyToView: View {
@@ -62,26 +85,21 @@ struct CopyToView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
             Text(state.title).font(.headline)
-            PathTextField(text: $state.text, onCancel: onCancel)
+            PathTextField(state: state, onConfirm: onConfirm, onCancel: onCancel)
                 .frame(height: 24)
-            if !state.visibleSuggestions.isEmpty {
-                VStack(alignment: .leading, spacing: 2) {
-                    ForEach(state.visibleSuggestions, id: \.self) { path in
-                        Text((path as NSString).lastPathComponent)
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                            .contentShape(Rectangle())
-                            .onTapGesture { state.text = path + "/" }
-                    }
+            HStack(alignment: .top, spacing: 10) {
+                List {
+                    section("Recent", state.request.recent)
+                    section("Tabs", state.request.tabs)
+                    section("Favorites", state.request.favorites)
                 }
-                .padding(6)
-                .background(RoundedRectangle(cornerRadius: 6).fill(Color(nsColor: .controlBackgroundColor)))
+                .frame(width: 190)
+                browser
             }
-            List {
-                section("Recent", state.request.recent)
-                section("Tabs", state.request.tabs)
-                section("Favorites", state.request.favorites)
-            }
-            .frame(height: 220)
+            .frame(height: 280)
+            Text("↑↓ select · ↵ open folder · ⌫ up · ⌘↵ \(state.verb.lowercased()) here")
+                .font(.caption)
+                .foregroundStyle(.secondary)
             HStack {
                 Button("Choose…", action: onChoose)
                 Button("New Folder", action: onNewFolder)
@@ -89,12 +107,48 @@ struct CopyToView: View {
                 Button("Cancel", role: .cancel, action: onCancel)
                     .keyboardShortcut(.cancelAction)
                 Button(state.verb, action: onConfirm)
-                    .keyboardShortcut(.defaultAction)
+                    .keyboardShortcut(.return, modifiers: .command)
+                    .buttonStyle(.borderedProminent)
                     .disabled(state.typedURL == nil)
             }
         }
         .padding(20)
-        .frame(width: 520)
+        .frame(width: 680)
+    }
+
+    private var browser: some View {
+        ScrollViewReader { proxy in
+            List {
+                ForEach(Array(state.folders.enumerated()), id: \.element) { index, folder in
+                    HStack(spacing: 6) {
+                        Image(nsImage: NSWorkspace.shared.icon(forFile: folder))
+                            .resizable()
+                            .frame(width: 16, height: 16)
+                        Text((folder as NSString).lastPathComponent)
+                            .accessibilityIdentifier("browser.\((folder as NSString).lastPathComponent)")
+                        Spacer()
+                        Image(systemName: "chevron.right").foregroundStyle(.tertiary)
+                    }
+                    .padding(.vertical, 2)
+                    .padding(.horizontal, 4)
+                    .background(RoundedRectangle(cornerRadius: 4).fill(index == state.selection ? Color.accentColor.opacity(0.3) : .clear))
+                    .contentShape(Rectangle())
+                    .onTapGesture(count: 2) { state.enter(folder) }
+                    .onTapGesture { state.selection = index }
+                    .id(folder)
+                }
+            }
+            .overlay {
+                if state.folders.isEmpty {
+                    Text("No folders").foregroundStyle(.secondary)
+                }
+            }
+            .onChange(of: state.selection) {
+                if let selection = state.selection, state.folders.indices.contains(selection) {
+                    proxy.scrollTo(state.folders[selection])
+                }
+            }
+        }
     }
 
     @ViewBuilder
@@ -107,14 +161,12 @@ struct CopyToView: View {
                             .resizable()
                             .frame(width: 16, height: 16)
                         Text(FileManager.default.displayName(atPath: url.path))
-                        Text(url.deletingLastPathComponent().path)
-                            .foregroundStyle(.secondary)
                             .lineLimit(1)
-                            .truncationMode(.head)
                     }
+                    .help(url.path)
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .contentShape(Rectangle())
-                    .onTapGesture { state.text = url.path }
+                    .onTapGesture { state.enter(url.path) }
                 }
             }
         }
@@ -122,13 +174,15 @@ struct CopyToView: View {
 }
 
 /// SwiftUI's TextField ignores programmatic changes while focused and can't be focused reliably in a sheet,
-/// so the path is an AppKit field that follows `text` even mid-edit and takes focus when shown.
+/// so the path is an AppKit field that follows `text` even mid-edit, takes focus when shown, and drives the
+/// folder browser from the keyboard.
 private struct PathTextField: NSViewRepresentable {
-    @Binding var text: String
+    @ObservedObject var state: CopyToState
+    let onConfirm: () -> Void
     let onCancel: () -> Void
 
     func makeNSView(context: Context) -> NSTextField {
-        let field = NSTextField(string: text)
+        let field = NSTextField(string: state.text)
         field.font = .monospacedSystemFont(ofSize: 12, weight: .regular)
         field.lineBreakMode = .byTruncatingHead
         field.cell?.isScrollable = true
@@ -139,42 +193,56 @@ private struct PathTextField: NSViewRepresentable {
     }
 
     func updateNSView(_ field: NSTextField, context: Context) {
-        context.coordinator.text = $text
-        context.coordinator.onCancel = onCancel
+        context.coordinator.view = self
+        let text = state.text
         guard field.stringValue != text else { return }
         field.stringValue = text
+        if field.currentEditor() == nil { field.window?.makeFirstResponder(field) }
         if let editor = field.currentEditor() {
             editor.string = text
             editor.selectedRange = NSRange(location: (text as NSString).length, length: 0)
-        } else {
-            field.window?.makeFirstResponder(field)
-            field.currentEditor()?.selectedRange = NSRange(location: (text as NSString).length, length: 0)
         }
     }
 
-    func makeCoordinator() -> Coordinator { Coordinator(text: $text, onCancel: onCancel) }
+    func makeCoordinator() -> Coordinator { Coordinator(view: self) }
 
+    @MainActor
     final class Coordinator: NSObject, NSTextFieldDelegate {
-        var text: Binding<String>
-        var onCancel: () -> Void
+        var view: PathTextField
 
-        init(text: Binding<String>, onCancel: @escaping () -> Void) {
-            self.text = text
-            self.onCancel = onCancel
+        init(view: PathTextField) {
+            self.view = view
         }
 
         func control(_ control: NSControl, textView: NSTextView, doCommandBy commandSelector: Selector) -> Bool {
+            let state = view.state
+            switch commandSelector {
             // Esc arrives as `complete:` in a field editor; ⌘. as `cancelOperation:`.
-            guard commandSelector == #selector(NSResponder.cancelOperation(_:))
-                || commandSelector == #selector(NSResponder.complete(_:))
-            else { return false }
-            onCancel()
+            case #selector(NSResponder.cancelOperation(_:)), #selector(NSResponder.complete(_:)):
+                view.onCancel()
+            case #selector(NSResponder.moveUp(_:)):
+                state.moveSelection(by: -1)
+            case #selector(NSResponder.moveDown(_:)):
+                state.moveSelection(by: 1)
+            case #selector(NSResponder.insertNewline(_:)):
+                if !state.enterSelection() { view.onConfirm() }
+            case #selector(NSResponder.moveToBeginningOfDocument(_:)):
+                state.goUp()
+            case #selector(NSResponder.deleteBackward(_:)):
+                // Right after entering a folder ("…/Photos/"), ⌫ steps back out instead of eating the slash.
+                guard state.text.hasSuffix("/"), state.text != "/", textView.selectedRange().length == 0,
+                      textView.selectedRange().location == (state.text as NSString).length
+                else { return false }
+                state.goUp()
+            default:
+                return false
+            }
             return true
         }
 
         func controlTextDidChange(_ notification: Notification) {
             guard let field = notification.object as? NSTextField else { return }
-            text.wrappedValue = field.stringValue
+            view.state.text = field.stringValue
         }
     }
 }
@@ -259,7 +327,7 @@ final class CopyToPresenter {
         else { return NSSound.beep() }
         Task {
             do {
-                state.text = try await model.createFolder(in: directory).path
+                state.enter(try await model.createFolder(in: directory).path)
             } catch {
                 await showError("Couldn't create a folder", error)
             }
@@ -276,7 +344,7 @@ final class CopyToPresenter {
         panel.directoryURL = state.typedURL
         panel.beginSheetModal(for: sheetWindow) { [state] response in
             guard response == .OK, let url = panel.url else { return }
-            MainActor.assumeIsolated { state.text = url.path }
+            MainActor.assumeIsolated { state.enter(url.path) }
         }
     }
 

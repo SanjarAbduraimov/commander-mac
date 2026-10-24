@@ -311,4 +311,37 @@ final class SmokeTests: XCTestCase {
         app.typeKey("c", modifierFlags: .command)
         XCTAssertTrue(table.images["Cut"].waitForNonExistence(timeout: 5))
     }
+
+    func testCopyToBrowserEntersFolder() {
+        let app = launch()
+        XCTAssertTrue(app.tables["table.left"].staticTexts["alpha"].waitForExistence(timeout: 5))
+
+        app.typeKey(.F5, modifierFlags: .option)
+        let field = app.textFields["copyTo.path"]
+        XCTAssertTrue(field.waitForExistence(timeout: 5))
+        field.click()
+        app.typeKey("a", modifierFlags: .command)
+        app.typeText(path("") + "/")
+        XCTAssertTrue(app.staticTexts["browser.nested"].waitForExistence(timeout: 5))
+        app.typeKey(.downArrow, modifierFlags: [])
+        app.typeKey(.downArrow, modifierFlags: [])
+        app.typeKey(.return, modifierFlags: [])
+        XCTAssertTrue(waitFor(field, value: path("nested") + "/"))
+        XCTAssertTrue(app.staticTexts["browser.sub"].waitForExistence(timeout: 5))
+
+        app.typeKey(.delete, modifierFlags: [])
+        XCTAssertTrue(waitFor(field, value: path("") + "/"))
+        XCTAssertTrue(app.staticTexts["browser.nested"].waitForExistence(timeout: 5))
+        app.typeKey(.downArrow, modifierFlags: [])
+        app.typeKey(.downArrow, modifierFlags: [])
+        app.typeKey(.return, modifierFlags: [])
+        XCTAssertTrue(waitFor(field, value: path("nested") + "/"))
+
+        app.typeKey(.return, modifierFlags: .command)
+
+        let copied = root.appendingPathComponent("nested/alpha.txt").path
+        let deadline = Date().addingTimeInterval(5)
+        while !FileManager.default.fileExists(atPath: copied), Date() < deadline { RunLoop.current.run(until: Date().addingTimeInterval(0.1)) }
+        XCTAssertTrue(FileManager.default.fileExists(atPath: copied))
+    }
 }
