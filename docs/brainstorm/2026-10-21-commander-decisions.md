@@ -131,7 +131,9 @@ Open · Open With ▸ (ilovalar, Other…, Always open with this app) · Quick L
 - Plan B (App UI) bajarildi (2026-10-23, `phase1b-app-ui` branch'ida): CommanderController (244 test) + AppKit ilova, 11 XCUITest smoke. SMB ulanish — NetFS orqali (`NSWorkspace.open` mount nuqtasini qaytarmaydi). Cold start ~1,05 s (maqsad 1 s) — alohida optimizatsiya taski.
 - 1C (foydalanuvchi fikrlari) bajarildi (2026-10-24, `phase1c-feedback` branch'ida): Esc — Unmark All, Copy To…/Move To… dialogi (New Folder, Recent/Tabs/Favorites), yashirin fayllar xira, drag & drop manzilini ko'rsatish + spring-loading (qatorlar, "↑ Enclosing folder", breadcrumbs, tablar), On launch papkalari, bitta panel rejimi (`⌘\`), `⇧⌘⌫` butunlay o'chirish, Calculate Size. "Calculate folder size" 3-bosqichdan 1C ga ko'chdi; uning default tugmasi `⌥⇧↩` (`⌥Space` ni Raycast global ushlaydi).
 - Qo'shimcha: ilova ikonkasi va o'rnatiladigan Universal DMG (`scripts/make-dmg.sh`).
-- Keyingi: foydalanuvchi qo'lda sinaydi, 1B+1C `main` ga merge; so'ng 2-bosqich (fayl operatsiyalari) spec'i.
+- 1B+1C foydalanuvchi tomonidan sinaldi va `main` ga merge qilindi (2026-10-24; `swift test` 289, XCUITest 18).
+- 1C review'dan qolgan mayda kamchiliklar (keyinroq): bitta panelda footer'da "Tab Switch pane" ko'rinadi; Copy To'da nisbiy yo'l `/` ga nisbatan olinadi; "Create & Copy" manba ichida bo'sh papka qoldirishi mumkin; "↑ Enclosing folder" ustida ushlab turish ketma-ket yuqoriga chiqadi va `/` da chiziq qoladi; bir panelda hajm hisobi ikkinchisidagini to'xtatadi; Settings ochiqligida ⌘\ toggle'ni yangilamaydi; uzun yo'lda breadcrumbs spring-loading zanjir bo'lishi mumkin; bitta panelda Tab iste'mol qilinmaydi.
+- Keyingi: 2-bosqich (fayl operatsiyalari) spec'i.
 
 ### Asboblar — **tasdiqlandi**
 - 2026-10-21 holati: Xcode o'rnatilmagan, faqat Command Line Tools (Swift 6.2.1, x86_64), XcodeGen yo'q.
