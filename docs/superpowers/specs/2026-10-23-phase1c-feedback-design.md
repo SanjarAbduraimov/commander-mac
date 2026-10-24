@@ -56,7 +56,7 @@ Implementation plan: `docs/superpowers/plans/2026-10-23-phase1c-feedback.md`.
 
 ### 2.10 O'rnatiladigan DMG
 - `scripts/make-dmg.sh`: Release, **Universal (arm64 + x86_64)**, ad-hoc imzo; `build/Commander.dmg` — ichida `Commander.app` va `Applications` havolasi.
-- Developer ID va notarization yo'q: boshqa Mac'da birinchi ochish — o'ng tugma → Open (yoki `xattr -dr com.apple.quarantine /Applications/Commander.app`).
+- Developer ID va notarization yo'q: boshqa Mac'da birinchi ochish — System Settings → Privacy & Security → **Open Anyway** (macOS 15 da o'ng tugma → Open endi ishlamaydi) yoki `xattr -dr com.apple.quarantine /Applications/Commander.app`.
 
 ## 3. Doiradan tashqari
 - Get Info, Compare, Quick Look — 3-bosqichda qoladi (spec'dagi jadval: "Calculate folder size" 1C ga ko'chdi).

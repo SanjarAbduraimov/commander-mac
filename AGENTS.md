@@ -47,6 +47,6 @@ Talab: to'liq Xcode (Command Line Tools'da `Testing` moduli yo'q). Barcha buyruq
 - Xcode loyihasini generatsiya qilish: `xcodegen generate`
 - App build: `xcodebuild -project Commander.xcodeproj -scheme Commander -destination 'platform=macOS,arch=x86_64' build`
 - UI smoke testlar: `xcodebuild test -project Commander.xcodeproj -scheme Commander -destination 'platform=macOS,arch=x86_64'` (birinchi marta macOS UI automation uchun Touch ID / parol so'raydi)
-- O'rnatiladigan DMG (Universal: Apple silicon + Intel, Release): `scripts/make-dmg.sh` → `build/Commander.dmg`. Developer ID yo'q — boshqa Mac'da birinchi ochish: o'ng tugma → Open (yoki `xattr -dr com.apple.quarantine /Applications/Commander.app`).
+- O'rnatiladigan DMG (Universal: Apple silicon + Intel, Release): `scripts/make-dmg.sh` → `build/Commander.dmg`. Developer ID yo'q — "Apple could not verify…" ogohlantirishi chiqadi; birinchi ochish: System Settings → Privacy & Security → **Open Anyway** (macOS 15 da o'ng tugma → Open endi ishlamaydi) yoki `xattr -dr com.apple.quarantine /Applications/Commander.app`.
 - Ilova ikonkasi: `swift scripts/make-icon.swift App/Assets.xcassets/AppIcon.appiconset` (kod bilan chiziladi).
 - Eslatma: ad-hoc imzo har build'da o'zgaradi — Full Disk Access ruxsatini qayta berish kerak bo'lishi mumkin.

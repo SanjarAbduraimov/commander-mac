@@ -1,6 +1,7 @@
 #!/bin/bash
 # Builds a Universal (Apple silicon + Intel) Release of Commander and packs it into build/Commander.dmg.
-# The app is ad-hoc signed (no Developer ID), so on another Mac the first launch needs right-click → Open.
+# The app is ad-hoc signed (no Developer ID): Gatekeeper blocks the first launch. On macOS 15 right-click → Open no
+# longer helps; use System Settings → Privacy & Security → Open Anyway, or xattr -dr com.apple.quarantine.
 set -euo pipefail
 
 cd "$(dirname "$0")/.."
