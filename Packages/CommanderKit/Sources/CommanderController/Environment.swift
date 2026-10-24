@@ -34,6 +34,17 @@ public enum PaneBanner: Equatable, Sendable {
     case unreadable(String)
 }
 
+/// Mark or Unmark by Pattern: the dialog offers the recent patterns.
+public struct PatternRequest: Equatable, Sendable {
+    public let marking: Bool
+    public let recent: [String]
+
+    public init(marking: Bool, recent: [String]) {
+        self.marking = marking
+        self.recent = recent
+    }
+}
+
 public struct AlertMessage: Equatable, Sendable {
     public let title: String
     public let detail: String?
@@ -61,6 +72,7 @@ public protocol WindowEffects: AnyObject {
     func chooseDestination(_ request: DestinationRequest) async -> URL?
     func confirmDeleteImmediately(_ urls: [URL]) async -> Bool
     func showMultiRename(_ request: MultiRenameRequest)
+    func askPattern(_ request: PatternRequest) async -> String?
     func showAlert(_ alert: AlertMessage)
     func beep()
 }

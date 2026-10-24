@@ -22,6 +22,8 @@ public struct KeyBindings: Sendable {
             .connectToServer: ["cmd+k"], .openSettings: ["cmd+,"],
             .unmarkAll: ["escape"], .copyTo: ["opt+f5"], .moveTo: ["opt+f6"],
             .multiRename: ["ctrl+m"],
+            .markByPattern: ["cmd+="], .unmarkByPattern: ["cmd+-"], .invertMarks: ["cmd+shift+i"],
+            .markSameExtension: ["opt+cmd+="],
             .deleteImmediately: ["cmd+shift+backspace"], .calculateSize: ["opt+shift+return"], .toggleSinglePane: ["cmd+\\"],
         ]
         table[behavior.backspaceAction == .parent ? .goUp : .goBack, default: []].append("backspace")

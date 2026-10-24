@@ -53,6 +53,18 @@ extension WindowModel {
         case .moveTo: chooseDestination(.move, from: side, suggested: suggestedDestination(from: side))
         case .toggleSinglePane: toggleSinglePane()
         case .multiRename: startMultiRename(side)
+        case .markByPattern, .unmarkByPattern:
+            let marking = command == .markByPattern
+            let request = PatternRequest(marking: marking, recent: session.recentPatterns)
+            track {
+                guard let text = await self.effects.askPattern(request)?.trimmingCharacters(in: .whitespaces), !text.isEmpty
+                else { return }
+                self.session.addRecentPattern(text)
+                let pattern = NamePattern(text)
+                self.mutateTab(side) { marking ? $0.mark(matching: pattern) : $0.unmark(matching: pattern) }
+            }
+        case .invertMarks: mutateTab(side) { $0.invertMarks() }
+        case .markSameExtension: mutateTab(side) { $0.markSameExtension() }
         case .undoMultiRename:
             track {
                 if let message = await self.undoMultiRename() {
