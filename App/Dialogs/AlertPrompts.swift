@@ -75,6 +75,23 @@ final class AlertPrompts: OperationPrompts {
         return await present(alert) == .alertFirstButtonReturn
     }
 
+    func askPattern(_ request: PatternRequest) async -> String? {
+        let alert = NSAlert()
+        alert.messageText = request.marking ? "Mark files matching:" : "Unmark files matching:"
+        alert.informativeText = "Use * and ?, separate patterns with ; — for example *.jpg;*.png"
+        let field = NSComboBox(frame: NSRect(x: 0, y: 0, width: 300, height: 26))
+        field.addItems(withObjectValues: request.recent)
+        field.stringValue = request.recent.first ?? "*.*"
+        field.completes = true
+        field.setAccessibilityIdentifier("pattern.field")
+        alert.accessoryView = field
+        alert.addButton(withTitle: request.marking ? "Mark" : "Unmark")
+        alert.addButton(withTitle: "Cancel")
+        alert.window.initialFirstResponder = field
+        guard await present(alert) == .alertFirstButtonReturn else { return nil }
+        return field.stringValue
+    }
+
     func showAlert(_ message: AlertMessage) {
         let alert = NSAlert()
         alert.messageText = message.title

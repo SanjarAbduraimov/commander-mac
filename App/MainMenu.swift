@@ -25,7 +25,7 @@ final class MainMenu: NSObject, NSMenuItemValidation {
         ]))
         main.addItem(submenu("File", [
             command(.newTab), command(.closeTab), .separator(),
-            command(.newFolder), command(.rename), command(.duplicate), .separator(),
+            command(.newFolder), command(.rename), command(.multiRename), command(.duplicate), .separator(),
             command(.copyToOtherPane), command(.moveToOtherPane), command(.copyTo), command(.moveTo), .separator(),
             command(.moveToTrash), command(.deleteImmediately), .separator(),
             command(.connectToServer),
@@ -39,6 +39,8 @@ final class MainMenu: NSObject, NSMenuItemValidation {
             NSMenuItem(title: "Paste", action: #selector(NSText.paste(_:)), keyEquivalent: "v"),
             NSMenuItem(title: "Select All", action: #selector(NSText.selectAll(_:)), keyEquivalent: "a"),
             .separator(),
+            command(.undoMultiRename), .separator(),
+            command(.markByPattern), command(.unmarkByPattern), command(.invertMarks), command(.markSameExtension),
             command(.unmarkAll), .separator(),
             command(.copyPath), command(.copyName),
         ]))

@@ -11,7 +11,7 @@ extension WindowModel {
 
     private static let targetCommands: Set<Command> = [
         .copyToOtherPane, .moveToOtherPane, .duplicate, .moveToTrash, .copyToClipboard, .cutToClipboard,
-        .copyPath, .copyName, .revealInFinder, .deleteImmediately, .copyTo, .moveTo,
+        .copyPath, .copyName, .revealInFinder, .deleteImmediately, .copyTo, .moveTo, .multiRename,
     ]
 
     public func perform(_ command: Command, scope: CommandScope = .targets) {
@@ -52,6 +52,25 @@ extension WindowModel {
         case .copyTo: chooseDestination(.copy, from: side, suggested: suggestedDestination(from: side))
         case .moveTo: chooseDestination(.move, from: side, suggested: suggestedDestination(from: side))
         case .toggleSinglePane: toggleSinglePane()
+        case .multiRename: startMultiRename(side)
+        case .markByPattern, .unmarkByPattern:
+            let marking = command == .markByPattern
+            let request = PatternRequest(marking: marking, recent: session.recentPatterns)
+            track {
+                guard let text = await self.effects.askPattern(request)?.trimmingCharacters(in: .whitespaces), !text.isEmpty
+                else { return }
+                self.session.addRecentPattern(text)
+                let pattern = NamePattern(text)
+                self.mutateTab(side) { marking ? $0.mark(matching: pattern) : $0.unmark(matching: pattern) }
+            }
+        case .invertMarks: mutateTab(side) { $0.invertMarks() }
+        case .markSameExtension: mutateTab(side) { $0.markSameExtension() }
+        case .undoMultiRename:
+            track {
+                if let message = await self.undoMultiRename() {
+                    self.effects.showAlert(AlertMessage(title: "Multi-Rename was partly undone", detail: message))
+                }
+            }
         }
     }
 
@@ -70,6 +89,7 @@ extension WindowModel {
         case .rename: return tab.cursorItem != nil
         case .switchPane: return !isSinglePane
         case .unmarkAll: return !tab.marked.isEmpty
+        case .undoMultiRename: return canUndoMultiRename
         case .calculateSize: return tab.targets.contains { $0.kind == .directory || $0.kind == .package }
         case .showPackageContents: return tab.cursorItem?.kind == .package
         case .paste: return pasteboard.readFiles() != nil

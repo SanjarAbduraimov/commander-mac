@@ -22,6 +22,7 @@ public struct Session: Codable, Equatable, Sendable {
     public static let currentVersion = 1
     static let recentServerLimit = 10
     static let recentDestinationLimit = 10
+    static let recentPatternLimit = 10
 
     public var version = currentVersion
     public var left: PaneSession
@@ -32,6 +33,7 @@ public struct Session: Codable, Equatable, Sendable {
     public var recentServers: [String] = []
     public var recentDestinations: [URL] = []
     public var singlePane = false
+    public var recentPatterns: [String] = []
 
     public init() {
         let home = FileManager.default.homeDirectoryForCurrentUser
@@ -58,6 +60,7 @@ public struct Session: Codable, Equatable, Sendable {
         recentServers = c.value(.recentServers, default: d.recentServers)
         recentDestinations = c.value(.recentDestinations, default: d.recentDestinations)
         singlePane = c.value(.singlePane, default: d.singlePane)
+        recentPatterns = c.value(.recentPatterns, default: d.recentPatterns)
     }
 
     public mutating func addRecentServer(_ address: String) {
@@ -71,5 +74,11 @@ public struct Session: Codable, Equatable, Sendable {
         recentDestinations.removeAll { $0.standardizedFileURL.path == url.path }
         recentDestinations.insert(url, at: 0)
         recentDestinations = Array(recentDestinations.prefix(Self.recentDestinationLimit))
+    }
+
+    public mutating func addRecentPattern(_ text: String) {
+        recentPatterns.removeAll { $0 == text }
+        recentPatterns.insert(text, at: 0)
+        recentPatterns = Array(recentPatterns.prefix(Self.recentPatternLimit))
     }
 }

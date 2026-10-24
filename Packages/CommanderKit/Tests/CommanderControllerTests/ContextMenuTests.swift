@@ -43,7 +43,7 @@ struct ContextMenuTests {
         let menu = model.contextMenu(.left, row: "b.txt")
 
         #expect(commands(menu) == [
-            .open, nil, .copyToOtherPane, .moveToOtherPane, .copyTo, .moveTo, nil, .rename, .duplicate, .moveToTrash, .deleteImmediately, nil,
+            .open, nil, .copyToOtherPane, .moveToOtherPane, .copyTo, .moveTo, nil, .rename, .multiRename, .duplicate, .moveToTrash, .deleteImmediately, nil,
             .copyPath, .copyName, nil, .revealInFinder, .openInTerminal,
         ])
         #expect(entry(menu, .copyToOtherPane)?.shortcut == "F5")

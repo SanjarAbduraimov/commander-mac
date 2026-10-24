@@ -47,6 +47,12 @@ extension Command {
         case .deleteImmediately: "Delete Immediately…"
         case .calculateSize: "Calculate Size"
         case .toggleSinglePane: "Single Pane"
+        case .multiRename: "Multi-Rename…"
+        case .undoMultiRename: "Undo Multi-Rename"
+        case .markByPattern: "Mark by Pattern…"
+        case .unmarkByPattern: "Unmark by Pattern…"
+        case .invertMarks: "Invert Marks"
+        case .markSameExtension: "Mark Same Extension"
         }
     }
 }

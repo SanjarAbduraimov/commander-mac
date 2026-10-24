@@ -84,6 +84,15 @@ final class AppKitEffects: WindowEffects {
         await prompts.confirmDeleteImmediately(urls)
     }
 
+    func showMultiRename(_ request: MultiRenameRequest) {
+        guard let windowController, let window = windowController.window else { return }
+        MultiRenamePresenter.show(request, model: windowController.model, over: window)
+    }
+
+    func askPattern(_ request: PatternRequest) async -> String? {
+        await prompts.askPattern(request)
+    }
+
     func showAlert(_ alert: AlertMessage) {
         prompts.showAlert(alert)
     }

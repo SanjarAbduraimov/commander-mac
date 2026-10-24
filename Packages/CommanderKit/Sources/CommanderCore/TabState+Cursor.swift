@@ -58,4 +58,23 @@ extension TabState {
     private mutating func mark(from start: Int, to end: Int) {
         for i in min(start, end)...max(start, end) { marked.insert(items[i].name) }
     }
+
+    public mutating func mark(matching pattern: NamePattern) {
+        marked.formUnion(items.filter { pattern.matches($0.name) }.map(\.name))
+    }
+
+    public mutating func unmark(matching pattern: NamePattern) {
+        marked.subtract(items.filter { pattern.matches($0.name) }.map(\.name))
+    }
+
+    public mutating func invertMarks() {
+        marked = Set(items.map(\.name)).subtracting(marked)
+    }
+
+    /// Marks the items sharing the cursor item's extension (letter case ignored); folders only match folders.
+    public mutating func markSameExtension() {
+        guard let current = cursorItem else { return }
+        let ext = current.ext.lowercased()
+        marked.formUnion(items.filter { $0.isNavigable == current.isNavigable && $0.ext.lowercased() == ext }.map(\.name))
+    }
 }

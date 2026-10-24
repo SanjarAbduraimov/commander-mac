@@ -197,7 +197,8 @@ final class SmokeTests: XCTestCase {
         app.typeKey(.return, modifierFlags: [])
         XCTAssertTrue(app.buttons["Create & Copy"].firstMatch.waitForExistence(timeout: 5))
         // The alert sits on the sheet, and accessibility also reports an off-screen copy of its buttons.
-        let create = app.buttons.matching(identifier: "Create & Copy").allElementsBoundByIndex.first { $0.isHittable }
+        // Scoped to the window: the Touch Bar shows a copy of the alert's buttons too.
+        let create = app.windows["Commander"].buttons.matching(identifier: "Create & Copy").allElementsBoundByIndex.first { $0.isHittable }
         XCTAssertNotNil(create)
         create?.click()
 
@@ -363,5 +364,39 @@ final class SmokeTests: XCTestCase {
 
         XCTAssertTrue(waitFor(field, value: path("nested") + "/"))
         app.typeKey(.escape, modifierFlags: [])
+    }
+
+    func testMultiRenameRenamesMarkedFiles() throws {
+        try Data("b".utf8).write(to: root.appendingPathComponent("left/beta.txt"))
+        let app = launch()
+        XCTAssertTrue(app.tables["table.left"].staticTexts["beta"].waitForExistence(timeout: 5))
+
+        app.typeKey("a", modifierFlags: .command)
+        app.typeKey("m", modifierFlags: .control)
+        let mask = app.textFields["multiRename.nameMask"]
+        XCTAssertTrue(mask.waitForExistence(timeout: 5))
+        mask.click()
+        app.typeKey("a", modifierFlags: .command)
+        app.typeText("[N]_x")
+        XCTAssertTrue(app.staticTexts["multiRename.new.alpha.txt"].waitForExistence(timeout: 5))
+        XCTAssertTrue(waitFor(app.staticTexts["multiRename.new.alpha.txt"], value: "alpha_x.txt"))
+        app.buttons["multiRename.rename"].click()
+
+        XCTAssertTrue(app.tables["table.left"].staticTexts["alpha_x"].waitForExistence(timeout: 5))
+        XCTAssertTrue(FileManager.default.fileExists(atPath: root.appendingPathComponent("left/beta_x.txt").path))
+    }
+
+    func testMarkByPattern() throws {
+        try Data("b".utf8).write(to: root.appendingPathComponent("left/beta.md"))
+        let app = launch()
+        XCTAssertTrue(app.tables["table.left"].staticTexts["beta"].waitForExistence(timeout: 5))
+
+        app.typeKey("=", modifierFlags: .command)
+        let field = app.comboBoxes["pattern.field"]
+        XCTAssertTrue(field.waitForExistence(timeout: 5))
+        app.typeText("*.txt")
+        app.typeKey(.return, modifierFlags: [])
+
+        XCTAssertTrue(app.staticTexts["1 marked in left pane"].waitForExistence(timeout: 5))
     }
 }

@@ -89,7 +89,11 @@ extension WindowModel {
             }
         case .newFolder: createFolder(on: side)
         case .rename:
-            if let name = tab.cursorItem?.name { effects.beginRename(side, name: name) }
+            if tab.marked.count > 1 {
+                startMultiRename(side)
+            } else if let name = tab.cursorItem?.name {
+                effects.beginRename(side, name: name)
+            }
         case .copyToClipboard, .cutToClipboard:
             guard !urls.isEmpty else { return }
             pasteboard.writeFiles(urls, cut: command == .cutToClipboard)
