@@ -133,7 +133,9 @@ Open · Open With ▸ (ilovalar, Other…, Always open with this app) · Quick L
 - Qo'shimcha: ilova ikonkasi va o'rnatiladigan Universal DMG (`scripts/make-dmg.sh`).
 - 1B+1C foydalanuvchi tomonidan sinaldi va `main` ga merge qilindi (2026-10-24; `swift test` 289, XCUITest 18).
 - 1C review'dan qolgan mayda kamchiliklar (keyinroq): bitta panelda footer'da "Tab Switch pane" ko'rinadi; Copy To'da nisbiy yo'l `/` ga nisbatan olinadi; "Create & Copy" manba ichida bo'sh papka qoldirishi mumkin; "↑ Enclosing folder" ustida ushlab turish ketma-ket yuqoriga chiqadi va `/` da chiziq qoladi; bir panelda hajm hisobi ikkinchisidagini to'xtatadi; Settings ochiqligida ⌘\ toggle'ni yangilamaydi; uzun yo'lda breadcrumbs spring-loading zanjir bo'lishi mumkin; bitta panelda Tab iste'mol qilinmaydi.
-- Keyingi: 2-bosqich (fayl operatsiyalari) spec'i.
+- 1D bajarildi (2026-10-24, `phase1d-cut-reveal-columns`): ⌘X cut belgisi (✂ + kursiv accent), Finder Services / Dock / `open -a` orqali "Reveal in Commander" (3-bosqichdan 1D ga ko'chdi; faol panelda yangi tab), bitta panelda divider chizig'i tuzatildi, boshqariladigan ustunlar (Name, Ext, Size, Modified, Created, Kind — sarlavhada o'ng tugma, sudrash, saralash), Copy To ichida klaviatura bilan ishlaydigan papka brauzeri.
+- 1E (keyingi): Multi-Rename Tool (TC kabi), belgilangan elementlar uchun kengaytirilgan kontekst menyu. Finder "Use Groups" uslubidagi guruhlash — ixtiyoriy.
+- Keyin: 2-bosqich (fayl operatsiyalari) spec'i.
 
 ### Asboblar — **tasdiqlandi**
 - 2026-10-21 holati: Xcode o'rnatilmagan, faqat Command Line Tools (Swift 6.2.1, x86_64), XcodeGen yo'q.

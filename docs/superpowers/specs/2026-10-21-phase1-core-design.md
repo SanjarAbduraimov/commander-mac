@@ -28,7 +28,8 @@ Total Commander uslubidagi ikki panelli, klaviatura bilan tez ishlaydigan, yengi
 | Amallar navbati, pause, batafsil konflikt dialogi, fayl amallari undo | 2 |
 | Open With ▸, "Always open with", Settings → File associations | 2 |
 | `F4` Edit | 2 |
-| ZIP Compress / Extract, Quick Look (`F3`, Preview), Share ▸ / Telegram, "Open in Commander" (Services, Finder Sync, `NSFileViewer`) | 3 |
+| ZIP Compress / Extract, Quick Look (`F3`, Preview), Share ▸ / Telegram | 3 |
+| "Reveal in Commander" (Services, Dock, `open -a`) | 1D — `docs/superpowers/specs/2026-10-24-phase1d-cut-reveal-columns-design.md` |
 | Get Info, Compare (2 fayl) | 3 |
 | Calculate folder size | 1C — `docs/superpowers/specs/2026-10-23-phase1c-feedback-design.md` |
 | SFTP / FTP | 4 |
