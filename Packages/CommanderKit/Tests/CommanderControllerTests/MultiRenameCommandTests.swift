@@ -119,4 +119,52 @@ struct MultiRenameCommandTests {
         #expect(error != nil)
         #expect(h.exists("left/a.txt") && h.exists("left/b.txt"))
     }
+
+    /// `fileExists` follows symlinks, so a dangling one must still count for undo — both as a source to
+    /// restore and as an occupier that blocks one pair without sinking the rest.
+    private func linkExists(_ path: String) -> Bool {
+        var info = stat()
+        return lstat(path, &info) == 0
+    }
+
+    private func addBrokenSymlink(_ h: FileHarness, at relative: String) async throws {
+        try FileManager.default.createSymbolicLink(
+            atPath: h.tmp.url.appendingPathComponent(relative).path,
+            withDestinationPath: "/nonexistent-commander-test-target")
+        h.model.perform(.reload)
+        await h.model.waitUntilIdle()
+    }
+
+    @Test func undoRestoresDanglingSymlink() async throws {
+        let h = try await FileHarness(files: ["a.txt"])
+        defer { h.tmp.remove() }
+        try await addBrokenSymlink(h, at: "left/link")
+        h.model.mutateTab(.left) { $0.toggleMark(name: "link") }
+        let request = try await request(h)
+
+        let error = await h.model.applyMultiRename(rows(request, mask: "[N]_x"), in: request)
+        #expect(error == nil)
+        #expect(linkExists(h.left.appendingPathComponent("link_x").path))
+
+        let message = await h.model.undoMultiRename()
+
+        #expect(message == nil)
+        #expect(linkExists(h.left.appendingPathComponent("link").path))
+        #expect(!linkExists(h.left.appendingPathComponent("link_x").path))
+    }
+
+    @Test func undoSkipsPairBlockedByDanglingSymlink() async throws {
+        let h = try await FileHarness()
+        defer { h.tmp.remove() }
+        markAll(h)
+        let request = try await request(h)
+        _ = await h.model.applyMultiRename(rows(request, mask: "[N]_x"), in: request)
+        try await addBrokenSymlink(h, at: "left/a.txt")
+
+        let message = await h.model.undoMultiRename()
+
+        #expect(message == "1 item could not be restored.")
+        #expect(h.exists("left/b.txt"))
+        #expect(h.exists("left/a_x.txt"))
+    }
 }

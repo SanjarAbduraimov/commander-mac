@@ -1,5 +1,6 @@
 import CommanderCore
 import CommanderFileSystem
+import Darwin
 import Foundation
 
 public struct MultiRenameRequest: Equatable, Sendable {
@@ -55,8 +56,9 @@ extension WindowModel {
     public func undoMultiRename() async -> String? {
         guard let pairs = multiRenameUndo else { return nil }
         multiRenameUndo = nil
-        let manager = FileManager.default
-        let possible = pairs.filter { manager.fileExists(atPath: $0.from.path) && !manager.fileExists(atPath: $0.to.path) }
+        // lstat, not fileExists: the latter follows symlinks, so a dangling one would look missing both as a
+        // source to restore and as an occupier blocking a restore.
+        let possible = pairs.filter { Self.isPresent($0.from) && !Self.isPresent($0.to) }
         var failed = pairs.count - possible.count
         if !possible.isEmpty {
             do {
@@ -68,6 +70,11 @@ extension WindowModel {
         if let folder = pairs.first?.to.deletingLastPathComponent() { await reloadShowing(folder) }
         guard failed > 0 else { return nil }
         return failed == 1 ? "1 item could not be restored." : "\(failed) items could not be restored."
+    }
+
+    private static func isPresent(_ url: URL) -> Bool {
+        var info = stat()
+        return lstat(url.path, &info) == 0
     }
 
     private func reloadShowing(_ folder: URL) async {
