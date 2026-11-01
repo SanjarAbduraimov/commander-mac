@@ -138,6 +138,7 @@ Open · Open With ▸ (ilovalar, Other…, Always open with this app) · Quick L
 - 1E bajarildi (2026-10-24, `phase1e-multi-rename`): Multi-Rename Tool (⌃M; F2 bir nechta belgilanganda) — nom/ext maskalari ([N], [Nx-y], [E], [C], [P], [YMD], [hms]), qidirish/almashtirish (regex), harf, hisoblagich, oldindan ko'rish va konfliktlar, vaqtinchalik nomlar orqali xavfsiz bajarish va rollback, Undo; Mark/Unmark by Pattern (⌘= / ⌘−), Invert Marks (⌘⇧I), Mark Same Extension (⌥⌘=).
 - 1E foydalanuvchi tomonidan sinaldi va `main` ga merge qilindi (2026-10-24; `swift test` 343). Sinov paytida tuzatildi: drag rasmi (bitta tayyor rasm: ikonka + nom + elementlar soni badge'i) va fon yangilanishida scroll kursorga sakrashi. 1E review'i keyinga qoldirildi.
 - 1F (keyingi): kontekst menyu — Cut/Copy/Paste, New File, Alias/Symlink, ZIP, Open With, Quick Look, Get Info, Share, Finder teglari (Open With 2-bosqichdan, ZIP/Quick Look/Share/Get Info 3-bosqichdan ko'chadi). Finder "Use Groups" guruhlash — ixtiyoriy.
+- 1F hajmi (2026-10-24, B): ro'yxatdagi hammasi bitta 1F da. Qo'shimcha: TC Quick View kabi media preview (rasm/video panel ichida, kursor yurganda avtomatik yangilanadi) — sabab: macOS'da rasm/videoni ochish sekin, oxirgi yuklangan mediani tez topish kerak.
 - Keyin: 2-bosqich (fayl operatsiyalari) spec'i.
 
 ### Asboblar — **tasdiqlandi**
