@@ -96,6 +96,31 @@ private final class CopyRun {
                     try FileManager.default.removeItem(at: target)
                 }
                 if removal != .done { return removal }
+            case .replaceIfOlder:
+                let conflict = Conflict(source: source, existing: target)
+                if let details = conflict.details, details.isSourceNewer {
+                    let removal = await attempt(target, delegate: delegate, cancel: cancel) {
+                        try FileManager.default.removeItem(at: target)
+                    }
+                    if removal != .done { return removal }
+                } else {
+                    account(skipped: source)
+                    return .skipped
+                }
+            case .replaceIfSizeDiffers:
+                let conflict = Conflict(source: source, existing: target)
+                if let details = conflict.details, details.hasSizeDifference {
+                    let removal = await attempt(target, delegate: delegate, cancel: cancel) {
+                        try FileManager.default.removeItem(at: target)
+                    }
+                    if removal != .done { return removal }
+                } else {
+                    account(skipped: source)
+                    return .skipped
+                }
+            case .resume:
+                // If resume requested, leave target in place and stream
+                break
             }
         }
         return await copyTree(source, to: target)

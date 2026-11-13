@@ -109,6 +109,41 @@ struct CopyOperationTests {
         #expect(try read(tmp.url.appendingPathComponent("dst/a 2.txt")) == "new")
     }
 
+    @Test func conflictReplaceIfOlder() async throws {
+        let tmp = try TempDir()
+        defer { tmp.remove() }
+        let src = tmp.url.appendingPathComponent("src/a.txt")
+        let dst = tmp.url.appendingPathComponent("dst/a.txt")
+        try write("new-content", to: src)
+        try write("old-content", to: dst)
+
+        let olderDate = Date(timeIntervalSince1970: 1_500_000_000)
+        let newerDate = Date(timeIntervalSince1970: 1_700_000_000)
+        try FileManager.default.setAttributes([.modificationDate: newerDate], ofItemAtPath: src.path)
+        try FileManager.default.setAttributes([.modificationDate: olderDate], ofItemAtPath: dst.path)
+
+        let delegate = RecordingDelegate(resolutions: [ConflictResolution(decision: .replaceIfOlder)])
+        let outcome = await CopyOperation(sources: [src], destination: tmp.url.appendingPathComponent("dst"), delegate: delegate).run()
+
+        #expect(outcome == .completed)
+        #expect(try read(dst) == "new-content")
+    }
+
+    @Test func conflictReplaceIfSizeDiffers() async throws {
+        let tmp = try TempDir()
+        defer { tmp.remove() }
+        let src = tmp.url.appendingPathComponent("src/a.txt")
+        let dst = tmp.url.appendingPathComponent("dst/a.txt")
+        try write("different-size-source", to: src)
+        try write("short", to: dst)
+
+        let delegate = RecordingDelegate(resolutions: [ConflictResolution(decision: .replaceIfSizeDiffers)])
+        let outcome = await CopyOperation(sources: [src], destination: tmp.url.appendingPathComponent("dst"), delegate: delegate).run()
+
+        #expect(outcome == .completed)
+        #expect(try read(dst) == "different-size-source")
+    }
+
     @Test func applyToAllAsksOnce() async throws {
         let tmp = try TempDir()
         defer { tmp.remove() }

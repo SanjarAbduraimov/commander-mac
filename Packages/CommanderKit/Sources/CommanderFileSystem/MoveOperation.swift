@@ -90,6 +90,34 @@ public struct MoveOperation: Sendable {
                     }
                     if removal == .cancelAll { return .cancelAll }
                     skip = removal == .skipped
+                case .replaceIfOlder:
+                    let conflict = Conflict(source: source, existing: target)
+                    if let details = conflict.details, details.isSourceNewer {
+                        let removal = await attempt(target, delegate: delegate, cancel: cancel) {
+                            try FileManager.default.removeItem(at: target)
+                        }
+                        if removal == .cancelAll { return .cancelAll }
+                        skip = removal == .skipped
+                    } else {
+                        skip = true
+                    }
+                case .replaceIfSizeDiffers:
+                    let conflict = Conflict(source: source, existing: target)
+                    if let details = conflict.details, details.hasSizeDifference {
+                        let removal = await attempt(target, delegate: delegate, cancel: cancel) {
+                            try FileManager.default.removeItem(at: target)
+                        }
+                        if removal == .cancelAll { return .cancelAll }
+                        skip = removal == .skipped
+                    } else {
+                        skip = true
+                    }
+                case .resume:
+                    let removal = await attempt(target, delegate: delegate, cancel: cancel) {
+                        try FileManager.default.removeItem(at: target)
+                    }
+                    if removal == .cancelAll { return .cancelAll }
+                    skip = removal == .skipped
                 }
             }
 

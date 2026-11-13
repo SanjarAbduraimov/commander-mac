@@ -8,6 +8,10 @@ final class AlertPrompts: OperationPrompts {
     weak var window: NSWindow?
 
     func resolve(_ conflict: Conflict) async -> ConflictResolution {
+        if let window {
+            return await ConflictPresenter.show(for: conflict, over: window)
+        }
+
         let alert = NSAlert()
         alert.messageText = "An item named “\(conflict.existing.lastPathComponent)” already exists in this location."
         alert.informativeText = "Do you want to replace it?"

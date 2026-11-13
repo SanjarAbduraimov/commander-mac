@@ -24,10 +24,35 @@ public struct Conflict: Sendable {
         self.source = source
         self.existing = existing
     }
+
+    public var details: ConflictDetails? {
+        guard let srcAttrs = try? FileManager.default.attributesOfItem(atPath: source.path),
+              let dstAttrs = try? FileManager.default.attributesOfItem(atPath: existing.path) else {
+            return nil
+        }
+        let srcSize = (srcAttrs[.size] as? NSNumber)?.int64Value ?? 0
+        let dstSize = (dstAttrs[.size] as? NSNumber)?.int64Value ?? 0
+        let srcMod = (srcAttrs[.modificationDate] as? Date) ?? Date()
+        let dstMod = (dstAttrs[.modificationDate] as? Date) ?? Date()
+
+        return ConflictDetails(
+            sourceURL: source,
+            targetURL: existing,
+            sourceSize: srcSize,
+            targetSize: dstSize,
+            sourceModified: srcMod,
+            targetModified: dstMod
+        )
+    }
 }
 
-public enum ConflictDecision: Sendable {
-    case replace, skip, keepBoth
+public enum ConflictDecision: String, Sendable, Codable {
+    case replace
+    case replaceIfOlder
+    case replaceIfSizeDiffers
+    case resume
+    case skip
+    case keepBoth
 }
 
 public struct ConflictResolution: Sendable {
