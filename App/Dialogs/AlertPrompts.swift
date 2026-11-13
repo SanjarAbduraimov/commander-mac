@@ -49,6 +49,7 @@ final class AlertPrompts: OperationPrompts {
         alert.informativeText = "They will be deleted immediately. You can't undo this action.\n\n\(names)\(more)"
         let delete = alert.addButton(withTitle: "Delete")
         delete.hasDestructiveAction = true
+        delete.keyEquivalent = "\r"
         let cancel = alert.addButton(withTitle: "Cancel")
         cancel.keyEquivalent = "\u{1b}"
         return await present(alert) == .alertFirstButtonReturn
@@ -69,9 +70,9 @@ final class AlertPrompts: OperationPrompts {
         alert.informativeText = detail
         let delete = alert.addButton(withTitle: "Delete")
         delete.hasDestructiveAction = true
-        delete.keyEquivalent = ""
+        delete.keyEquivalent = "\r"
         let cancel = alert.addButton(withTitle: "Cancel")
-        cancel.keyEquivalent = "\r"
+        cancel.keyEquivalent = "\u{1b}"
         return await present(alert) == .alertFirstButtonReturn
     }
 

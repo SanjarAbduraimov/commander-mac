@@ -64,7 +64,11 @@ public protocol WindowEffects: AnyObject {
     func stateDidChange(_ change: StateChange)
     func focusPathField(_ side: PaneSide)
     func beginRename(_ side: PaneSide, name: String)
-    func open(_ url: URL)
+    func open(_ url: URL, withApp appURL: URL?)
+    func openWithAppPrompt(_ urls: [URL])
+    func quickLook(_ urls: [URL])
+    func showNewFilePrompt(_ side: PaneSide)
+    func pasteImage(_ side: PaneSide)
     func revealInFinder(_ urls: [URL])
     func openInTerminal(_ directory: URL)
     func showSettings()
@@ -75,6 +79,12 @@ public protocol WindowEffects: AnyObject {
     func askPattern(_ request: PatternRequest) async -> String?
     func showAlert(_ alert: AlertMessage)
     func beep()
+}
+
+extension WindowEffects {
+    public func open(_ url: URL) {
+        open(url, withApp: nil)
+    }
 }
 
 public struct WindowEnvironment: Sendable {

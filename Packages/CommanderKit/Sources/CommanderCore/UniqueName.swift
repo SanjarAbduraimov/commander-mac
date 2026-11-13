@@ -13,6 +13,11 @@ public enum UniqueName {
         firstFree(exists) { $0 == 0 ? "untitled folder" : "untitled folder \($0 + 1)" }
     }
 
+    public static func newFile(_ baseName: String = "Untitled.txt", exists: (String) -> Bool) -> String {
+        let (stem, ext) = split(baseName)
+        return firstFree(exists) { $0 == 0 ? "\(stem)\(ext)" : "\(stem) \($0 + 1)\(ext)" }
+    }
+
     private static func firstFree(_ exists: (String) -> Bool, _ candidate: (Int) -> String) -> String {
         var attempt = 0
         while exists(candidate(attempt)) { attempt += 1 }

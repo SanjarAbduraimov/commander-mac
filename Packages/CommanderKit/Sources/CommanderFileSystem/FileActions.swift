@@ -15,6 +15,15 @@ public enum FileActions {
         return folder
     }
 
+    public static func createFile(named requestedName: String = "Untitled.txt", in directory: URL) throws -> URL {
+        let name = UniqueName.newFile(requestedName) { pathExists(directory.appendingPathComponent($0)) }
+        let file = directory.appendingPathComponent(name, isDirectory: false)
+        guard FileManager.default.createFile(atPath: file.path, contents: Data(), attributes: nil) else {
+            throw RenameError.failed("Could not create file at \(file.path)")
+        }
+        return file
+    }
+
     public static func rename(_ url: URL, to newName: String) throws(RenameError) -> URL {
         let name = newName.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !name.isEmpty else { throw .empty }

@@ -43,7 +43,7 @@ struct ContextMenuTests {
         let menu = model.contextMenu(.left, row: "b.txt")
 
         #expect(commands(menu) == [
-            .open, nil, .copyToOtherPane, .moveToOtherPane, .copyTo, .moveTo, nil, .rename, .multiRename, .duplicate, .moveToTrash, .deleteImmediately, nil,
+            .open, .openWithApp, .quickLook, nil, .copyToOtherPane, .moveToOtherPane, .copyTo, .moveTo, nil, .rename, .multiRename, .duplicate, .moveToTrash, .deleteImmediately, nil,
             .copyPath, .copyName, nil, .revealInFinder, .openInTerminal,
         ])
         #expect(entry(menu, .copyToOtherPane)?.shortcut == "F5")
@@ -52,6 +52,8 @@ struct ContextMenuTests {
         #expect(entry(menu, .rename)?.shortcut == "F2")
         #expect(entry(menu, .duplicate)?.shortcut == "⌘D")
         #expect(entry(menu, .moveToTrash)?.shortcut == "⌘⌫")
+        #expect(entry(menu, .openWithApp)?.shortcut == "⌥↩")
+        #expect(entry(menu, .quickLook)?.shortcut == "F3")
         #expect(entry(menu, .copyPath)?.shortcut == nil)
         #expect(entry(menu, .copyName)?.title == "Copy Name")
         #expect(entry(menu, .openInTerminal)?.scope == .targets)
@@ -72,15 +74,16 @@ struct ContextMenuTests {
         let model = harness.model
 
         let menu = model.contextMenu(.left, row: nil)
-        #expect(commands(menu) == [.newFolder, .toggleHiddenFiles, nil, .openInTerminal])
+        #expect(commands(menu) == [.newFolder, .newFile, .pasteImage, .toggleHiddenFiles, nil, .openInTerminal])
         #expect(entry(menu, .toggleHiddenFiles)?.title == "Show Hidden Files")
         #expect(entry(menu, .openInTerminal)?.scope == .folder)
         #expect(entry(menu, .newFolder)?.shortcut == "F7")
+        #expect(entry(menu, .newFile)?.shortcut == "⌘N")
 
         harness.pasteboard.writeFiles([root.appendingPathComponent("b.txt")], cut: false)
         model.perform(.toggleHiddenFiles)
         let afterToggle = model.contextMenu(.left, row: nil)
-        #expect(commands(afterToggle) == [.newFolder, .paste, .toggleHiddenFiles, nil, .openInTerminal])
+        #expect(commands(afterToggle) == [.newFolder, .newFile, .paste, .pasteImage, .toggleHiddenFiles, nil, .openInTerminal])
         #expect(entry(afterToggle, .toggleHiddenFiles)?.title == "Hide Hidden Files")
     }
 

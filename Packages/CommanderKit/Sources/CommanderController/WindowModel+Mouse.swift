@@ -62,7 +62,7 @@ extension WindowModel {
         let packageEntry: [MenuItemModel] = targets.count == 1 && targets[0].kind == .package ? [entry(.showPackageContents)] : []
         let sizeEntry: [MenuItemModel] = isEnabled(.calculateSize, context: .table) ? [entry(.calculateSize)] : []
         return [
-            entry(.open), .separator,
+            entry(.open), entry(.openWithApp), entry(.quickLook), .separator,
             entry(.copyToOtherPane), entry(.moveToOtherPane), entry(.copyTo), entry(.moveTo), .separator,
             entry(.rename), entry(.multiRename), entry(.duplicate), entry(.moveToTrash), entry(.deleteImmediately), .separator,
             entry(.copyPath), entry(.copyName),
@@ -72,7 +72,8 @@ extension WindowModel {
     private func emptySpaceMenu(_ side: PaneSide) -> [MenuItemModel] {
         let pasteEntry: [MenuItemModel] = isEnabled(.paste, context: .table) ? [entry(.paste)] : []
         let hiddenTitle = tab(side).showHidden ? "Hide Hidden Files" : "Show Hidden Files"
-        return [entry(.newFolder)] + pasteEntry + [
+        return [entry(.newFolder), entry(.newFile)] + pasteEntry + [
+            entry(.pasteImage),
             entry(.toggleHiddenFiles, title: hiddenTitle), .separator,
             entry(.openInTerminal, scope: .folder),
         ]

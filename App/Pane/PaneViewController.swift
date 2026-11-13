@@ -114,14 +114,41 @@ final class PaneViewController: NSViewController, NSTextFieldDelegate, NSDraggin
         statusLabel.textColor = .secondaryLabelColor
         statusLabel.setAccessibilityIdentifier("status.\(side.rawValue)")
 
-        let pathRow = padded(pathField, height: 24)
+        let newItemButton = NewItemButton(frame: .zero)
+        newItemButton.translatesAutoresizingMaskIntoConstraints = false
+        newItemButton.onNewFolder = { [model, side] in
+            model.activate(side)
+            model.perform(.newFolder)
+        }
+        newItemButton.onNewFile = { [model, side] in
+            model.activate(side)
+            model.perform(.newFile)
+        }
+        newItemButton.onNewTextDocument = { [model, side] in
+            model.activate(side)
+            model.createFile(on: side, named: "Document.txt")
+        }
+        newItemButton.onNewMarkdownDocument = { [model, side] in
+            model.activate(side)
+            model.createFile(on: side, named: "Readme.md")
+        }
+        newItemButton.onPasteImage = { [model, side] in
+            model.activate(side)
+            model.perform(.pasteImage)
+        }
+
+        let pathRow = padded(pathField, height: 26)
         breadcrumbs.translatesAutoresizingMaskIntoConstraints = false
         pathRow.addSubview(breadcrumbs)
+        pathRow.addSubview(newItemButton)
         NSLayoutConstraint.activate([
             breadcrumbs.leadingAnchor.constraint(equalTo: pathRow.leadingAnchor, constant: 6),
-            breadcrumbs.trailingAnchor.constraint(equalTo: pathRow.trailingAnchor, constant: -6),
+            breadcrumbs.trailingAnchor.constraint(lessThanOrEqualTo: newItemButton.leadingAnchor, constant: -6),
             breadcrumbs.topAnchor.constraint(equalTo: pathRow.topAnchor),
             breadcrumbs.bottomAnchor.constraint(equalTo: pathRow.bottomAnchor),
+
+            newItemButton.trailingAnchor.constraint(equalTo: pathRow.trailingAnchor, constant: -6),
+            newItemButton.centerYAnchor.constraint(equalTo: pathRow.centerYAnchor),
         ])
         let statusRow = padded(statusLabel, height: 27)
         let stack = NSStackView(views: [activeLine, tabBar, pathRow, banner, scrollView, statusRow])

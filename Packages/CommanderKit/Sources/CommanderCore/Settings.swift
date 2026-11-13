@@ -8,6 +8,22 @@ public enum Theme: String, Codable, Sendable {
     case system, light, dark
 }
 
+public struct ClipboardSettings: Codable, Equatable, Sendable {
+    public var confirmPasteImage: Bool = true
+    public var defaultImageFormat: String = "png"
+    public var imageNamingPattern: String = "Image_yyyy-MM-dd_HHmmss"
+
+    public init() {}
+
+    public init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        let d = ClipboardSettings()
+        confirmPasteImage = c.value(.confirmPasteImage, default: d.confirmPasteImage)
+        defaultImageFormat = c.value(.defaultImageFormat, default: d.defaultImageFormat)
+        imageNamingPattern = c.value(.imageNamingPattern, default: d.imageNamingPattern)
+    }
+}
+
 public struct BehaviorSettings: Codable, Equatable, Sendable {
     public var backspaceAction: BackspaceAction = .parent
     public var spaceAdvances = true
@@ -94,13 +110,15 @@ public struct AppSettings: Codable, Equatable, Sendable {
     public var version = currentVersion
     public var appearance = AppearanceSettings()
     public var behavior = BehaviorSettings()
+    public var clipboard = ClipboardSettings()
+    public var fileAssociations: [String: String] = [:]
     /// Only the user's changes; defaults live in `KeyBindings.defaults(for:)`.
     public var shortcutOverrides: [Command: [KeyChord]] = [:]
 
     public init() {}
 
     private enum CodingKeys: String, CodingKey {
-        case version, appearance, behavior, shortcutOverrides
+        case version, appearance, behavior, clipboard, fileAssociations, shortcutOverrides
     }
 
     public init(from decoder: Decoder) throws {
@@ -108,6 +126,8 @@ public struct AppSettings: Codable, Equatable, Sendable {
         version = c.value(.version, default: Self.currentVersion)
         appearance = c.value(.appearance, default: AppearanceSettings())
         behavior = c.value(.behavior, default: BehaviorSettings())
+        clipboard = c.value(.clipboard, default: ClipboardSettings())
+        fileAssociations = c.value(.fileAssociations, default: [String: String]())
         // Stored by command name so overrides for commands removed in a later version are dropped, not fatal.
         let raw = c.value(.shortcutOverrides, default: [String: [String]]())
         shortcutOverrides = Dictionary(uniqueKeysWithValues: raw.compactMap { name, chords in
@@ -120,8 +140,28 @@ public struct AppSettings: Codable, Equatable, Sendable {
         try c.encode(version, forKey: .version)
         try c.encode(appearance, forKey: .appearance)
         try c.encode(behavior, forKey: .behavior)
+        try c.encode(clipboard, forKey: .clipboard)
+        try c.encode(fileAssociations, forKey: .fileAssociations)
         let raw = Dictionary(uniqueKeysWithValues: shortcutOverrides.map { ($0.key.rawValue, $0.value.map(\.description)) })
         try c.encode(raw, forKey: .shortcutOverrides)
+    }
+
+    /// Returns the assigned app path or bundle identifier for a given file extension, if configured.
+    public func appForExtension(_ ext: String) -> String? {
+        fileAssociations[ext.lowercased().trimmingCharacters(in: CharacterSet(charactersIn: "."))]
+    }
+
+    /// Associates an extension (e.g. "png" or ".png") with an application path or bundle identifier.
+    public mutating func setApp(_ appPathOrBundleID: String, forExtension ext: String) {
+        let cleanExt = ext.lowercased().trimmingCharacters(in: CharacterSet(charactersIn: "."))
+        guard !cleanExt.isEmpty else { return }
+        fileAssociations[cleanExt] = appPathOrBundleID
+    }
+
+    /// Removes association for an extension.
+    public mutating func removeApp(forExtension ext: String) {
+        let cleanExt = ext.lowercased().trimmingCharacters(in: CharacterSet(charactersIn: "."))
+        fileAssociations.removeValue(forKey: cleanExt)
     }
 }
 

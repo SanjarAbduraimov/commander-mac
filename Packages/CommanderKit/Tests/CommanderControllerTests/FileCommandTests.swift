@@ -150,4 +150,42 @@ struct FileCommandTests {
         await h.model.waitUntilIdle()
         #expect(h.model.tab(.left).path.lastPathComponent == "X.app")
     }
+
+    @Test func newFileCreatesThenBeginsRename() async throws {
+        let h = try await FileHarness()
+        defer { h.tmp.remove() }
+
+        h.model.perform(.newFile)
+        await h.model.waitUntilIdle()
+
+        #expect(h.exists("left/Untitled.txt"))
+        #expect(h.harness.effects.renames.map(\.name).contains("Untitled.txt"))
+        #expect(h.model.tab(.left).cursor == "Untitled.txt")
+    }
+
+    @Test func openRespectsFileAssociations() async throws {
+        var settings = AppSettings()
+        settings.setApp("/Applications/TextEdit.app", forExtension: "txt")
+        let h = try await FileHarness(files: ["note.txt"], settings: settings)
+        defer { h.tmp.remove() }
+
+        h.model.mutateTab(.left) { $0.setCursor(name: "note.txt") }
+        h.model.perform(.open)
+
+        #expect(h.harness.effects.openedWithApp.count == 1)
+        #expect(h.harness.effects.openedWithApp.first?.url.lastPathComponent == "note.txt")
+        #expect(h.harness.effects.openedWithApp.first?.appURL?.path == "/Applications/TextEdit.app")
+    }
+
+    @Test func openWithAppAndQuickLookTriggerEffects() async throws {
+        let h = try await FileHarness(files: ["photo.png"])
+        defer { h.tmp.remove() }
+
+        h.model.mutateTab(.left) { $0.setCursor(name: "photo.png") }
+        h.model.perform(.openWithApp)
+        h.model.perform(.quickLook)
+
+        #expect(h.harness.effects.openWithAppPrompts.first?.map(\.lastPathComponent) == ["photo.png"])
+        #expect(h.harness.effects.quickLooks.first?.map(\.lastPathComponent) == ["photo.png"])
+    }
 }

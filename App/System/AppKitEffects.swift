@@ -47,8 +47,29 @@ final class AppKitEffects: WindowEffects {
         windowController?.pane(side).beginRename(name)
     }
 
-    func open(_ url: URL) {
-        NSWorkspace.shared.open(url)
+    func open(_ url: URL, withApp appURL: URL?) {
+        if let appURL {
+            NSWorkspace.shared.open([url], withApplicationAt: appURL, configuration: NSWorkspace.OpenConfiguration())
+        } else {
+            NSWorkspace.shared.open(url)
+        }
+    }
+
+    func openWithAppPrompt(_ urls: [URL]) {
+        windowController?.showAppChooser(for: urls)
+    }
+
+    func quickLook(_ urls: [URL]) {
+        windowController?.showQuickLook(for: urls)
+    }
+
+    func showNewFilePrompt(_ side: PaneSide) {
+        guard let model = windowController?.model else { return }
+        model.createFile(on: side)
+    }
+
+    func pasteImage(_ side: PaneSide) {
+        windowController?.pasteImageFromClipboard(side: side)
     }
 
     func revealInFinder(_ urls: [URL]) {
@@ -62,7 +83,7 @@ final class AppKitEffects: WindowEffects {
 
     func showSettings() {
         guard let model = windowController?.model else { return }
-        SettingsWindowController.show(model: model)
+        SettingsWindowController.show(model: model, over: windowController?.window)
     }
 
     static func applyTheme(_ theme: Theme) {

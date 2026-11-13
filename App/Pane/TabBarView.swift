@@ -39,6 +39,24 @@ final class TabBarView: NSView {
         stack.arrangedSubviews.forEach { $0.removeFromSuperview() }
 
         for (index, title) in titles.enumerated() {
+            let isActive = index == active
+            let tabContainer = NSStackView()
+            tabContainer.orientation = .horizontal
+            tabContainer.spacing = 4
+            tabContainer.alignment = .centerY
+            tabContainer.wantsLayer = true
+            tabContainer.layer?.cornerRadius = 6
+            tabContainer.edgeInsets = NSEdgeInsets(top: 2, left: 8, bottom: 2, right: 6)
+
+            if isActive {
+                tabContainer.layer?.backgroundColor = NSColor.controlBackgroundColor.cgColor
+                tabContainer.layer?.borderWidth = 1
+                tabContainer.layer?.borderColor = NSColor.separatorColor.cgColor
+            } else {
+                tabContainer.layer?.backgroundColor = NSColor.clear.cgColor
+                tabContainer.layer?.borderWidth = 0
+            }
+
             let tab = DropButton(frame: .zero)
             tab.title = title
             tab.target = self
@@ -47,24 +65,46 @@ final class TabBarView: NSView {
             tab.model = model
             tab.destination = { [weak self] in self?.dropDestination?(index) }
             tab.onSpringLoad = { [weak self] in self?.onSpringLoad?(index) }
-            tab.bezelStyle = .recessed
-            tab.setButtonType(.pushOnPushOff)
-            tab.state = index == active ? .on : .off
+            tab.isBordered = false
+            tab.font = isActive ? NSFont.systemFont(ofSize: 12, weight: .semibold) : NSFont.systemFont(ofSize: 12)
+            tab.contentTintColor = isActive ? NSColor.labelColor : NSColor.secondaryLabelColor
             tab.lineBreakMode = .byTruncatingMiddle
-            tab.widthAnchor.constraint(lessThanOrEqualToConstant: 160).isActive = true
-            stack.addArrangedSubview(tab)
+            tab.widthAnchor.constraint(lessThanOrEqualToConstant: 140).isActive = true
+            tabContainer.addArrangedSubview(tab)
 
             if titles.count > 1 {
-                let close = NSButton(title: "×", target: self, action: #selector(closeTab(_:)))
+                let close = NSButton(frame: .zero)
+                if let closeImg = NSImage(systemSymbolName: "xmark", accessibilityDescription: "Close \(title)") {
+                    let config = NSImage.SymbolConfiguration(pointSize: 9, weight: .semibold)
+                    close.image = closeImg.withSymbolConfiguration(config)
+                } else {
+                    close.title = "×"
+                }
+                close.target = self
+                close.action = #selector(closeTab(_:))
                 close.tag = index
                 close.isBordered = false
-                close.setAccessibilityLabel("Close \(title)")
-                stack.addArrangedSubview(close)
+                close.contentTintColor = NSColor.tertiaryLabelColor
+                close.widthAnchor.constraint(equalToConstant: 14).isActive = true
+                close.heightAnchor.constraint(equalToConstant: 14).isActive = true
+                tabContainer.addArrangedSubview(close)
             }
+
+            stack.addArrangedSubview(tabContainer)
         }
-        let add = NSButton(title: "+", target: self, action: #selector(addTab))
+        let add = NSButton(frame: .zero)
+        if let plusImg = NSImage(systemSymbolName: "plus", accessibilityDescription: "New Tab") {
+            let config = NSImage.SymbolConfiguration(pointSize: 11, weight: .medium)
+            add.image = plusImg.withSymbolConfiguration(config)
+        } else {
+            add.title = "+"
+        }
+        add.target = self
+        add.action = #selector(addTab)
         add.isBordered = false
-        add.setAccessibilityLabel("New Tab")
+        add.contentTintColor = NSColor.secondaryLabelColor
+        add.widthAnchor.constraint(equalToConstant: 24).isActive = true
+        add.heightAnchor.constraint(equalToConstant: 24).isActive = true
         stack.addArrangedSubview(add)
     }
 

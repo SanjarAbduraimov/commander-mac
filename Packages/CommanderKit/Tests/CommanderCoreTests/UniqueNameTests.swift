@@ -34,4 +34,11 @@ struct UniqueNameTests {
         #expect(UniqueName.newFolder(exists: taken("untitled folder")) == "untitled folder 2")
         #expect(UniqueName.newFolder(exists: taken("untitled folder", "untitled folder 2")) == "untitled folder 3")
     }
+
+    @Test func newFileName() {
+        #expect(UniqueName.newFile(exists: taken()) == "Untitled.txt")
+        #expect(UniqueName.newFile(exists: taken("Untitled.txt")) == "Untitled 2.txt")
+        #expect(UniqueName.newFile(exists: taken("Untitled.txt", "Untitled 2.txt")) == "Untitled 3.txt")
+        #expect(UniqueName.newFile("Document.md", exists: taken("Document.md")) == "Document 2.md")
+    }
 }

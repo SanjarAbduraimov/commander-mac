@@ -86,7 +86,12 @@ final class RecordingEffects: WindowEffects {
     private(set) var changes: [StateChange] = []
     private(set) var focusedPathFields: [PaneSide] = []
     private(set) var renames: [(side: PaneSide, name: String)] = []
-    private(set) var opened: [URL] = []
+    var opened: [URL] { openedWithApp.map(\.url) }
+    private(set) var openedWithApp: [(url: URL, appURL: URL?)] = []
+    private(set) var openWithAppPrompts: [[URL]] = []
+    private(set) var quickLooks: [[URL]] = []
+    private(set) var newFilePrompts: [PaneSide] = []
+    private(set) var pasteImages: [PaneSide] = []
     private(set) var revealed: [[URL]] = []
     private(set) var terminals: [URL] = []
     private(set) var settingsShown = 0
@@ -98,7 +103,11 @@ final class RecordingEffects: WindowEffects {
     func stateDidChange(_ change: StateChange) { changes.append(change) }
     func focusPathField(_ side: PaneSide) { focusedPathFields.append(side) }
     func beginRename(_ side: PaneSide, name: String) { renames.append((side, name)) }
-    func open(_ url: URL) { opened.append(url) }
+    func open(_ url: URL, withApp appURL: URL?) { openedWithApp.append((url, appURL)) }
+    func openWithAppPrompt(_ urls: [URL]) { openWithAppPrompts.append(urls) }
+    func quickLook(_ urls: [URL]) { quickLooks.append(urls) }
+    func showNewFilePrompt(_ side: PaneSide) { newFilePrompts.append(side) }
+    func pasteImage(_ side: PaneSide) { pasteImages.append(side) }
     func revealInFinder(_ urls: [URL]) { revealed.append(urls) }
     func openInTerminal(_ directory: URL) { terminals.append(directory) }
     func showSettings() { settingsShown += 1 }

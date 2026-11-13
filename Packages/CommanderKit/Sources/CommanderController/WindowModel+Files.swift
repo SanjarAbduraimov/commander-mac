@@ -88,6 +88,14 @@ extension WindowModel {
                 self.mutateTab(side) { $0.clearMarks() }
             }
         case .newFolder: createFolder(on: side)
+        case .newFile: createFile(on: side)
+        case .pasteImage: effects.pasteImage(side)
+        case .openWithApp:
+            guard !urls.isEmpty else { return }
+            effects.openWithAppPrompt(urls)
+        case .quickLook:
+            guard !urls.isEmpty else { return }
+            effects.quickLook(urls)
         case .rename:
             if tab.marked.count > 1 {
                 startMultiRename(side)
@@ -169,6 +177,23 @@ extension WindowModel {
                 self.effects.beginRename(side, name: folder.lastPathComponent)
             } catch {
                 self.effects.showAlert(AlertMessage(title: "Couldn't create a folder", detail: error.localizedDescription))
+            }
+        }
+    }
+
+    public func createFile(on side: PaneSide, named name: String = "Untitled.txt") {
+        let directory = tab(side).path
+        let executor = environment.listingExecutor
+        track {
+            do {
+                let file = try await executor.run { try FileActions.createFile(named: name, in: directory) }
+                guard samePath(self.tab(side).path, directory) else { return }
+                self.pendingCursor[side] = file.lastPathComponent
+                await self.reloadAndWait(side)
+                guard self.tab(side).cursor == file.lastPathComponent else { return }
+                self.effects.beginRename(side, name: file.lastPathComponent)
+            } catch {
+                self.effects.showAlert(AlertMessage(title: "Couldn't create a file", detail: error.localizedDescription))
             }
         }
     }

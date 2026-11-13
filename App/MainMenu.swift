@@ -24,8 +24,9 @@ final class MainMenu: NSObject, NSMenuItemValidation {
             NSMenuItem(title: "Quit Commander", action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q"),
         ]))
         main.addItem(submenu("File", [
+            command(.open), command(.openWithApp), command(.quickLook), .separator(),
             command(.newTab), command(.closeTab), .separator(),
-            command(.newFolder), command(.rename), command(.multiRename), command(.duplicate), .separator(),
+            command(.newFolder), command(.newFile), command(.rename), command(.multiRename), command(.duplicate), .separator(),
             command(.copyToOtherPane), command(.moveToOtherPane), command(.copyTo), command(.moveTo), .separator(),
             command(.moveToTrash), command(.deleteImmediately), .separator(),
             command(.connectToServer),
@@ -37,6 +38,7 @@ final class MainMenu: NSObject, NSMenuItemValidation {
             NSMenuItem(title: "Cut", action: #selector(NSText.cut(_:)), keyEquivalent: "x"),
             NSMenuItem(title: "Copy", action: #selector(NSText.copy(_:)), keyEquivalent: "c"),
             NSMenuItem(title: "Paste", action: #selector(NSText.paste(_:)), keyEquivalent: "v"),
+            command(.pasteImage),
             NSMenuItem(title: "Select All", action: #selector(NSText.selectAll(_:)), keyEquivalent: "a"),
             .separator(),
             command(.undoMultiRename), .separator(),
@@ -48,7 +50,7 @@ final class MainMenu: NSObject, NSMenuItemValidation {
             command(.toggleSinglePane), .separator(),
             command(.toggleHiddenFiles), command(.calculateSize), command(.reload),
         ]))
-        main.addItem(submenu("Go", [command(.goBack), command(.goForward), command(.goUp), .separator(), command(.focusPathField)]))
+        main.addItem(submenu("Go", [command(.goBack), command(.goForward), command(.goUp), .separator(), command(.focusPathField), command(.openInTerminal)]))
         main.addItem(submenu("Window", [
             command(.nextTab), command(.previousTab), command(.switchPane), .separator(),
             NSMenuItem(title: "Minimize", action: #selector(NSWindow.performMiniaturize(_:)), keyEquivalent: "m"),

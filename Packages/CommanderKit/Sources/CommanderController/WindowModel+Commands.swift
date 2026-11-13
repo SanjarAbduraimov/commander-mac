@@ -46,7 +46,8 @@ extension WindowModel {
         case .openSettings: effects.showSettings()
         case .connectToServer: effects.showConnectToServer()
         case .copyToClipboard, .cutToClipboard, .paste, .duplicate, .copyToOtherPane, .moveToOtherPane,
-             .newFolder, .rename, .moveToTrash, .copyPath, .copyName, .showPackageContents, .revealInFinder,
+             .newFolder, .newFile, .pasteImage, .openWithApp, .quickLook,
+             .rename, .moveToTrash, .copyPath, .copyName, .showPackageContents, .revealInFinder,
              .openInTerminal, .deleteImmediately:
             performFileCommand(command, on: side, scope: scope)
         case .copyTo: chooseDestination(.copy, from: side, suggested: suggestedDestination(from: side))
@@ -86,7 +87,8 @@ extension WindowModel {
         let tab = tab(state.activeSide)
         if Self.targetCommands.contains(command) { return !tab.targets.isEmpty }
         switch command {
-        case .rename: return tab.cursorItem != nil
+        case .rename, .openWithApp, .quickLook: return tab.cursorItem != nil
+        case .newFile, .pasteImage: return true
         case .switchPane: return !isSinglePane
         case .unmarkAll: return !tab.marked.isEmpty
         case .undoMultiRename: return canUndoMultiRename
@@ -105,6 +107,10 @@ extension WindowModel {
 
     public func setPageSize(_ side: PaneSide, rows: Int) {
         pageSizes[side] = rows
+    }
+
+    public func setCursor(_ side: PaneSide, name: String) {
+        mutateTab(side) { $0.setCursor(name: name) }
     }
 
     @discardableResult
@@ -153,7 +159,11 @@ extension WindowModel {
         if item.isNavigable {
             navigate(side, to: item.url)
         } else {
-            effects.open(item.url)
+            if let assignedApp = settings.appForExtension(item.url.pathExtension) {
+                effects.open(item.url, withApp: URL(fileURLWithPath: assignedApp))
+            } else {
+                effects.open(item.url, withApp: nil)
+            }
         }
     }
 }

@@ -8,6 +8,7 @@ public enum Command: String, CaseIterable, Codable, Sendable {
     case copyToOtherPane, moveToOtherPane, newFolder, rename, moveToTrash
     case connectToServer, openSettings
     case copyPath, copyName, showPackageContents, revealInFinder, openInTerminal
+    case openWithApp, quickLook, newFile, pasteImage
     case unmarkAll, copyTo, moveTo, deleteImmediately, calculateSize, toggleSinglePane
     case multiRename, undoMultiRename
     case markByPattern, unmarkByPattern, invertMarks, markSameExtension

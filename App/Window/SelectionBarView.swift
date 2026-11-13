@@ -13,6 +13,7 @@ final class SelectionBarView: NSView {
     private let model: WindowModel
     private let summary = NSTextField(labelWithString: "")
     private let buttons: [NSButton]
+    private let shareButton = NSButton(title: "Telegram / Share…", target: nil, action: nil)
 
     init(model: WindowModel) {
         self.model = model
@@ -29,6 +30,17 @@ final class SelectionBarView: NSView {
             button.setAccessibilityIdentifier("selection.\(Self.actions[index].command.rawValue)")
             stack.addArrangedSubview(button)
         }
+
+        shareButton.target = self
+        shareButton.action = #selector(sharePressed)
+        shareButton.bezelStyle = .rounded
+        if let paperplane = NSImage(systemSymbolName: "paperplane.fill", accessibilityDescription: "Share") {
+            shareButton.image = paperplane.withSymbolConfiguration(NSImage.SymbolConfiguration(pointSize: 11, weight: .medium))
+            shareButton.imagePosition = .imageLeading
+        }
+        shareButton.setAccessibilityIdentifier("selection.share")
+        stack.addArrangedSubview(shareButton)
+
         stack.orientation = .horizontal
         stack.edgeInsets = NSEdgeInsets(top: 0, left: 12, bottom: 0, right: 12)
         stack.translatesAutoresizingMaskIntoConstraints = false
@@ -64,5 +76,18 @@ final class SelectionBarView: NSView {
 
     @objc private func buttonPressed(_ sender: NSButton) {
         model.perform(Self.actions[sender.tag].command)
+    }
+
+    @objc private func sharePressed() {
+        let side = model.state.activeSide
+        let urls = model.tab(side).targets.map(\.url)
+        guard !urls.isEmpty else { return }
+        let telegramURL = URL(fileURLWithPath: "/Applications/Telegram.app")
+        if FileManager.default.fileExists(atPath: telegramURL.path) {
+            NSWorkspace.shared.open(urls, withApplicationAt: telegramURL, configuration: NSWorkspace.OpenConfiguration())
+        } else {
+            let picker = NSSharingServicePicker(items: urls)
+            picker.show(relativeTo: shareButton.bounds, of: shareButton, preferredEdge: .maxY)
+        }
     }
 }

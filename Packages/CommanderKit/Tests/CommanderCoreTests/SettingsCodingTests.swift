@@ -112,4 +112,30 @@ struct SettingsCodingTests {
         let settings = try decode(AppSettings.self, json)
         #expect(settings.appearance.columns == [ColumnSetting(id: .kind, width: 90), ColumnSetting(id: .size, width: 72)])
     }
+
+    @Test func fileAssociationsAndClipboardSettingsRoundTrip() throws {
+        var settings = AppSettings()
+        #expect(settings.clipboard.confirmPasteImage == true)
+        #expect(settings.clipboard.defaultImageFormat == "png")
+        #expect(settings.fileAssociations.isEmpty)
+
+        settings.setApp("/Applications/Preview.app", forExtension: ".PNG")
+        #expect(settings.appForExtension("png") == "/Applications/Preview.app")
+        #expect(settings.appForExtension(".png") == "/Applications/Preview.app")
+
+        settings.clipboard.confirmPasteImage = false
+        settings.clipboard.defaultImageFormat = "jpeg"
+
+        let encoded = try JSONEncoder().encode(settings)
+        let decoded = try JSONDecoder().decode(AppSettings.self, from: encoded)
+        #expect(decoded == settings)
+        #expect(decoded.clipboard.confirmPasteImage == false)
+        #expect(decoded.clipboard.defaultImageFormat == "jpeg")
+        #expect(decoded.appForExtension("png") == "/Applications/Preview.app")
+
+        // Old JSON without clipboard or fileAssociations decodes safely with defaults
+        let old = try decode(AppSettings.self, #"{"version":1}"#)
+        #expect(old.clipboard == ClipboardSettings())
+        #expect(old.fileAssociations.isEmpty)
+    }
 }

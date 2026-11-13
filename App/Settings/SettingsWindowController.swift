@@ -3,53 +3,83 @@ import CommanderController
 import SwiftUI
 
 @MainActor
-final class SettingsWindowController: NSWindowController {
-    private static var shared: SettingsWindowController?
+final class SettingsWindowController {
+    private static var activeSheet: NSWindow?
 
-    static func show(model: WindowModel) {
-        if shared == nil {
-            // Columns change from the table header, not from this window; keep the window's stale copy from undoing them.
-            let viewModel = SettingsViewModel(settings: model.settings) { [model] changed in
-                var settings = changed
-                settings.appearance.columns = model.settings.appearance.columns
-                model.updateSettings(settings)
+    static func show(model: WindowModel, over hostWindow: NSWindow? = nil) {
+        let window = hostWindow ?? NSApp.keyWindow
+        if let current = activeSheet {
+            if let window, window.attachedSheet == current {
+                window.endSheet(current)
+                activeSheet = nil
+                return
             }
-            // Single-pane mode lives in the session, not in AppSettings, so it talks to the window model directly.
-            let singlePane = Binding(
-                get: { model.isSinglePane },
-                set: { if $0 != model.isSinglePane { model.perform(.toggleSinglePane) } }
-            )
-            shared = SettingsWindowController(viewModel: viewModel, singlePane: singlePane)
         }
-        shared?.showWindow(nil)
-        shared?.window?.makeKeyAndOrderFront(nil)
-    }
+        guard let window else { return }
 
-    private init(viewModel: SettingsViewModel, singlePane: Binding<Bool>) {
-        let window = NSWindow(contentViewController: NSHostingController(rootView: SettingsView(model: viewModel, singlePane: singlePane)))
-        window.title = "Settings"
-        window.styleMask = [.titled, .closable]
-        window.center()
-        super.init(window: window)
-    }
+        // Columns change from the table header, not from this window; keep the window's stale copy from undoing them.
+        let viewModel = SettingsViewModel(settings: model.settings) { [model] changed in
+            var settings = changed
+            settings.appearance.columns = model.settings.appearance.columns
+            model.updateSettings(settings)
+        }
+        // Single-pane mode lives in the session, not in AppSettings, so it talks to the window model directly.
+        let singlePane = Binding(
+            get: { model.isSinglePane },
+            set: { if $0 != model.isSinglePane { model.perform(.toggleSinglePane) } }
+        )
 
-    @available(*, unavailable)
-    required init?(coder: NSCoder) {
-        fatalError("init(coder:) is not used")
+        let dismiss: () -> Void = {
+            if let sheet = activeSheet {
+                window.endSheet(sheet)
+                activeSheet = nil
+            }
+        }
+
+        let rootView = SettingsSheetView(model: viewModel, singlePane: singlePane, onDismiss: dismiss)
+        let hostingController = NSHostingController(rootView: rootView)
+        let sheet = NSWindow(contentViewController: hostingController)
+        sheet.styleMask = [.titled]
+        activeSheet = sheet
+        window.beginSheet(sheet)
     }
 }
 
-struct SettingsView: View {
+struct SettingsSheetView: View {
     @Bindable var model: SettingsViewModel
     let singlePane: Binding<Bool>
+    let onDismiss: () -> Void
 
     var body: some View {
-        TabView {
-            AppearanceView(model: model, singlePane: singlePane).tabItem { Label("Appearance", systemImage: "paintbrush") }
-            BehaviorView(model: model).tabItem { Label("Behavior", systemImage: "gearshape") }
-            ShortcutsView(model: model).tabItem { Label("Shortcuts", systemImage: "keyboard") }
+        VStack(spacing: 0) {
+            HStack {
+                Text("Settings")
+                    .font(.headline)
+                Spacer()
+                Button("Done", action: onDismiss)
+                    .keyboardShortcut(.defaultAction)
+            }
+            .padding(.horizontal, 20)
+            .padding(.top, 16)
+            .padding(.bottom, 12)
+
+            Divider()
+
+            TabView {
+                AppearanceView(model: model, singlePane: singlePane)
+                    .tabItem { Label("Appearance", systemImage: "paintbrush") }
+                BehaviorView(model: model)
+                    .tabItem { Label("Behavior", systemImage: "gearshape") }
+                ClipboardSettingsView(model: model)
+                    .tabItem { Label("Clipboard & Paste", systemImage: "doc.on.clipboard") }
+                FileAssociationsView(model: model)
+                    .tabItem { Label("Associations", systemImage: "app.badge.checkmark") }
+                ShortcutsView(model: model)
+                    .tabItem { Label("Shortcuts", systemImage: "keyboard") }
+            }
+            .padding(16)
+            .frame(width: 620, height: 490)
         }
-        .padding(20)
-        .frame(width: 560, height: 480)
+        .onExitCommand(perform: onDismiss)
     }
 }

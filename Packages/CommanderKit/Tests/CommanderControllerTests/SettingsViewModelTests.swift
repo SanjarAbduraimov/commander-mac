@@ -69,4 +69,18 @@ struct SettingsViewModelTests {
 
         #expect(model.rows.map(\.command) == [.moveToTrash])
     }
+
+    @Test func clipboardAndFileAssociationsPublishOnChange() {
+        var published: [AppSettings] = []
+        let model = SettingsViewModel(settings: AppSettings()) { published.append($0) }
+
+        model.clipboard.confirmPasteImage = false
+        #expect(published.last?.clipboard.confirmPasteImage == false)
+
+        model.setFileAssociation(extension: "png", appPath: "/Applications/Preview.app")
+        #expect(published.last?.fileAssociations["png"] == "/Applications/Preview.app")
+
+        model.removeFileAssociation(extension: "png")
+        #expect(published.last?.fileAssociations["png"] == nil)
+    }
 }

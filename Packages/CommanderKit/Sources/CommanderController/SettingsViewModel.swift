@@ -22,6 +22,14 @@ public final class SettingsViewModel {
         }
     }
 
+    public var clipboard: ClipboardSettings {
+        didSet { publish() }
+    }
+
+    public var fileAssociations: [String: String] {
+        didSet { publish() }
+    }
+
     public var shortcutQuery = "" {
         didSet { refreshRows() }
     }
@@ -39,6 +47,8 @@ public final class SettingsViewModel {
         self.onChange = onChange
         appearance = settings.appearance
         behavior = settings.behavior
+        clipboard = settings.clipboard
+        fileAssociations = settings.fileAssociations
         editor = ShortcutEditor(behavior: settings.behavior, overrides: settings.shortcutOverrides)
         rows = editor.rows(matching: "")
     }
@@ -79,6 +89,18 @@ public final class SettingsViewModel {
         publish()
     }
 
+    public func setFileAssociation(extension ext: String, appPath: String) {
+        settings.setApp(appPath, forExtension: ext)
+        fileAssociations = settings.fileAssociations
+        publish()
+    }
+
+    public func removeFileAssociation(extension ext: String) {
+        settings.removeApp(forExtension: ext)
+        fileAssociations = settings.fileAssociations
+        publish()
+    }
+
     private func assign(_ chord: KeyChord, to command: Command) {
         editor.assign(chord, to: command)
         recording = nil
@@ -94,6 +116,8 @@ public final class SettingsViewModel {
     private func publish() {
         settings.appearance = appearance
         settings.behavior = behavior
+        settings.clipboard = clipboard
+        settings.fileAssociations = fileAssociations
         settings.shortcutOverrides = editor.overrides
         onChange(settings)
     }
