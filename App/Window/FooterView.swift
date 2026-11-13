@@ -8,6 +8,7 @@ import CommanderCore
 final class FooterView: NSView {
     private static let maxRows = 3
 
+    var onOpenTransferManager: (() -> Void)?
     private let model: WindowModel
     private let stack = NSStackView()
     private var shownOperationIDs: [UUID] = []
@@ -71,7 +72,10 @@ final class FooterView: NSView {
             clear()
             rows = [:]
             for state in visible {
-                let row = OperationRow { [model] in model.operations.cancel(state.id) }
+                let row = OperationRow(
+                    onCancel: { [model] in model.operations.cancel(state.id) },
+                    onOpenManager: { [weak self] in self?.onOpenTransferManager?() }
+                )
                 rows[state.id] = row
                 stack.addArrangedSubview(row)
             }
@@ -172,9 +176,11 @@ private final class OperationRow: NSStackView {
     private let progress = NSProgressIndicator()
     private let label = NSTextField(labelWithString: "")
     private let onCancel: () -> Void
+    private let onOpenManager: (() -> Void)?
 
-    init(onCancel: @escaping () -> Void) {
+    init(onCancel: @escaping () -> Void, onOpenManager: (() -> Void)? = nil) {
         self.onCancel = onCancel
+        self.onOpenManager = onOpenManager
         super.init(frame: .zero)
         orientation = .horizontal
         spacing = 8
@@ -187,8 +193,18 @@ private final class OperationRow: NSStackView {
         let cancel = NSButton(title: "Cancel", target: self, action: #selector(cancelPressed))
         cancel.controlSize = .small
         cancel.bezelStyle = .rounded
+
+        let managerBtn = NSButton(title: "", target: self, action: #selector(openManagerPressed))
+        managerBtn.bezelStyle = .inline
+        managerBtn.isBordered = false
+        if let icon = NSImage(systemSymbolName: "arrow.up.right.square", accessibilityDescription: "Transfer Manager") {
+            managerBtn.image = icon.withSymbolConfiguration(NSImage.SymbolConfiguration(pointSize: 12, weight: .regular))
+        }
+        managerBtn.toolTip = "Background Transfer Manager"
+
         addArrangedSubview(progress)
         addArrangedSubview(label)
+        addArrangedSubview(managerBtn)
         addArrangedSubview(NSView())
         addArrangedSubview(cancel)
         heightAnchor.constraint(equalToConstant: 24).isActive = true
@@ -214,5 +230,9 @@ private final class OperationRow: NSStackView {
 
     @objc private func cancelPressed() {
         onCancel()
+    }
+
+    @objc private func openManagerPressed() {
+        onOpenManager?()
     }
 }

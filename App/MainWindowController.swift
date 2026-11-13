@@ -30,6 +30,9 @@ final class MainWindowController: NSWindowController {
         window.center()
         window.setFrameAutosaveName("MainWindow")
         super.init(window: window)
+        panes.footer.onOpenTransferManager = { [weak self] in
+            self?.showTransferManager()
+        }
         split.splitView.setPosition(CGFloat(sidebarWidth), ofDividerAt: 0)
         // Otherwise AppKit focuses the first editable view — the path field — and keys would edit the path.
         window.initialFirstResponder = pane(model.state.activeSide).table
@@ -62,6 +65,11 @@ final class MainWindowController: NSWindowController {
     func showAppChooser(for urls: [URL]) {
         guard let window else { return }
         AppChooserPresenter.show(for: urls, model: model, over: window)
+    }
+
+    func showTransferManager() {
+        guard let window else { return }
+        TransferManagerPresenter.show(model: model, over: window)
     }
 
     func showQuickLook(for urls: [URL]) {

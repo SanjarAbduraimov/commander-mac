@@ -51,8 +51,13 @@ final class MainMenu: NSObject, NSMenuItemValidation {
             command(.toggleHiddenFiles), command(.calculateSize), command(.reload),
         ]))
         main.addItem(submenu("Go", [command(.goBack), command(.goForward), command(.goUp), .separator(), command(.focusPathField), command(.openInTerminal)]))
+        let transferManagerItem = NSMenuItem(title: "Background Transfer Manager…", action: #selector(openTransferManager), keyEquivalent: "b")
+        transferManagerItem.keyEquivalentModifierMask = [.option, .command]
+        transferManagerItem.target = self
+
         main.addItem(submenu("Window", [
             command(.nextTab), command(.previousTab), command(.switchPane), .separator(),
+            transferManagerItem, .separator(),
             NSMenuItem(title: "Minimize", action: #selector(NSWindow.performMiniaturize(_:)), keyEquivalent: "m"),
         ]))
         refreshKeyEquivalents()
@@ -71,6 +76,12 @@ final class MainMenu: NSObject, NSMenuItemValidation {
     @objc func performCommand(_ sender: NSMenuItem) {
         guard let command = commandFor(sender) else { return }
         model.perform(command)
+    }
+
+    @objc func openTransferManager() {
+        if let window = NSApp.keyWindow {
+            TransferManagerPresenter.show(model: model, over: window)
+        }
     }
 
     func validateMenuItem(_ menuItem: NSMenuItem) -> Bool {
