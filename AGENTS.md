@@ -4,13 +4,15 @@ Total Commander uslubidagi ikki panelli, klaviatura bilan tez ishlaydigan, yengi
 
 ## Joriy holat
 
-**1-bosqich (yadro): A–F bajarildi (2026-11-13). 1F: Redesign, kengaytirilgan kontekst menyu, smart type-ahead, rasm paste, app assotsiatsiyalari.**
+**2-bosqich (fayl operatsiyalari va transferlar): A–E bajarildi (2026-11-14). 2A-2E: TransferQueue, Smart Concurrency, APFS clone & resume streaming, Kengaytirilgan Konflikt dialogi, Transfer Manager sheet, ko'p bosqichli Undo/Redo (`⌘Z`, `⇧⌘Z`).**
 
-- Asosiy manba — spec: `docs/superpowers/specs/2026-11-13-phase1f-redesign-context-menu.md`. Brainstorm tarixi: `docs/brainstorm/2026-10-21-commander-decisions.md`.
-- Bajarilgan plan'lar: `docs/superpowers/plans/2026-10-21-phase1a-commanderkit.md` (Core + FileSystem), `docs/superpowers/plans/2026-10-22-phase1b-app-ui.md` (CommanderController + `App/`), `docs/superpowers/plans/2026-10-23-phase1c-feedback.md`, `docs/superpowers/plans/2026-10-24-phase1d-cut-reveal-columns.md`, `docs/superpowers/plans/2026-10-24-phase1e-multi-rename.md`, `docs/superpowers/plans/2026-11-13-phase1f-redesign-context-menu.md`. Testlar: `swift test` — 354 ta test.
-- Interaktiv dizayn maketi: `docs/design/prototype/v2/index.html`. Zamonaviy macOS 15 Native UI + SF Symbols 6.
-- O'lchovlar: RAM ~63 MB, 5000 faylli papkani o'qish benchmark ≤100 ms, Universal Release `build/Commander.dmg` (2.9 MB).
-- Keyingi qadam: 2-bosqich (fayl operatsiyalari) spec'i va rejalashtirish.
+- Asosiy manba — spec: `docs/superpowers/specs/2026-11-14-phase2-file-operations-design.md`. Brainstorm tarixi: `docs/brainstorm/2026-10-21-commander-decisions.md`.
+- Bajarilgan plan'lar:
+  - 1-bosqich: `phase1a-commanderkit.md`, `phase1b-app-ui.md`, `phase1c-feedback.md`, `phase1d-cut-reveal-columns.md`, `phase1e-multi-rename.md`, `phase1f-redesign-context-menu.md`.
+  - 2-bosqich: `phase2a-transfer-queue.md`, `phase2b-stream-file-copier.md`, `phase2c-conflict-resolution.md`, `phase2d-transfer-manager-ui.md`, `phase2e-undo-redo.md`.
+- Testlar: `swift test` — 376 ta test (63 suite), barchasi muvaffaqiyatli.
+- Universal Release: `build/Commander.dmg` (3.2 MB, x86_64 + arm64).
+- Keyingi qadam: 3-bosqich (Qo'shimchalar: ZIP qilish/ochish, boyitilgan Quick View va h.k.) yoki 2-bosqichni foydalanuvchi sinovi.
 
 ## Ish tartibi
 
