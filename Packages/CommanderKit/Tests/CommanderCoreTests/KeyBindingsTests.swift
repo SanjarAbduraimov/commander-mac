@@ -23,6 +23,8 @@ struct KeyBindingsTests {
             ("f2", .rename), ("shift+f6", .rename),
             ("cmd+backspace", .moveToTrash), ("forwardDelete", .moveToTrash),
             ("cmd+k", .connectToServer), ("cmd+,", .openSettings),
+            ("opt+cmd+t", .openInTerminal), ("opt+return", .openWithApp),
+            ("f3", .quickLook), ("cmd+y", .quickLook), ("cmd+n", .newFile),
         ]
         let keys = bindings()
         for (string, command) in expected {
@@ -32,7 +34,7 @@ struct KeyBindingsTests {
 
     @Test func menuOnlyCommandsHaveNoDefaultChord() {
         let keys = bindings()
-        for command in [Command.copyPath, .copyName, .showPackageContents, .revealInFinder, .openInTerminal] {
+        for command in [Command.copyPath, .copyName, .showPackageContents, .revealInFinder] {
             #expect(keys.chords(for: command).isEmpty)
         }
     }
