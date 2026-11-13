@@ -4,13 +4,13 @@ Total Commander uslubidagi ikki panelli, klaviatura bilan tez ishlaydigan, yengi
 
 ## Joriy holat
 
-**1-bosqich (yadro): A–E `main` da (2026-10-24). Hozir 1F: kengaytirilgan kontekst menyu — brainstorming.**
+**1-bosqich (yadro): A–F bajarildi (2026-11-13). 1F: Redesign, kengaytirilgan kontekst menyu, smart type-ahead, rasm paste, app assotsiatsiyalari.**
 
-- Asosiy manba — spec: `docs/superpowers/specs/2026-10-21-phase1-core-design.md`. Brainstorm tarixi va ochiq savollar: `docs/brainstorm/2026-10-21-commander-decisions.md` — har sessiya boshida o'qing.
-- Bajarilgan plan'lar: `docs/superpowers/plans/2026-10-21-phase1a-commanderkit.md` (Core + FileSystem), `docs/superpowers/plans/2026-10-22-phase1b-app-ui.md` (CommanderController + `App/`) `docs/superpowers/plans/2026-10-23-phase1c-feedback.md` (spec: `…/specs/2026-10-23-phase1c-feedback-design.md`) `docs/superpowers/plans/2026-10-24-phase1d-cut-reveal-columns.md` va `docs/superpowers/plans/2026-10-24-phase1e-multi-rename.md` (spec'lari `docs/superpowers/specs/` da). Testlar: `swift test` — 343, XCUITest smoke — 25.
-- Interaktiv dizayn maketi: `docs/design/prototype/index.html`. Tanlangan layout — **A · Native balance**.
-- O'lchovlar (2026-10-23, MacBook Pro Intel, Release, `sudo purge`siz): bo'sh holatda RAM 63 MB (maqsad ≤100 ✅); 5 000 faylli papkani o'qish — benchmark ≤100 ms ✅; ishga tushish xctrace App Launch bo'yicha `applicationDidFinishLaunching` oxirigacha ~1,04–1,08 s (3 o'lchov, birinchisi 1,53 s) — maqsad ≤1 s dan biroz oshadi, ~0,5 s `applicationDidFinishLaunching` ichida (asosan AppKit oyna qurilishi, sidebar ikonkalari). Optimizatsiya alohida task.
-- Keyingi qadam: 1F (kontekst menyu: Cut/Copy/Paste, New File, Alias/Symlink, ZIP, Open With, Quick Look, Get Info, Share, teglar) brainstorming'i → 2-bosqich. Qolgan mayda kamchiliklar: `docs/brainstorm/2026-10-21-commander-decisions.md` → "Ochiq savollar".
+- Asosiy manba — spec: `docs/superpowers/specs/2026-11-13-phase1f-redesign-context-menu.md`. Brainstorm tarixi: `docs/brainstorm/2026-10-21-commander-decisions.md`.
+- Bajarilgan plan'lar: `docs/superpowers/plans/2026-10-21-phase1a-commanderkit.md` (Core + FileSystem), `docs/superpowers/plans/2026-10-22-phase1b-app-ui.md` (CommanderController + `App/`), `docs/superpowers/plans/2026-10-23-phase1c-feedback.md`, `docs/superpowers/plans/2026-10-24-phase1d-cut-reveal-columns.md`, `docs/superpowers/plans/2026-10-24-phase1e-multi-rename.md`, `docs/superpowers/plans/2026-11-13-phase1f-redesign-context-menu.md`. Testlar: `swift test` — 354 ta test.
+- Interaktiv dizayn maketi: `docs/design/prototype/v2/index.html`. Zamonaviy macOS 15 Native UI + SF Symbols 6.
+- O'lchovlar: RAM ~63 MB, 5000 faylli papkani o'qish benchmark ≤100 ms, Universal Release `build/Commander.dmg` (2.9 MB).
+- Keyingi qadam: 2-bosqich (fayl operatsiyalari) spec'i va rejalashtirish.
 
 ## Ish tartibi
 
