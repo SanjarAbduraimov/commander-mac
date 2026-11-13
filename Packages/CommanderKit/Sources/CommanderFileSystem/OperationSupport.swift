@@ -59,7 +59,7 @@ func failureReason(_ error: Error) -> OperationFailure.Reason {
 }
 
 /// Like fileExists, but true for broken symlinks too: a name that is taken is taken.
-func pathExists(_ url: URL) -> Bool {
+public func pathExists(_ url: URL) -> Bool {
     var info = stat()
     return lstat(url.path, &info) == 0
 }
@@ -74,6 +74,13 @@ private struct FileIdentity: Equatable {
         device = info.st_dev
         inode = info.st_ino
     }
+}
+
+/// True when both URLs name the same file-system object (device + inode, symlinks not followed) —
+/// how a case-insensitive volume reports that "A.txt" is the file itself, not a clash.
+func isSameFile(_ a: URL, _ b: URL) -> Bool {
+    guard let first = FileIdentity(a.path, followSymlink: false) else { return false }
+    return first == FileIdentity(b.path, followSymlink: false)
 }
 
 /// True when both URLs name the same directory, however they are spelled (symlinks, firmlinks, case).

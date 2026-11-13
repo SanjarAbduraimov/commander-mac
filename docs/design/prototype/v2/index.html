@@ -1,0 +1,900 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Commander for Mac · Prototype v2</title>
+  <link rel="icon" href="data:,">
+  <link rel="stylesheet" href="app.css">
+  <script src="app.js" defer></script>
+</head>
+<body>
+
+<!-- SVG Sprite -->
+<svg class="sprite" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+  <symbol id="i-panels" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M12 4v16M6 8h3m-3 4h3m6-4h3m-3 4h3"/></symbol>
+  <symbol id="i-sidebar" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M9 4v16M5.5 8h1M5.5 11h1"/></symbol>
+  <symbol id="i-folder" viewBox="0 0 24 24"><path d="M3 6a2 2 0 0 1 2-2h5l2 3h7a2 2 0 0 1 2 2v10a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1Z"/></symbol>
+  <symbol id="i-file" viewBox="0 0 24 24"><path d="M14 3H6a1 1 0 0 0-1 1v16a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V8Zm0 0v5h5M8 13h8m-8 4h6"/></symbol>
+  <symbol id="i-image" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8" cy="8" r="1.5"/><path d="m3 17 5-5 4 4 4-6 5 7"/></symbol>
+  <symbol id="i-archive" viewBox="0 0 24 24"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M11 3v2h2v2h-2v2h2v2h-2v2m0 2h2v3h-2z"/></symbol>
+  <symbol id="i-home" viewBox="0 0 24 24"><path d="m3 10 9-7 9 7M5 9v11h5v-7h4v7h5V9"/></symbol>
+  <symbol id="i-desktop" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="13" rx="2"/><path d="M8 21h8m-4-5v5M3 13h18"/></symbol>
+  <symbol id="i-download" viewBox="0 0 24 24"><path d="M12 3v12m-5-5 5 5 5-5M4 16v4h16v-4"/></symbol>
+  <symbol id="i-code" viewBox="0 0 24 24"><path d="m7 7-5 5 5 5m10-10 5 5-5 5M14 4l-4 16"/></symbol>
+  <symbol id="i-server" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="7" rx="2"/><rect x="3" y="14" width="18" height="7" rx="2"/><path d="M7 6.5h.01M7 17.5h.01m4-11h6m-6 11h6"/></symbol>
+  <symbol id="i-drive" viewBox="0 0 24 24"><path d="m4 4-2 12v4h20v-4L20 4ZM2 16h20m-5 2h.01m3 0h.01"/></symbol>
+  <symbol id="i-check" viewBox="0 0 24 24"><path d="m5 12 4 4L19 6"/></symbol>
+  <symbol id="i-up" viewBox="0 0 24 24"><path d="M12 20V4m-6 6 6-6 6 6"/></symbol>
+  <symbol id="i-sort" viewBox="0 0 24 24"><path d="m7 14 5-5 5 5"/></symbol>
+  <symbol id="i-copy" viewBox="0 0 24 24"><rect x="8" y="8" width="12" height="13" rx="2"/><path d="M15 8V3H3v13h5"/></symbol>
+  <symbol id="i-paste" viewBox="0 0 24 24"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1"/></symbol>
+  <symbol id="i-scissors" viewBox="0 0 24 24"><circle cx="6" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><path d="M20 4 8.12 15.88M14.47 14.48 20 20M8.12 8.12 12 12"/></symbol>
+  <symbol id="i-trash" viewBox="0 0 24 24"><path d="M3 6h18M9 6V3h6v3M5 6l1 15h12l1-15M10 10v7m4-7v7"/></symbol>
+  <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+  <symbol id="i-share" viewBox="0 0 24 24"><path d="M7 9H4v12h16V9h-3M12 15V2m-5 5 5-5 5 5"/></symbol>
+  <symbol id="i-settings" viewBox="0 0 24 24"><path d="m9 3-.5 3-2 1L4 6 2 9l2.5 2v2L2 15l2 3 2.5-1 2 1 .5 3h6l.5-3 2-1 2.5 1 2-3-2.5-2v-2L22 9l-2-3-2.5 1-2-1L15 3Z"/><circle cx="12" cy="12" r="3"/></symbol>
+  <symbol id="i-search" viewBox="0 0 24 24"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 5 5"/></symbol>
+  <symbol id="i-x" viewBox="0 0 24 24"><path d="m6 6 12 12M6 18 18 6"/></symbol>
+  <symbol id="i-eye" viewBox="0 0 24 24"><path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/></symbol>
+  <symbol id="i-moon" viewBox="0 0 24 24"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></symbol>
+  <symbol id="i-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2M4.93 4.93l1.41 1.41m11.32 11.32 1.41 1.41M2 12h2m16 0h2M6.34 17.66l-1.41 1.41m14.14-14.14-1.41 1.41"/></symbol>
+  <symbol id="i-keyboard" viewBox="0 0 24 24"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M6 9h.01M10 9h.01M14 9h.01M18 9h.01M6 12h.01M10 12h.01M14 12h.01M18 12h.01M7 16h10"/></symbol>
+  <symbol id="i-spark" viewBox="0 0 24 24"><path d="m12 3 2 7 7 2-7 2-2 7-2-7-7-2 7-2Z"/></symbol>
+  <symbol id="i-camera" viewBox="0 0 24 24"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></symbol>
+  <symbol id="i-terminal" viewBox="0 0 24 24"><polyline points="4 17 10 11 4 5"/><line x1="12" y1="19" x2="20" y2="19"/></symbol>
+  <symbol id="i-external" viewBox="0 0 24 24"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></symbol>
+  <symbol id="i-telegram" viewBox="0 0 24 24"><path d="m21 3-3.5 18-6-5-3 3v-5L3 12Zm0 0L8.5 14M11.5 16 18 7"/></symbol>
+</svg>
+
+<div class="page-container">
+  <!-- Top Prototype Control Header -->
+  <header class="prototype-bar">
+    <div class="proto-brand">
+      <div class="proto-icon"><svg><use href="#i-panels"/></svg></div>
+      <div>
+        <strong>Commander for Mac</strong>
+        <span class="badge">Prototype v2.1 · Smart Type-Ahead & Quick View</span>
+      </div>
+    </div>
+    <div class="proto-controls">
+      <button class="pill-btn" id="demo-terminal-btn" title="Joriy papkada Terminal ochish (⌥⌘T)">
+        <svg><use href="#i-terminal"/></svg>
+        <span>Terminal (⌥⌘T)</span>
+      </button>
+      <button class="pill-btn" id="btn-quick-new-folder" title="Yangi papka ochish (F7)">
+        <svg><use href="#i-folder"/></svg>
+        <span>+ Folder (F7)</span>
+      </button>
+      <button class="pill-btn" id="btn-quick-new-file" title="Yangi fayl yaratish (⌘N)">
+        <svg><use href="#i-file"/></svg>
+        <span>+ File (⌘N)</span>
+      </button>
+      <button class="pill-btn primary" id="simulate-paste-btn" title="Clipboard'dan rasm qo'yish (⌘V)">
+        <svg><use href="#i-paste"/></svg>
+        <span>Paste Image (⌘V)</span>
+      </button>
+      <button class="pill-btn" id="open-settings-shortcut-btn" title="Sozlamalar (⌘,)">
+        <svg><use href="#i-settings"/></svg>
+        <span>Settings (⌘,)</span>
+      </button>
+      <button class="icon-toggle" id="theme-toggle-btn" title="Dark / Light">
+        <svg id="theme-icon"><use href="#i-moon"/></svg>
+      </button>
+    </div>
+  </header>
+
+  <!-- Tip Banner -->
+  <div class="quick-banner">
+    <svg><use href="#i-spark"/></svg>
+    <span><strong>Yangi qulayliklar:</strong> 
+      1) Klaviatura bilan <strong>"d"</strong> ni ketma-ket bosib ko'ring (D harfidagi hamma fayllar bo'ylab navbatma-navbat aylanadi).
+      2) <strong>"g"</strong> ni bosing — hatto <em>.git / .gitignore</em> kabi yashirin fayllarni ham topadi!
+      3) <kbd>Space</kbd> yoki <kbd>F3</kbd> bosing — tezkor <strong>Quick View</strong> preview ochiladi.
+      4) <kbd>⌘⌫</kbd> bosilganda tasdiq dialogida <kbd>Enter</kbd> by default "Ha / O'chirish" tugmasini bajaradi.
+    </span>
+  </div>
+
+  <!-- Main App Window Simulation -->
+  <main class="app-window" id="app-window" data-theme="light" tabindex="0">
+    
+    <!-- Titlebar / macOS unified toolbar -->
+    <header class="app-titlebar">
+      <div class="traffic-lights" aria-hidden="true">
+        <span class="light red"></span>
+        <span class="light yellow"></span>
+        <span class="light green"></span>
+      </div>
+
+      <button class="tb-btn" id="toggle-sidebar-btn" title="Sidebar ko'rinishi">
+        <svg><use href="#i-sidebar"/></svg>
+      </button>
+
+      <div class="app-title">Commander</div>
+
+      <span class="tb-divider"></span>
+
+      <!-- Windows File Explorer Style "+ New" Split Dropdown Button -->
+      <div class="new-dropdown-wrap">
+        <button class="tb-new-btn" id="tb-new-main-btn" title="Yangi papka yaratish (F7)">
+          <svg class="icon-folder"><use href="#i-plus"/></svg>
+          <span>New</span>
+        </button>
+        <button class="tb-new-arrow" id="tb-new-dropdown-arrow" title="Boshqa variantlar">
+          <span>▾</span>
+        </button>
+
+        <div class="dropdown-popover" id="new-items-popover" hidden>
+          <button class="pop-item" id="pop-new-folder">
+            <svg class="icon-folder"><use href="#i-folder"/></svg>
+            <div class="pop-text">
+              <strong>Folder</strong>
+              <span>Yangi papka yaratish</span>
+            </div>
+            <kbd>F7</kbd>
+          </button>
+          <button class="pop-item" id="pop-new-file">
+            <svg class="icon-file"><use href="#i-file"/></svg>
+            <div class="pop-text">
+              <strong>Text Document / File</strong>
+              <span>Yangi fayl yaratish</span>
+            </div>
+            <kbd>⌘N</kbd>
+          </button>
+          <div class="ctx-divider"></div>
+          <button class="pop-item" id="pop-new-paste">
+            <svg><use href="#i-paste"/></svg>
+            <div class="pop-text">
+              <strong>Paste from Clipboard</strong>
+              <span>Rasm yoki fayl qo'yish</span>
+            </div>
+            <kbd>⌘V</kbd>
+          </button>
+        </div>
+      </div>
+
+      <div class="tb-spacer"></div>
+
+      <!-- Quick Action Buttons -->
+      <button class="tb-btn" id="tb-terminal-btn" title="Open in Terminal (⌥⌘T)">
+        <svg><use href="#i-terminal"/></svg>
+      </button>
+      <button class="tb-btn" id="tb-paste-btn" title="Paste Image/File (⌘V)">
+        <svg><use href="#i-paste"/></svg>
+      </button>
+      <button class="tb-btn" id="tb-quicklook-btn" title="Quick Look Preview (Space / F3)">
+        <svg><use href="#i-eye"/></svg>
+      </button>
+      <span class="tb-divider"></span>
+      <button class="tb-btn" id="tb-settings-btn" title="Settings (⌘,) — In-App Modal">
+        <svg><use href="#i-settings"/></svg>
+      </button>
+    </header>
+
+    <!-- App Body: Sidebar + Dual Panes -->
+    <div class="app-body">
+      
+      <!-- Places Sidebar -->
+      <aside class="places-sidebar" id="places-sidebar">
+        <div class="sidebar-section-title">FAVORITES</div>
+        <nav class="places-list">
+          <a class="place-item" data-path="/Users/sanjar"><svg><use href="#i-home"/></svg><span>Home</span></a>
+          <a class="place-item" data-path="/Users/sanjar/Desktop"><svg><use href="#i-desktop"/></svg><span>Desktop</span><span class="badge-num">4</span></a>
+          <a class="place-item" data-path="/Users/sanjar/Documents"><svg><use href="#i-folder"/></svg><span>Documents</span></a>
+          <a class="place-item active" data-path="/Users/sanjar/Downloads"><svg><use href="#i-download"/></svg><span>Downloads</span><span class="badge-num" id="sidebar-dl-count">14</span></a>
+          <a class="place-item" data-path="/Users/sanjar/Projects"><svg><use href="#i-code"/></svg><span>Projects</span></a>
+        </nav>
+
+        <div class="sidebar-section-title">CONNECTIONS</div>
+        <nav class="places-list">
+          <a class="place-item" data-path="/home/sanjar/files"><svg><use href="#i-server"/></svg><span>Studio server</span><span class="dot-online"></span></a>
+          <a class="place-item" data-path="/Volumes/Shared"><svg><use href="#i-drive"/></svg><span>Home NAS</span></a>
+        </nav>
+
+        <div class="sidebar-storage">
+          <div class="storage-info">
+            <strong>Macintosh HD</strong>
+            <span>182 GB free of 500 GB</span>
+          </div>
+          <div class="storage-bar"><div class="storage-fill" style="width: 64%;"></div></div>
+        </div>
+      </aside>
+
+      <!-- Dual Panes Area -->
+      <div class="panes-container">
+        
+        <!-- Left Pane -->
+        <section class="file-pane active" id="pane-left" data-side="left">
+          <!-- Pane Tabs -->
+          <div class="pane-tabs-bar">
+            <div class="pane-tab active">
+              <svg><use href="#i-folder"/></svg>
+              <span class="tab-title">Downloads</span>
+              <button class="tab-close-btn">×</button>
+            </div>
+            <div class="pane-tab">
+              <span class="tab-title">Projects</span>
+            </div>
+            <button class="new-tab-btn" title="Yangi tab (⌘T)">
+              <svg><use href="#i-plus"/></svg>
+            </button>
+          </div>
+
+          <!-- Pathline / Breadcrumbs -->
+          <div class="path-toolbar">
+            <button class="path-btn" id="left-up-btn" title="Yuqori papka (⌫)">
+              <svg><use href="#i-up"/></svg>
+            </button>
+            <div class="breadcrumbs">
+              <span class="crumb">Users</span>
+              <span class="crumb-sep">/</span>
+              <span class="crumb">sanjar</span>
+              <span class="crumb-sep">/</span>
+              <span class="crumb active">Downloads</span>
+            </div>
+            <button class="path-btn" id="left-terminal-btn" title="Shu yerda Terminal ochish">
+              <svg><use href="#i-terminal"/></svg>
+            </button>
+            <button class="path-btn" id="left-copy-path-btn" title="Yo'lni nusxalash (⌘⇧C)">
+              <svg><use href="#i-copy"/></svg>
+            </button>
+          </div>
+
+          <!-- File Grid Header -->
+          <div class="grid-header">
+            <div class="col-head name-col">Name <svg><use href="#i-sort"/></svg></div>
+            <div class="col-head ext-col">Ext</div>
+            <div class="col-head size-col">Size</div>
+            <div class="col-head date-col">Modified</div>
+          </div>
+
+          <!-- File Rows List -->
+          <div class="file-rows" id="left-file-rows" tabindex="0">
+            <!-- Populated dynamically via JS -->
+          </div>
+
+          <!-- Type-Ahead Search Badge -->
+          <div class="typeahead-badge" id="left-typeahead" hidden>
+            <svg><use href="#i-search"/></svg>
+            <span class="query-text">"d"</span>
+            <span class="match-count">1 of 3 (next: 'd')</span>
+          </div>
+
+          <!-- Pane Footer -->
+          <footer class="pane-footer">
+            <span class="items-summary" id="left-summary">14 items · 2 marked</span>
+            <span class="pane-badge">Local Disk</span>
+          </footer>
+        </section>
+
+        <!-- Right Pane -->
+        <section class="file-pane" id="pane-right" data-side="right">
+          <!-- Pane Tabs -->
+          <div class="pane-tabs-bar">
+            <div class="pane-tab active">
+              <svg><use href="#i-server"/></svg>
+              <span class="tab-title">Studio: files</span>
+              <button class="tab-close-btn">×</button>
+            </div>
+            <button class="new-tab-btn" title="Yangi tab (⌘T)">
+              <svg><use href="#i-plus"/></svg>
+            </button>
+          </div>
+
+          <!-- Pathline / Breadcrumbs -->
+          <div class="path-toolbar">
+            <button class="path-btn" id="right-up-btn" title="Yuqori papka (⌫)">
+              <svg><use href="#i-up"/></svg>
+            </button>
+            <div class="breadcrumbs">
+              <span class="crumb">home</span>
+              <span class="crumb-sep">/</span>
+              <span class="crumb">sanjar</span>
+              <span class="crumb-sep">/</span>
+              <span class="crumb active">files</span>
+            </div>
+            <span class="remote-badge">SFTP</span>
+            <button class="path-btn" id="right-copy-path-btn" title="Yo'lni nusxalash (⌘⇧C)">
+              <svg><use href="#i-copy"/></svg>
+            </button>
+          </div>
+
+          <!-- File Grid Header -->
+          <div class="grid-header">
+            <div class="col-head name-col">Name <svg><use href="#i-sort"/></svg></div>
+            <div class="col-head ext-col">Ext</div>
+            <div class="col-head size-col">Size</div>
+            <div class="col-head date-col">Modified</div>
+          </div>
+
+          <!-- File Rows List -->
+          <div class="file-rows" id="right-file-rows" tabindex="0">
+            <!-- Populated dynamically via JS -->
+          </div>
+
+          <!-- Type-Ahead Search Badge -->
+          <div class="typeahead-badge" id="right-typeahead" hidden>
+            <svg><use href="#i-search"/></svg>
+            <span class="query-text">"d"</span>
+            <span class="match-count">1 of 2</span>
+          </div>
+
+          <!-- Pane Footer -->
+          <footer class="pane-footer">
+            <span class="items-summary" id="right-summary">9 items</span>
+            <span class="pane-badge remote">SFTP Online</span>
+          </footer>
+        </section>
+
+      </div>
+    </div>
+
+    <!-- Action Selection Bar -->
+    <div class="action-selection-bar">
+      <div class="sel-count" id="global-sel-count">
+        <strong>2 fayl</strong> belgilandi
+      </div>
+      <div class="sel-actions">
+        <button class="act-btn" id="act-new-folder" title="Yangi papka ochish (F7)"><svg><use href="#i-folder"/></svg><span>+ Folder</span><kbd>F7</kbd></button>
+        <button class="act-btn" id="act-new-file" title="Yangi fayl yaratish (⌘N)"><svg><use href="#i-file"/></svg><span>+ File</span><kbd>⌘N</kbd></button>
+        <span class="tb-divider" style="height: 14px;"></span>
+        <button class="act-btn" id="act-preview"><svg><use href="#i-eye"/></svg><span>Quick Look</span><kbd>F3</kbd></button>
+        <button class="act-btn" id="act-copy"><svg><use href="#i-copy"/></svg><span>Copy</span><kbd>F5</kbd></button>
+        <button class="act-btn" id="act-move"><svg><use href="#i-scissors"/></svg><span>Move</span><kbd>F6</kbd></button>
+        <button class="act-btn" id="act-paste"><svg><use href="#i-paste"/></svg><span>Paste</span><kbd>⌘V</kbd></button>
+        <button class="act-btn telegram-btn" id="act-share-telegram" title="Tanlangan fayllarni Telegram'ga yuborish"><svg class="icon-telegram"><use href="#i-telegram"/></svg><span>Telegram</span></button>
+        <button class="act-btn" id="act-trash"><svg><use href="#i-trash"/></svg><span>Trash</span><kbd>⌘⌫</kbd></button>
+      </div>
+    </div>
+
+    <!-- Total Commander Function Key Footer -->
+    <footer class="function-keys-footer">
+      <div class="fn-key"><kbd>F3</kbd><span>View</span></div>
+      <div class="fn-key"><kbd>F4</kbd><span>Edit</span></div>
+      <div class="fn-key"><kbd>F5</kbd><span>Copy</span></div>
+      <div class="fn-key"><kbd>F6</kbd><span>Move</span></div>
+      <div class="fn-key"><kbd>F7</kbd><span>New Folder</span></div>
+      <div class="fn-key"><kbd>F8</kbd><span>Delete</span></div>
+      <div class="fn-key"><kbd>Space</kbd><span>Mark</span></div>
+      <div class="fn-key"><kbd>Tab</kbd><span>Switch Pane</span></div>
+    </footer>
+
+    <!-- IN-APP MODAL: Telegram-Style Clipboard Paste Sheet -->
+    <div class="modal-overlay" id="paste-modal" hidden>
+      <div class="modal-card paste-card" role="dialog" aria-modal="true" aria-labelledby="paste-modal-title">
+        <div class="modal-header">
+          <div class="modal-title-wrap">
+            <div class="modal-icon-badge"><svg><use href="#i-camera"/></svg></div>
+            <div>
+              <h3 id="paste-modal-title">Clipboard'dan rasm qo'yish</h3>
+              <p>Telegram kabi oson va tezkor past qilish</p>
+            </div>
+          </div>
+          <button class="close-modal-btn" id="close-paste-modal" title="Yopish (Esc)">
+            <svg><use href="#i-x"/></svg>
+          </button>
+        </div>
+
+        <div class="paste-body">
+          <div class="paste-preview-frame">
+            <img id="paste-preview-img" src="" alt="Pasted Image Preview">
+            <div class="img-meta" id="paste-img-meta">PNG · 1920×1080 · 1.4 MB</div>
+          </div>
+
+          <div class="paste-options">
+            <label class="field-label" for="paste-filename-input">Fayl nomi:</label>
+            <div class="input-with-ext">
+              <input type="text" id="paste-filename-input" class="text-input" value="Pasted-Image-2026-11-13">
+              <select id="paste-ext-select" class="select-input">
+                <option value=".png">.png (Lossless)</option>
+                <option value=".jpg">.jpg (Compressed)</option>
+                <option value=".webp">.webp (Modern)</option>
+              </select>
+            </div>
+
+            <div class="paste-destination">
+              <span>Qo'yiladigan manzil:</span>
+              <strong id="paste-target-path">/Users/sanjar/Downloads</strong>
+            </div>
+
+            <div class="quick-paste-hint">
+              <kbd>↩ Enter</kbd> bosish darhol saqlaydi (by default ijobiy tugma), <kbd>Esc</kbd> bekor qiladi.
+            </div>
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button class="btn btn-secondary" id="cancel-paste-btn">Bekor qilish (Esc)</button>
+          <button class="btn btn-primary is-default" id="confirm-paste-btn">
+            <svg><use href="#i-check"/></svg>
+            <span>Fayl sifatida saqlash <kbd>↩ Enter</kbd></span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- IN-APP MODAL: Quick Look / Quick View Modal (Space / F3) -->
+    <div class="modal-overlay" id="quicklook-modal" hidden>
+      <div class="modal-card quicklook-card" role="dialog" aria-modal="true">
+        <div class="modal-header">
+          <div class="modal-title-wrap">
+            <div class="modal-icon-badge" id="ql-icon-badge"><svg><use href="#i-eye"/></svg></div>
+            <div>
+              <h3 id="ql-filename">hero-image.png</h3>
+              <p id="ql-meta">PNG Image · 2.6 MB · 1920×1080</p>
+            </div>
+          </div>
+          <div class="ql-nav-controls">
+            <button class="path-btn" id="ql-prev-btn" title="Oldingi fayl (↑)"><svg><use href="#i-up"/></svg></button>
+            <button class="path-btn" id="ql-next-btn" title="Keyingi fayl (↓)"><svg style="transform: rotate(180deg);"><use href="#i-up"/></svg></button>
+            <button class="close-modal-btn" id="close-quicklook-modal" title="Yopish (Esc / Space)"><svg><use href="#i-x"/></svg></button>
+          </div>
+        </div>
+
+        <div class="quicklook-body" id="quicklook-content">
+          <!-- Dynamic preview: Image, text, code, or PDF metadata -->
+        </div>
+
+        <div class="modal-footer">
+          <span class="footer-tip">↑ / ↓ tugmalari bilan fayllar orasida o'ting</span>
+          <button class="btn btn-secondary" id="ql-choose-app-btn">
+            <svg><use href="#i-external"/></svg>
+            <span>Open With…</span>
+          </button>
+          <button class="btn btn-secondary" id="ql-open-with-btn">
+            <svg><use href="#i-external"/></svg>
+            <span>Default App</span>
+          </button>
+          <button class="btn btn-primary is-default" id="done-quicklook-btn">Yopish (Esc)</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- IN-APP MODAL: Affirmative Confirmation Modal (Enter by default confirms!) -->
+    <div class="modal-overlay" id="confirm-dialog-modal" hidden>
+      <div class="modal-card confirm-card" role="alertdialog" aria-modal="true" aria-labelledby="dialog-title">
+        <div class="modal-header danger-header">
+          <div class="modal-title-wrap">
+            <div class="modal-icon-badge danger-badge"><svg><use href="#i-trash"/></svg></div>
+            <div>
+              <h3 id="dialog-title">Faylni Trash'ga o'chirish</h3>
+              <p>Harakatni tasdiqlash talab etiladi</p>
+            </div>
+          </div>
+          <button class="close-modal-btn" id="close-confirm-modal" title="Yopish (Esc)"><svg><use href="#i-x"/></svg></button>
+        </div>
+
+        <div class="confirm-body">
+          <p id="dialog-message">Haqiqatan ham tanlangan <strong>"brand-guidelines.pdf"</strong> faylini Trash'ga tashlaysizmi?</p>
+          <div class="confirm-hint">
+            <span class="default-action-badge"><kbd>↩ Enter</kbd> bosilganda darhol "O'chirish" bajariladi</span>
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button class="btn btn-secondary" id="dialog-cancel-btn">Yo'q, bekor qilish (Esc)</button>
+          <button class="btn btn-danger is-default" id="dialog-confirm-btn">
+            <svg><use href="#i-check"/></svg>
+            <span>Ha, o'chirish <kbd>↩ Enter</kbd></span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- IN-APP MODAL: Open With App Chooser Modal -->
+    <div class="modal-overlay" id="openwith-modal" hidden>
+      <div class="modal-card openwith-card" role="dialog" aria-modal="true" aria-labelledby="openwith-modal-title">
+        <div class="modal-header">
+          <div class="modal-title-wrap">
+            <div class="modal-icon-badge"><svg><use href="#i-external"/></svg></div>
+            <div>
+              <h3 id="openwith-modal-title">Open With…</h3>
+              <p id="openwith-target-info">"meeting-notes.md" uchun ochuvchi ilovani tanlang</p>
+            </div>
+          </div>
+          <button class="close-modal-btn" id="close-openwith-modal" title="Yopish (Esc)"><svg><use href="#i-x"/></svg></button>
+        </div>
+
+        <div class="openwith-body">
+          <input type="text" id="openwith-search" class="text-input" placeholder="Ilovani qidirish... (nomini yozing)" autocomplete="off">
+          
+          <div class="openwith-list-label">MOS KELUVCHI DASTURLAR:</div>
+          <div class="app-picker-list" id="openwith-apps-list">
+            <!-- Dynamically populated app items -->
+          </div>
+
+          <div class="always-open-row">
+            <label class="always-label">
+              <input type="checkbox" id="always-open-checkbox" checked>
+              <span>Har doim ushbu turdagi (<strong id="always-ext-label">.md</strong>) fayllarni shu dasturda ochish</span>
+            </label>
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button class="btn btn-secondary" id="openwith-browse-btn">
+            <svg><use href="#i-folder"/></svg>
+            <span>Boshqa dastur…</span>
+          </button>
+          <div style="flex: 1;"></div>
+          <button class="btn btn-secondary" id="cancel-openwith-btn">Bekor qilish (Esc)</button>
+          <button class="btn btn-primary is-default" id="confirm-openwith-btn">
+            <svg><use href="#i-check"/></svg>
+            <span>Ochish va saqlash <kbd>↩ Enter</kbd></span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- IN-APP MODAL: Settings Sheet -->
+    <div class="modal-overlay" id="settings-modal" hidden>
+      <div class="modal-card settings-card" role="dialog" aria-modal="true" aria-labelledby="settings-modal-title">
+        
+        <div class="modal-header">
+          <div class="modal-title-wrap">
+            <div class="modal-icon-badge"><svg><use href="#i-settings"/></svg></div>
+            <div>
+              <h3 id="settings-modal-title">Settings</h3>
+              <p>Oson kirish, tezkor sozlash va bir tugmada yopish</p>
+            </div>
+          </div>
+          <button class="close-modal-btn" id="close-settings-modal" title="Yopish (Esc)">
+            <svg><use href="#i-x"/></svg>
+          </button>
+        </div>
+
+        <div class="settings-layout">
+          <!-- Sidebar tabs -->
+          <nav class="settings-sidebar">
+            <button class="set-tab-btn active" data-tab="appearance">
+              <svg><use href="#i-spark"/></svg><span>Appearance</span>
+            </button>
+            <button class="set-tab-btn" data-tab="clipboard">
+              <svg><use href="#i-paste"/></svg><span>Clipboard & Paste</span>
+            </button>
+            <button class="set-tab-btn" data-tab="associations">
+              <svg><use href="#i-external"/></svg><span>File Associations</span>
+            </button>
+            <button class="set-tab-btn" data-tab="search">
+              <svg><use href="#i-search"/></svg><span>Type-Ahead & Search</span>
+            </button>
+            <button class="set-tab-btn" data-tab="behavior">
+              <svg><use href="#i-panels"/></svg><span>Behavior</span>
+            </button>
+            <button class="set-tab-btn" data-tab="shortcuts">
+              <svg><use href="#i-keyboard"/></svg><span>Shortcuts</span>
+            </button>
+          </nav>
+
+          <!-- Settings Tab Content -->
+          <div class="settings-content-wrap">
+            
+            <!-- Appearance Tab -->
+            <div class="set-pane active" id="tab-appearance">
+              <h4>Mavzu va ko'rinish</h4>
+              <p class="section-desc">Interfeys mavzusi, qator balandligi va vizual zichlik.</p>
+
+              <div class="setting-item">
+                <div class="setting-text">
+                  <strong>Mavzu (Theme)</strong>
+                  <span>Tizim bilan birga o'zgarishi yoki doimiy Light/Dark rejim</span>
+                </div>
+                <div class="segmented-control" id="theme-segmented">
+                  <button class="seg-btn active" data-theme-val="light">Light</button>
+                  <button class="seg-btn" data-theme-val="dark">Dark</button>
+                </div>
+              </div>
+
+              <div class="setting-item">
+                <div class="setting-text">
+                  <strong>Qator balandligi (Row Density)</strong>
+                  <span>Kichik ekranda ko'proq fayl sig'dirish</span>
+                </div>
+                <div class="segmented-control" id="density-segmented">
+                  <button class="seg-btn" data-density="compact">Compact (24px)</button>
+                  <button class="seg-btn active" data-density="normal">Normal (30px)</button>
+                  <button class="seg-btn" data-density="cozy">Cozy (36px)</button>
+                </div>
+              </div>
+
+              <div class="setting-item">
+                <div class="setting-text">
+                  <strong>Yashirin fayllar (Hidden files: .git, .env)</strong>
+                  <span>Yashirin fayllarni ko'rsatish (⌘⇧.)</span>
+                </div>
+                <label class="switch">
+                  <input type="checkbox" id="show-hidden-toggle" checked>
+                  <span class="slider"></span>
+                </label>
+              </div>
+
+              <div class="setting-item">
+                <div class="setting-text">
+                  <strong>Shrift o'lchami (Font Size)</strong>
+                  <span>Fayllar jadvali uchun shrift o'lchami</span>
+                </div>
+                <select class="select-input" id="set-font-size">
+                  <option value="11">11 pt (Ixcham)</option>
+                  <option value="12" selected>12 pt (Standart)</option>
+                  <option value="13">13 pt (Kattaroq)</option>
+                  <option value="14">14 pt (Yirik)</option>
+                </select>
+              </div>
+
+              <div class="setting-item">
+                <div class="setting-text">
+                  <strong>Jadval ustunlari (Table Columns)</strong>
+                  <span>Name ustunidan tashqari ko'rinadigan ustunlar</span>
+                </div>
+                <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                  <label style="font-size: 11px; display: flex; align-items: center; gap: 4px;"><input type="checkbox" checked> Ext</label>
+                  <label style="font-size: 11px; display: flex; align-items: center; gap: 4px;"><input type="checkbox" checked> Size</label>
+                  <label style="font-size: 11px; display: flex; align-items: center; gap: 4px;"><input type="checkbox" checked> Modified</label>
+                  <label style="font-size: 11px; display: flex; align-items: center; gap: 4px;"><input type="checkbox"> Created</label>
+                  <label style="font-size: 11px; display: flex; align-items: center; gap: 4px;"><input type="checkbox"> Kind</label>
+                </div>
+              </div>
+            </div>
+
+            <!-- Clipboard & Paste Tab -->
+            <div class="set-pane" id="tab-clipboard">
+              <h4>Clipboard & Image Paste (Telegram uslubida)</h4>
+              <p class="section-desc">Brauzerdan yoki screenshotlardan rasmlarni to'g'ridan-to'g'ri fayl qilib qo'yish.</p>
+
+              <div class="setting-item">
+                <div class="setting-text">
+                  <strong>Rasm past qilinganda modal ko'rsatish</strong>
+                  <span>Telegram kabi oldindan ko'rish va fayl nomini tasdiqlash</span>
+                </div>
+                <label class="switch">
+                  <input type="checkbox" id="confirm-paste-toggle" checked>
+                  <span class="slider"></span>
+                </label>
+              </div>
+
+              <div class="setting-item">
+                <div class="setting-text">
+                  <strong>Standart rasm formati</strong>
+                  <span>Clipboard'dan qo'yiladigan tasvirlar uchun default format</span>
+                </div>
+                <select class="select-input" id="default-img-format">
+                  <option value="png">PNG (Sifat yo'qotilmaydi)</option>
+                  <option value="jpg">JPG (Hajmi kichik)</option>
+                  <option value="webp">WebP (Eng yangi)</option>
+                </select>
+              </div>
+            </div>
+
+            <!-- File Associations Tab -->
+            <div class="set-pane" id="tab-associations">
+              <h4>Fayl turlari va ochuvchi dasturlar (File Associations)</h4>
+              <p class="section-desc">Fayl kengaytmasini doimiy ochadigan ilovaga bog'lash (faqat Commander ichida saqlanadi, macOS tizimiga ta'sir qilmaydi).</p>
+
+              <div class="assoc-table-wrap">
+                <div class="assoc-row-header">
+                  <span>Kengaytma</span>
+                  <span>Biriktirilgan dastur</span>
+                  <span></span>
+                </div>
+                <div class="assoc-row">
+                  <div class="ext-badge">.md, .txt</div>
+                  <select class="select-input assoc-select">
+                    <option value="code" selected>Visual Studio Code</option>
+                    <option value="sublime">Sublime Text</option>
+                    <option value="textedit">TextEdit.app</option>
+                  </select>
+                  <button class="tb-btn" title="O'chirish"><svg><use href="#i-trash"/></svg></button>
+                </div>
+                <div class="assoc-row">
+                  <div class="ext-badge">.pdf</div>
+                  <select class="select-input assoc-select">
+                    <option value="preview" selected>Preview.app</option>
+                    <option value="acrobat">Adobe Acrobat Reader</option>
+                  </select>
+                  <button class="tb-btn" title="O'chirish"><svg><use href="#i-trash"/></svg></button>
+                </div>
+                <div class="assoc-row">
+                  <div class="ext-badge">.png, .jpg, .webp</div>
+                  <select class="select-input assoc-select">
+                    <option value="preview" selected>Preview.app</option>
+                    <option value="cleanshot">CleanShot X</option>
+                    <option value="photoshop">Adobe Photoshop</option>
+                  </select>
+                  <button class="tb-btn" title="O'chirish"><svg><use href="#i-trash"/></svg></button>
+                </div>
+                <div class="assoc-row">
+                  <div class="ext-badge">.py, .swift, .ts, .json</div>
+                  <select class="select-input assoc-select">
+                    <option value="code" selected>Visual Studio Code</option>
+                    <option value="xcode">Xcode.app</option>
+                  </select>
+                  <button class="tb-btn" title="O'chirish"><svg><use href="#i-trash"/></svg></button>
+                </div>
+              </div>
+
+              <div class="setting-item" style="border-top: 1px solid var(--border-subtle); margin-top: 10px;">
+                <div class="setting-text">
+                  <strong>Yangi qoida biriktirish</strong>
+                  <span>Yangi kengaytma uchun dastur tanlash</span>
+                </div>
+                <button class="btn btn-secondary" id="btn-add-assoc">+ Yangi bog'lash</button>
+              </div>
+            </div>
+
+            <!-- Type-Ahead & Search Tab -->
+            <div class="set-pane" id="tab-search">
+              <h4>Klaviatura bilan qidirish (Type-Ahead)</h4>
+              <p class="section-desc">Fayllar ro'yxatida harflarni terish orqali tezkor topish qoidalari.</p>
+
+              <div class="setting-item">
+                <div class="setting-text">
+                  <strong>Bir xil harf bosilganda keyingisiga o'tish</strong>
+                  <span>Masalan, 'D' ni qayta bosganda 'D' bilan boshlanuvchi navbatdagi fayllarga aylanib o'tish</span>
+                </div>
+                <label class="switch">
+                  <input type="checkbox" id="cycle-typeahead-toggle" checked>
+                  <span class="slider"></span>
+                </label>
+              </div>
+
+              <div class="setting-item">
+                <div class="setting-text">
+                  <strong>Yashirin fayllarni ham qidirish</strong>
+                  <span>'g' harfini terganda '.git', '.gitignore' kabi nuqtali fayllarni ham qidiruvga kiritish</span>
+                </div>
+                <label class="switch">
+                  <input type="checkbox" id="search-hidden-toggle" checked>
+                  <span class="slider"></span>
+                </label>
+              </div>
+            </div>
+
+            <!-- Behavior Tab -->
+            <div class="set-pane" id="tab-behavior">
+              <h4>Klaviatura xatti-harakatlari (Behavior)</h4>
+              <p class="section-desc">Total Commander va macOS xatti-harakatlarining to'liq sozlamalari.</p>
+
+              <div class="setting-item">
+                <div class="setting-text">
+                  <strong>Backspace (⌫) amali</strong>
+                  <span>⌫ bosilganda yuqori papkaga chiqish yoki tarix bo'yicha orqaga qaytish</span>
+                </div>
+                <select class="select-input" id="set-backspace-act">
+                  <option value="parent" selected>Parent folder (Ota papkaga)</option>
+                  <option value="historyBack">Go back in history (Tarix orqaga)</option>
+                </select>
+              </div>
+
+              <div class="setting-item">
+                <div class="setting-text">
+                  <strong>Space bilan belgilangandan so'ng</strong>
+                  <span>Fayl belgilangach kursorni pastga surish</span>
+                </div>
+                <select class="select-input" id="set-space-advance">
+                  <option value="true" selected>Move to next row (Keyingi qatorga o'tish)</option>
+                  <option value="false">Stay on the row (Shu qatorda qolish)</option>
+                </select>
+              </div>
+
+              <div class="setting-item">
+                <div class="setting-text">
+                  <strong>F5 (Copy) va F6 (Move) amallari</strong>
+                  <span>Boshqa panelga nusxalashda darhol boshlash yoki manzil so'rash</span>
+                </div>
+                <select class="select-input" id="set-copy-confirm">
+                  <option value="false" selected>Start immediately (Darhol boshlash)</option>
+                  <option value="true">Ask for destination (Manzilni so'rash dialogi)</option>
+                </select>
+              </div>
+
+              <div class="setting-item">
+                <div class="setting-text">
+                  <strong>Forward Delete (Fn + ⌫ yoki tashqi ⌦ Delete)</strong>
+                  <span>Tashqi klaviatura Delete tugmasi bilan Trash'ga tashlash</span>
+                </div>
+                <label class="switch">
+                  <input type="checkbox" id="set-forward-del" checked>
+                  <span class="slider"></span>
+                </label>
+              </div>
+
+              <div class="setting-item">
+                <div class="setting-text">
+                  <strong>Dastur ochilganda (On launch)</strong>
+                  <span>Avvalgi tablarni tiklash yoki belgilangan papkani ochish</span>
+                </div>
+                <select class="select-input" id="set-restore-session">
+                  <option value="true" selected>Restore last session (Oxirgi tablarni tiklash)</option>
+                  <option value="false">Open Home folders (Boshlang'ich papkalar)</option>
+                </select>
+              </div>
+
+              <div class="setting-item">
+                <div class="setting-text">
+                  <strong>Tasdiq dialoglarida 'Enter' ijobiy tugmani bosishi</strong>
+                  <span>O'chirish yoki almashtirish so'ralganda 'Enter' doim 'Ha/Tasdiqlash' tugmasini bajaradi</span>
+                </div>
+                <label class="switch">
+                  <input type="checkbox" checked disabled>
+                  <span class="slider"></span>
+                </label>
+              </div>
+            </div>
+
+            <!-- Shortcuts Tab -->
+            <div class="set-pane" id="tab-shortcuts">
+              <h4>Klaviatura kombinatsiyalari</h4>
+              <div class="shortcut-list">
+                <div class="shortcut-row"><span>Terminalni shu papkada ochish</span><kbd>⌥ ⌘ T</kbd></div>
+                <div class="shortcut-row"><span>Tezkor Quick Look preview</span><kbd>Space / F3</kbd></div>
+                <div class="shortcut-row"><span>Rasm / Fayl qo'yish (Paste)</span><kbd>⌘ V</kbd></div>
+                <div class="shortcut-row"><span>Sozlamalar (In-App Modal)</span><kbd>⌘ ,</kbd></div>
+                <div class="shortcut-row"><span>Faylni o'chirish (Tasdiq bilan)</span><kbd>⌘ ⌫</kbd></div>
+                <div class="shortcut-row"><span>Panelni almashtirish</span><kbd>Tab</kbd></div>
+                <div class="shortcut-row"><span>Boshqa panelga nusxalash</span><kbd>F5</kbd></div>
+                <div class="shortcut-row"><span>Boshqa panelga ko'chirish</span><kbd>F6</kbd></div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <span class="footer-tip">O'zgarishlar darhol saqlanadi</span>
+          <button class="btn btn-primary is-default" id="done-settings-btn">Tayyor (Esc / ↩)</button>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Notification Toast -->
+    <div class="toast" id="toast" hidden>
+      <svg><use href="#i-check"/></svg>
+      <span id="toast-msg">Amal bajarildi</span>
+    </div>
+
+    <!-- Context Menu with Submenu (Open With & Quick Actions) -->
+    <div class="context-menu" id="file-context-menu" hidden>
+      <button class="ctx-item" data-action="preview"><svg><use href="#i-eye"/></svg> Quick Look <kbd>F3</kbd></button>
+      
+      <!-- Open With Submenu Trigger -->
+      <div class="ctx-item has-sub" id="ctx-open-with-trigger">
+        <svg><use href="#i-external"/></svg> 
+        <span>Open With</span>
+        <span class="sub-arrow">▸</span>
+
+        <!-- Nested Submenu -->
+        <div class="ctx-submenu" id="ctx-open-with-menu">
+          <button class="ctx-item" data-app="choose"><svg><use href="#i-external"/></svg> Choose Application… <kbd>⌥↩</kbd></button>
+          <div class="ctx-divider"></div>
+          <button class="ctx-item" data-app="code"><svg><use href="#i-code"/></svg> Visual Studio Code</button>
+          <button class="ctx-item" data-app="terminal"><svg><use href="#i-terminal"/></svg> Terminal (⌥⌘T)</button>
+          <button class="ctx-item" data-app="preview"><svg><use href="#i-eye"/></svg> Preview.app</button>
+          <div class="ctx-divider"></div>
+          <button class="ctx-item" data-app="always"><svg><use href="#i-check"/></svg> Always Open With…</button>
+          <button class="ctx-item" data-app="other"><svg><use href="#i-external"/></svg> Other Application…</button>
+        </div>
+      </div>
+
+      <button class="ctx-item" data-action="terminal"><svg><use href="#i-terminal"/></svg> Open in Terminal <kbd>⌥⌘T</kbd></button>
+      <div class="ctx-divider"></div>
+      <button class="ctx-item" data-action="new-folder"><svg class="icon-folder"><use href="#i-folder"/></svg> New Folder <kbd>F7</kbd></button>
+      <button class="ctx-item" data-action="new-file"><svg class="icon-file"><use href="#i-file"/></svg> New File <kbd>⌘N</kbd></button>
+      <div class="ctx-divider"></div>
+      <button class="ctx-item" data-action="cut"><svg><use href="#i-scissors"/></svg> Cut <kbd>⌘X</kbd></button>
+      <button class="ctx-item" data-action="copy"><svg><use href="#i-copy"/></svg> Copy <kbd>⌘C</kbd></button>
+      <button class="ctx-item" data-action="paste"><svg><use href="#i-paste"/></svg> Paste Image / File <kbd>⌘V</kbd></button>
+      <button class="ctx-item" data-action="telegram"><svg class="icon-telegram"><use href="#i-telegram"/></svg> Send to Telegram</button>
+      <div class="ctx-divider"></div>
+      <button class="ctx-item" data-action="copy-path"><svg><use href="#i-copy"/></svg> Copy Path <kbd>⌘⇧C</kbd></button>
+      <button class="ctx-item" data-action="f5"><svg><use href="#i-panels"/></svg> Copy to other pane <kbd>F5</kbd></button>
+      <button class="ctx-item" data-action="f6"><svg><use href="#i-panels"/></svg> Move to other pane <kbd>F6</kbd></button>
+      <div class="ctx-divider"></div>
+      <button class="ctx-item danger" data-action="trash"><svg><use href="#i-trash"/></svg> Move to Trash <kbd>⌘⌫</kbd></button>
+    </div>
+
+  </main>
+</div>
+
+</body>
+</html>

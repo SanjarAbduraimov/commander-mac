@@ -25,10 +25,10 @@ public enum BatchRename {
     public static func run(_ pairs: [RenamePair]) throws(BatchRenameError) {
         let moves = pairs.filter { $0.from.standardizedFileURL.path != $0.to.standardizedFileURL.path }
         guard !moves.isEmpty else { return }
-        for move in moves where exists(move.to) {
+        for move in moves where pathExists(move.to) {
             // A target may be one of the batch's own sources (it moves away first), or the same file under
             // another letter case; anything else would be overwritten.
-            guard moves.contains(where: { sameFile($0.from, move.to) }) else {
+            guard moves.contains(where: { isSameFile($0.from, move.to) }) else {
                 throw BatchRenameError(message: "“\(move.to.lastPathComponent)” already exists.")
             }
         }

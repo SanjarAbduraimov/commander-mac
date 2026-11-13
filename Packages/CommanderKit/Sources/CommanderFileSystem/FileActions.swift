@@ -30,11 +30,4 @@ public enum FileActions {
         }
         return target
     }
-
-    private static func isSameFile(_ a: URL, _ b: URL) -> Bool {
-        var first = stat()
-        var second = stat()
-        guard lstat(a.path, &first) == 0, lstat(b.path, &second) == 0 else { return false }
-        return first.st_dev == second.st_dev && first.st_ino == second.st_ino
-    }
 }
