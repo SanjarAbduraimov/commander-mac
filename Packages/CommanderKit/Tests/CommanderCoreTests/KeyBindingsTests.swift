@@ -23,6 +23,7 @@ struct KeyBindingsTests {
             ("f2", .rename), ("shift+f6", .rename),
             ("cmd+backspace", .moveToTrash), ("forwardDelete", .moveToTrash),
             ("cmd+k", .connectToServer), ("cmd+,", .openSettings),
+            ("cmd+z", .undo), ("cmd+shift+z", .redo),
             ("opt+cmd+t", .openInTerminal), ("opt+return", .openWithApp),
             ("f3", .quickLook), ("cmd+y", .quickLook), ("cmd+n", .newFile),
         ]

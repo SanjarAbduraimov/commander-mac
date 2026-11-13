@@ -72,6 +72,10 @@ extension WindowModel {
                     self.effects.showAlert(AlertMessage(title: "Multi-Rename was partly undone", detail: message))
                 }
             }
+        case .undo:
+            performUndo()
+        case .redo:
+            performRedo()
         }
     }
 
@@ -92,6 +96,8 @@ extension WindowModel {
         case .switchPane: return !isSinglePane
         case .unmarkAll: return !tab.marked.isEmpty
         case .undoMultiRename: return canUndoMultiRename
+        case .undo: return undoStack.canUndo
+        case .redo: return undoStack.canRedo
         case .calculateSize: return tab.targets.contains { $0.kind == .directory || $0.kind == .package }
         case .showPackageContents: return tab.cursorItem?.kind == .package
         case .paste: return pasteboard.readFiles() != nil
@@ -164,6 +170,63 @@ extension WindowModel {
             } else {
                 effects.open(item.url, withApp: nil)
             }
+        }
+    }
+
+    public func performUndo() {
+        guard let entry = undoStack.popUndo() else { return }
+        track {
+            await self.applyUndoAction(entry.action, isUndo: true)
+        }
+    }
+
+    public func performRedo() {
+        guard let entry = undoStack.popRedo() else { return }
+        track {
+            await self.applyUndoAction(entry.action, isUndo: false)
+        }
+    }
+
+    private func applyUndoAction(_ action: UndoAction, isUndo: Bool) async {
+        switch action {
+        case let .rename(from, to):
+            let src = isUndo ? to : from
+            let dst = isUndo ? from : to
+            if FileManager.default.fileExists(atPath: src.path) {
+                try? FileManager.default.moveItem(at: src, to: dst)
+                self.pendingCursor[self.state.activeSide] = dst.lastPathComponent
+                await self.reloadAndWait(self.state.activeSide)
+            }
+        case let .move(items):
+            for item in items {
+                let src = isUndo ? item.destination : item.source
+                let dst = isUndo ? item.source : item.destination
+                if FileManager.default.fileExists(atPath: src.path) {
+                    try? FileManager.default.moveItem(at: src, to: dst)
+                }
+            }
+            await self.reloadAndWait(.left)
+            await self.reloadAndWait(.right)
+        case let .copy(createdItems):
+            if isUndo {
+                for item in createdItems {
+                    if FileManager.default.fileExists(atPath: item.path) {
+                        try? FileManager.default.removeItem(at: item)
+                    }
+                }
+            }
+            await self.reloadAndWait(.left)
+            await self.reloadAndWait(.right)
+        case let .trash(items):
+            for item in items {
+                let src = isUndo ? item.trashedURL : item.originalURL
+                let dst = isUndo ? item.originalURL : item.trashedURL
+                if FileManager.default.fileExists(atPath: src.path) {
+                    try? FileManager.default.moveItem(at: src, to: dst)
+                }
+            }
+            await self.reloadAndWait(.left)
+            await self.reloadAndWait(.right)
         }
     }
 }

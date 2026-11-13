@@ -47,6 +47,7 @@ public final class WindowModel {
     var cutNamesByFolder: [String: Set<String>] = [:]
     /// The last Multi-Rename, as the renames that undo it (new name → old name).
     var multiRenameUndo: [RenamePair]?
+    public var undoStack = UndoStack()
 
     public init(
         state: WindowState, settings: AppSettings, session: Session, environment: WindowEnvironment,

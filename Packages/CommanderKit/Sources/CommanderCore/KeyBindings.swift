@@ -20,6 +20,7 @@ public struct KeyBindings: Sendable {
             .copyToOtherPane: ["f5"], .moveToOtherPane: ["f6"], .newFolder: ["f7"],
             .rename: ["f2", "shift+f6"], .moveToTrash: ["cmd+backspace"],
             .connectToServer: ["cmd+k"], .openSettings: ["cmd+,"],
+            .undo: ["cmd+z"], .redo: ["cmd+shift+z"],
             .openInTerminal: ["opt+cmd+t"], .openWithApp: ["opt+return"],
             .quickLook: ["f3", "cmd+y"], .newFile: ["cmd+n"],
             .unmarkAll: ["escape"], .copyTo: ["opt+f5"], .moveTo: ["opt+f6"],

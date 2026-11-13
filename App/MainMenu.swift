@@ -32,8 +32,8 @@ final class MainMenu: NSObject, NSMenuItemValidation {
             command(.connectToServer),
         ]))
         main.addItem(submenu("Edit", [
-            NSMenuItem(title: "Undo", action: Selector(("undo:")), keyEquivalent: "z"),
-            NSMenuItem(title: "Redo", action: Selector(("redo:")), keyEquivalent: "Z"),
+            command(.undo),
+            command(.redo),
             .separator(),
             NSMenuItem(title: "Cut", action: #selector(NSText.cut(_:)), keyEquivalent: "x"),
             NSMenuItem(title: "Copy", action: #selector(NSText.copy(_:)), keyEquivalent: "c"),

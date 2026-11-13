@@ -49,6 +49,7 @@ extension WindowModel {
         do {
             let renamed = try await environment.listingExecutor.run { () throws -> URL in try FileActions.rename(url, to: newName) }
             pendingCursor[side] = renamed.lastPathComponent
+            undoStack.push(action: .rename(from: url, to: renamed), description: "Rename '\(oldName)' to '\(newName)'")
             await reloadAndWait(side)
             return nil
         } catch let error as RenameError {

@@ -53,6 +53,8 @@ extension Command {
         case .toggleSinglePane: "Single Pane"
         case .multiRename: "Multi-Rename…"
         case .undoMultiRename: "Undo Multi-Rename"
+        case .undo: "Undo"
+        case .redo: "Redo"
         case .markByPattern: "Mark by Pattern…"
         case .unmarkByPattern: "Unmark by Pattern…"
         case .invertMarks: "Invert Marks"
