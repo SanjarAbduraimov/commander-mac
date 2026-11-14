@@ -14,11 +14,18 @@ final class SelectionBarView: NSView {
     private let summary = NSTextField(labelWithString: "")
     private let buttons: [NSButton]
     private let shareButton = NSButton(title: "Telegram / Share…", target: nil, action: nil)
+    private let visualEffect = NSVisualEffectView()
 
     init(model: WindowModel) {
         self.model = model
         buttons = Self.actions.map { NSButton(title: $0.title, target: nil, action: nil) }
         super.init(frame: .zero)
+
+        visualEffect.material = .headerView
+        visualEffect.blendingMode = .withinWindow
+        visualEffect.state = .active
+        visualEffect.translatesAutoresizingMaskIntoConstraints = false
+        addSubview(visualEffect)
 
         summary.font = .systemFont(ofSize: 12, weight: .medium)
         let stack = NSStackView(views: [summary, NSView()])
@@ -44,11 +51,16 @@ final class SelectionBarView: NSView {
         stack.orientation = .horizontal
         stack.edgeInsets = NSEdgeInsets(top: 0, left: 12, bottom: 0, right: 12)
         stack.translatesAutoresizingMaskIntoConstraints = false
-        addSubview(stack)
+        visualEffect.addSubview(stack)
         NSLayoutConstraint.activate([
-            stack.leadingAnchor.constraint(equalTo: leadingAnchor),
-            stack.trailingAnchor.constraint(equalTo: trailingAnchor),
-            stack.centerYAnchor.constraint(equalTo: centerYAnchor),
+            visualEffect.topAnchor.constraint(equalTo: topAnchor),
+            visualEffect.leadingAnchor.constraint(equalTo: leadingAnchor),
+            visualEffect.trailingAnchor.constraint(equalTo: trailingAnchor),
+            visualEffect.bottomAnchor.constraint(equalTo: bottomAnchor),
+
+            stack.leadingAnchor.constraint(equalTo: visualEffect.leadingAnchor),
+            stack.trailingAnchor.constraint(equalTo: visualEffect.trailingAnchor),
+            stack.centerYAnchor.constraint(equalTo: visualEffect.centerYAnchor),
             heightAnchor.constraint(equalToConstant: 42),
         ])
         setAccessibilityIdentifier("selectionBar")

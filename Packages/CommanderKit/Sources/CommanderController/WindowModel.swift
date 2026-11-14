@@ -48,6 +48,22 @@ public final class WindowModel {
     /// The last Multi-Rename, as the renames that undo it (new name → old name).
     var multiRenameUndo: [RenamePair]?
     public var undoStack = UndoStack()
+    public internal(set) var quickViewSide: PaneSide? = nil
+
+    public func toggleQuickView() {
+        if quickViewSide != nil {
+            quickViewSide = nil
+        } else {
+            quickViewSide = state.activeSide == .left ? .right : .left
+        }
+        effects.stateDidChange(.window)
+    }
+
+    public func closeQuickView() {
+        guard quickViewSide != nil else { return }
+        quickViewSide = nil
+        effects.stateDidChange(.window)
+    }
 
     public init(
         state: WindowState, settings: AppSettings, session: Session, environment: WindowEnvironment,

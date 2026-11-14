@@ -27,6 +27,11 @@ public protocol FilePasteboard: AnyObject {
     func writeString(_ string: String)
     func readFiles() -> (urls: [URL], isCut: Bool)?
     func clearCut()
+    func hasImage() -> Bool
+}
+
+extension FilePasteboard {
+    public func hasImage() -> Bool { false }
 }
 
 public enum PaneBanner: Equatable, Sendable {

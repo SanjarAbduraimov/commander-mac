@@ -27,7 +27,12 @@ extension WindowModel {
         case .markDown: mutateTab(side) { $0.moveCursorMarking(by: 1) }
         case .toggleMark: mutateTab(side) { [advance = settings.behavior.spaceAdvances] in $0.toggleMark(advance: advance) }
         case .markAll: mutateTab(side) { $0.markAll() }
-        case .unmarkAll: mutateTab(side) { $0.clearMarks() }
+        case .unmarkAll:
+            if quickViewSide != nil {
+                closeQuickView()
+                return
+            }
+            mutateTab(side) { $0.clearMarks() }
         case .open: openCursorItem(side)
         case .goUp: mutatePane(side) { $0.activeTab.goUp() }
         case .goBack: mutatePane(side) { $0.activeTab.goBack() }
@@ -76,6 +81,8 @@ extension WindowModel {
             performUndo()
         case .redo:
             performRedo()
+        case .toggleQuickView:
+            toggleQuickView()
         }
     }
 
@@ -94,13 +101,14 @@ extension WindowModel {
         case .rename, .openWithApp, .quickLook: return tab.cursorItem != nil
         case .newFile, .pasteImage: return true
         case .switchPane: return !isSinglePane
-        case .unmarkAll: return !tab.marked.isEmpty
+        case .toggleQuickView: return !isSinglePane
+        case .unmarkAll: return !tab.marked.isEmpty || quickViewSide != nil
         case .undoMultiRename: return canUndoMultiRename
         case .undo: return undoStack.canUndo
         case .redo: return undoStack.canRedo
         case .calculateSize: return tab.targets.contains { $0.kind == .directory || $0.kind == .package }
         case .showPackageContents: return tab.cursorItem?.kind == .package
-        case .paste: return pasteboard.readFiles() != nil
+        case .paste: return pasteboard.readFiles() != nil || pasteboard.hasImage()
         default: return true
         }
     }
@@ -151,7 +159,10 @@ extension WindowModel {
 
     private func toggleSinglePane() {
         session.singlePane.toggle()
-        if isSinglePane { activate(.left) }
+        if isSinglePane {
+            quickViewSide = nil
+            activate(.left)
+        }
         effects.stateDidChange(.window)
         publishSession()
     }

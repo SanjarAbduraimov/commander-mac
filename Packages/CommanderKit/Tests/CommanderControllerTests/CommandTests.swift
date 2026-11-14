@@ -156,4 +156,28 @@ struct CommandTests {
         #expect(model.isEnabled(.newFolder, context: .table))
         #expect(model.isEnabled(.openInTerminal, context: .table))
     }
+
+    @Test func toggleQuickViewTogglesOppositePaneAndEscClosesIt() async {
+        let model = await startedHarness().model
+
+        #expect(model.quickViewSide == nil)
+        #expect(model.isEnabled(.toggleQuickView, context: .table))
+
+        // Toggle on: left is active, so quickViewSide becomes right
+        model.perform(.toggleQuickView)
+        #expect(model.quickViewSide == .right)
+        #expect(model.isEnabled(.unmarkAll, context: .table))
+
+        // Esc (.unmarkAll) closes Quick View
+        model.perform(.unmarkAll)
+        #expect(model.quickViewSide == nil)
+
+        // Toggle on again
+        model.perform(.toggleQuickView)
+        #expect(model.quickViewSide == .right)
+
+        // Toggle again turns it off
+        model.perform(.toggleQuickView)
+        #expect(model.quickViewSide == nil)
+    }
 }

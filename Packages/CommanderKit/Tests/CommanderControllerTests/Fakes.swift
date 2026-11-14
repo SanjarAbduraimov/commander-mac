@@ -133,11 +133,13 @@ final class RecordingEffects: WindowEffects {
 final class FakePasteboard: FilePasteboard {
     private(set) var files: (urls: [URL], isCut: Bool)?
     private(set) var strings: [String] = []
+    var hasImageValue: Bool = false
 
     func writeFiles(_ urls: [URL], cut: Bool) { files = (urls, cut) }
     func writeString(_ string: String) { strings.append(string) }
     func readFiles() -> (urls: [URL], isCut: Bool)? { files }
     func clearCut() { files = files.map { ($0.urls, false) } }
+    func hasImage() -> Bool { hasImageValue }
 }
 
 /// Serves listings from a table keyed by path; unknown paths are "not found". Records every call.

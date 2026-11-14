@@ -103,17 +103,19 @@ final class FooterView: NSView {
         line.spacing = 14
         line.addArrangedSubview(NSView())
         for hint in hints {
-            let key = NSTextField(labelWithString: hint.keys)
-            key.font = .monospacedSystemFont(ofSize: 10, weight: .medium)
+            let key = NSTextField(labelWithString: " \(hint.keys) ")
+            key.font = .monospacedSystemFont(ofSize: 10, weight: .semibold)
+            key.textColor = .labelColor
             key.wantsLayer = true
-            key.layer?.borderWidth = 1
-            key.layer?.borderColor = NSColor.separatorColor.cgColor
-            key.layer?.cornerRadius = 3
+            key.layer?.backgroundColor = NSColor.quaternaryLabelColor.withAlphaComponent(0.14).cgColor
+            key.layer?.borderWidth = 0.5
+            key.layer?.borderColor = NSColor.separatorColor.withAlphaComponent(0.6).cgColor
+            key.layer?.cornerRadius = 4
             let title = NSTextField(labelWithString: hint.title)
-            title.font = .systemFont(ofSize: 11)
+            title.font = .systemFont(ofSize: 11, weight: .medium)
             title.textColor = .secondaryLabelColor
             let pair = NSStackView(views: [key, title])
-            pair.spacing = 4
+            pair.spacing = 5
             line.addArrangedSubview(pair)
         }
         line.addArrangedSubview(NSView())

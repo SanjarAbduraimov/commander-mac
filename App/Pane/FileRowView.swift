@@ -1,7 +1,7 @@
 import AppKit
 
-/// Cursor and marked rows look different (prototype): marked rows get a tint, the cursor row a stronger tint
-/// and an accent bar on the left edge — and only in the active pane.
+/// Modern macOS 15 rounded pill selection and cursor indicator.
+/// Follows system accent color dynamically and provides soft tints.
 final class FileRowView: NSTableRowView {
     var isCursor = false {
         didSet { if isCursor != oldValue { needsDisplay = true } }
@@ -17,20 +17,35 @@ final class FileRowView: NSTableRowView {
 
     override func drawBackground(in dirtyRect: NSRect) {
         super.drawBackground(in: dirtyRect)
+        let pillRect = bounds.insetBy(dx: 4, dy: 1)
+        let pillPath = NSBezierPath(roundedRect: pillRect, xRadius: 6, yRadius: 6)
+
         if isCursor {
-            Palette.cursorBackground.setFill()
-            bounds.fill()
-            Palette.accent.setFill()
-            NSRect(x: 0, y: 0, width: 2, height: bounds.height).fill()
+            if isMarked {
+                NSColor.controlAccentColor.withAlphaComponent(0.24).setFill()
+                pillPath.fill()
+                NSColor.controlAccentColor.withAlphaComponent(0.40).setStroke()
+                pillPath.lineWidth = 1
+                pillPath.stroke()
+            } else {
+                NSColor.controlAccentColor.withAlphaComponent(0.18).setFill()
+                pillPath.fill()
+            }
+            // Vertical accent pill indicator on the left
+            let indicatorRect = NSRect(x: 6, y: 3, width: 3, height: bounds.height - 6)
+            let indicatorPath = NSBezierPath(roundedRect: indicatorRect, xRadius: 1.5, yRadius: 1.5)
+            NSColor.controlAccentColor.setFill()
+            indicatorPath.fill()
         } else if isMarked {
-            Palette.markedBackground.setFill()
-            bounds.fill()
+            NSColor.systemBlue.withAlphaComponent(0.12).setFill()
+            pillPath.fill()
         }
+
         if isDropTarget {
-            Palette.cursorBackground.setFill()
-            bounds.fill()
-            Palette.accent.setStroke()
-            let ring = NSBezierPath(roundedRect: bounds.insetBy(dx: 1, dy: 1), xRadius: 4, yRadius: 4)
+            NSColor.controlAccentColor.withAlphaComponent(0.14).setFill()
+            pillPath.fill()
+            NSColor.controlAccentColor.setStroke()
+            let ring = NSBezierPath(roundedRect: bounds.insetBy(dx: 3, dy: 1), xRadius: 6, yRadius: 6)
             ring.lineWidth = 2
             ring.stroke()
         }

@@ -78,21 +78,34 @@ final class MainWindowController: NSWindowController {
 
     func pasteImageFromClipboard(side: PaneSide) {
         let pasteboard = NSPasteboard.general
-        if let image = NSImage(pasteboard: pasteboard) {
-            let targetDirectory = pane(side).model.tab(side).path
-            guard let window else { return }
-            if model.settings.clipboard.confirmPasteImage {
-                ImagePastePresenter.show(image: image, targetDirectory: targetDirectory, model: model, side: side, over: window)
-            } else {
-                let pattern = model.settings.clipboard.imageNamingPattern
-                let format = model.settings.clipboard.defaultImageFormat
-                let formatter = DateFormatter()
-                formatter.dateFormat = pattern.isEmpty ? "yyyy-MM-dd_HHmmss" : pattern
-                let fileName = "Image_\(formatter.string(from: Date())).\(format)"
-                ImagePastePresenter.saveImage(image, named: fileName, format: format, to: targetDirectory, model: model, side: side)
+        var image: NSImage? = NSImage(pasteboard: pasteboard)
+        if image == nil {
+            let types = [
+                NSPasteboard.PasteboardType.png,
+                NSPasteboard.PasteboardType.tiff,
+                NSPasteboard.PasteboardType("public.png"),
+                NSPasteboard.PasteboardType("public.jpeg"),
+                NSPasteboard.PasteboardType("public.tiff"),
+            ]
+            for type in types {
+                if let data = pasteboard.data(forType: type), let img = NSImage(data: data) {
+                    image = img
+                    break
+                }
             }
+        }
+        guard let validImage = image else { return }
+        let targetDirectory = pane(side).model.tab(side).path
+        guard let window else { return }
+        if model.settings.clipboard.confirmPasteImage {
+            ImagePastePresenter.show(image: validImage, targetDirectory: targetDirectory, model: model, side: side, over: window)
         } else {
-            model.perform(.paste)
+            let pattern = model.settings.clipboard.imageNamingPattern
+            let format = model.settings.clipboard.defaultImageFormat
+            let formatter = DateFormatter()
+            formatter.dateFormat = pattern.isEmpty ? "yyyy-MM-dd_HHmmss" : pattern
+            let fileName = "Image_\(formatter.string(from: Date())).\(format)"
+            ImagePastePresenter.saveImage(validImage, named: fileName, format: format, to: targetDirectory, model: model, side: side)
         }
     }
 

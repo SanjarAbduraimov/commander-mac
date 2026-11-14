@@ -55,6 +55,7 @@ extension Command {
         case .undoMultiRename: "Undo Multi-Rename"
         case .undo: "Undo"
         case .redo: "Redo"
+        case .toggleQuickView: "Quick View"
         case .markByPattern: "Mark by Pattern…"
         case .unmarkByPattern: "Unmark by Pattern…"
         case .invertMarks: "Invert Marks"

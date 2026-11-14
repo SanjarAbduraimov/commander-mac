@@ -45,4 +45,15 @@ struct ClipboardTests {
         #expect(paths.map { ($0 as NSString).lastPathComponent } == ["a.txt", "b.txt"])
         #expect(h.harness.pasteboard.strings == [paths.joined(separator: "\n"), "a.txt\nb.txt"])
     }
+
+    @Test func pasteWithImageTriggersPasteImage() async throws {
+        let h = try await FileHarness()
+        defer { h.tmp.remove() }
+
+        h.harness.pasteboard.hasImageValue = true
+        #expect(h.model.isEnabled(.paste, context: .table) == true)
+
+        h.model.perform(.paste)
+        #expect(h.harness.effects.pasteImages == [.left])
+    }
 }

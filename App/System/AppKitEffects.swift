@@ -18,6 +18,9 @@ final class AppKitEffects: WindowEffects {
         case let .pane(side):
             windowController.pane(side).render()
             windowController.panes.selectionBar.render()
+            if windowController.model.quickViewSide != nil {
+                windowController.panes.updateQuickView()
+            }
         case .window, .settings:
             windowController.panes.applyLayout()
             windowController.pane(.left).render()

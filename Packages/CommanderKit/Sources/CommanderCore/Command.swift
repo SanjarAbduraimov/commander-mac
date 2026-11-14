@@ -12,6 +12,7 @@ public enum Command: String, CaseIterable, Codable, Sendable {
     case unmarkAll, copyTo, moveTo, deleteImmediately, calculateSize, toggleSinglePane
     case multiRename, undoMultiRename
     case undo, redo
+    case toggleQuickView
     case markByPattern, unmarkByPattern, invertMarks, markSameExtension
 
     /// While a text field has focus, keys edit text; only these window-level commands still fire.

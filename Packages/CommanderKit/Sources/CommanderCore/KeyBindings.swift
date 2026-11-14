@@ -23,6 +23,7 @@ public struct KeyBindings: Sendable {
             .undo: ["cmd+z"], .redo: ["cmd+shift+z"],
             .openInTerminal: ["opt+cmd+t"], .openWithApp: ["opt+return"],
             .quickLook: ["f3", "cmd+y"], .newFile: ["cmd+n"],
+            .toggleQuickView: ["ctrl+q"],
             .unmarkAll: ["escape"], .copyTo: ["opt+f5"], .moveTo: ["opt+f6"],
             .multiRename: ["ctrl+m"],
             .markByPattern: ["cmd+="], .unmarkByPattern: ["cmd+-"], .invertMarks: ["cmd+shift+i"],

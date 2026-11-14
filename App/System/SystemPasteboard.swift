@@ -37,4 +37,16 @@ final class SystemPasteboard: FilePasteboard {
     func clearCut() {
         cutChangeCount = nil
     }
+
+    func hasImage() -> Bool {
+        if NSImage.canInit(with: pasteboard) { return true }
+        let imageTypes = [
+            NSPasteboard.PasteboardType.png,
+            NSPasteboard.PasteboardType.tiff,
+            NSPasteboard.PasteboardType("public.png"),
+            NSPasteboard.PasteboardType("public.jpeg"),
+            NSPasteboard.PasteboardType("public.image"),
+        ]
+        return pasteboard.availableType(from: imageTypes) != nil
+    }
 }

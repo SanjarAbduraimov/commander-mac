@@ -7,11 +7,13 @@ import CommanderCore
 final class PanesViewController: NSViewController, NSSplitViewDelegate {
     let left: PaneViewController
     let right: PaneViewController
+    let quickViewPanel = QuickViewPanel()
     let selectionBar: SelectionBarView
     let footer: FooterView
-    private let model: WindowModel
+    let model: WindowModel
     private let split = NSSplitView()
     private var shownSinglePane: Bool?
+    private var shownQuickViewSide: PaneSide?
 
     init(model: WindowModel) {
         self.model = model
@@ -20,6 +22,10 @@ final class PanesViewController: NSViewController, NSSplitViewDelegate {
         selectionBar = SelectionBarView(model: model)
         footer = FooterView(model: model)
         super.init(nibName: nil, bundle: nil)
+
+        quickViewPanel.onClose = { [weak self] in
+            self?.model.closeQuickView()
+        }
     }
 
     @available(*, unavailable)
@@ -53,20 +59,54 @@ final class PanesViewController: NSViewController, NSSplitViewDelegate {
     }
 
     /// Single-pane mode hides the right pane; leaving it splits the width in half again.
+    /// When Quick View is active (⌃Q), the inactive pane is replaced with QuickViewPanel.
     func applyLayout() {
         let single = model.isSinglePane
-        guard single != shownSinglePane else { return }
-        shownSinglePane = single
-        // Taking the pane out of the split view removes its divider too; a hidden subview kept it drawn.
-        if single {
-            split.removeArrangedSubview(right.view)
-            right.view.removeFromSuperview()
-        } else if right.view.superview == nil {
-            split.addArrangedSubview(right.view)
+        let quickSide = model.quickViewSide
+
+        if single != shownSinglePane || quickSide != shownQuickViewSide {
+            shownSinglePane = single
+            shownQuickViewSide = quickSide
+
+            // Clear split views
+            for subview in split.arrangedSubviews {
+                split.removeArrangedSubview(subview)
+                subview.removeFromSuperview()
+            }
+
+            if single {
+                split.addArrangedSubview(left.view)
+            } else {
+                // Left slot
+                if quickSide == .left {
+                    split.addArrangedSubview(quickViewPanel)
+                } else {
+                    split.addArrangedSubview(left.view)
+                }
+
+                // Right slot
+                if quickSide == .right {
+                    split.addArrangedSubview(quickViewPanel)
+                } else {
+                    split.addArrangedSubview(right.view)
+                }
+            }
+
+            split.adjustSubviews()
+            split.layoutSubtreeIfNeeded()
+            if !single {
+                split.setPosition((split.bounds.width / 2).rounded(), ofDividerAt: 0)
+            }
         }
-        split.adjustSubviews()
-        split.layoutSubtreeIfNeeded()
-        if !single { split.setPosition((split.bounds.width / 2).rounded(), ofDividerAt: 0) }
+
+        updateQuickView()
+    }
+
+    func updateQuickView() {
+        guard let quickSide = model.quickViewSide else { return }
+        let browsingSide: PaneSide = quickSide == .left ? .right : .left
+        let currentItem = model.tab(browsingSide).cursorItem
+        quickViewPanel.preview(item: currentItem)
     }
 
     /// Window resizes grow both panes alike instead of only the first one.

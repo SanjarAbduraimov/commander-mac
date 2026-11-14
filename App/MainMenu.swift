@@ -24,7 +24,7 @@ final class MainMenu: NSObject, NSMenuItemValidation {
             NSMenuItem(title: "Quit Commander", action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q"),
         ]))
         main.addItem(submenu("File", [
-            command(.open), command(.openWithApp), command(.quickLook), .separator(),
+            command(.open), command(.openWithApp), command(.quickLook), command(.toggleQuickView), .separator(),
             command(.newTab), command(.closeTab), .separator(),
             command(.newFolder), command(.newFile), command(.rename), command(.multiRename), command(.duplicate), .separator(),
             command(.copyToOtherPane), command(.moveToOtherPane), command(.copyTo), command(.moveTo), .separator(),
@@ -47,6 +47,7 @@ final class MainMenu: NSObject, NSMenuItemValidation {
             command(.copyPath), command(.copyName),
         ]))
         main.addItem(submenu("View", [
+            command(.toggleQuickView), .separator(),
             command(.toggleSinglePane), .separator(),
             command(.toggleHiddenFiles), command(.calculateSize), command(.reload),
         ]))

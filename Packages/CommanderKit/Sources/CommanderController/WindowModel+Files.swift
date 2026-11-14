@@ -108,13 +108,16 @@ extension WindowModel {
             pasteboard.writeFiles(urls, cut: command == .cutToClipboard)
             setCut(command == .cutToClipboard ? urls : [])
         case .paste:
-            guard let (sources, isCut) = pasteboard.readFiles() else { return }
-            if isCut {
-                operations.start(.move(sources: sources, destination: tab.path))
-                pasteboard.clearCut()
-                setCut([])
-            } else {
-                operations.start(.copy(sources: sources, destination: tab.path))
+            if let (sources, isCut) = pasteboard.readFiles() {
+                if isCut {
+                    operations.start(.move(sources: sources, destination: tab.path))
+                    pasteboard.clearCut()
+                    setCut([])
+                } else {
+                    operations.start(.copy(sources: sources, destination: tab.path))
+                }
+            } else if pasteboard.hasImage() {
+                effects.pasteImage(side)
             }
         case .copyPath:
             guard !urls.isEmpty else { return }

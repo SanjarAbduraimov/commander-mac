@@ -17,13 +17,15 @@ final class BreadcrumbBar: NSView {
         self.model = model
         self.side = side
         super.init(frame: .zero)
+        wantsLayer = true
+        layer?.cornerRadius = 6
+        layer?.backgroundColor = NSColor.quaternaryLabelColor.withAlphaComponent(0.06).cgColor
         stack.orientation = .horizontal
-        stack.spacing = 1
+        stack.spacing = 2
+        stack.edgeInsets = NSEdgeInsets(top: 2, left: 6, bottom: 2, right: 6)
         // Placed by frame in `layout()`: as constraints, a long path's width would widen the whole pane.
         stack.translatesAutoresizingMaskIntoConstraints = true
         addSubview(stack)
-        wantsLayer = true
-        layer?.masksToBounds = true
         setAccessibilityElement(true)
         setAccessibilityRole(.group)
         setAccessibilityIdentifier("path.\(side.rawValue)")

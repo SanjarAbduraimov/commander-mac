@@ -4,15 +4,16 @@ Total Commander uslubidagi ikki panelli, klaviatura bilan tez ishlaydigan, yengi
 
 ## Joriy holat
 
-**2-bosqich (fayl operatsiyalari va transferlar): A–E bajarildi (2026-11-14). 2A-2E: TransferQueue, Smart Concurrency, APFS clone & resume streaming, Kengaytirilgan Konflikt dialogi, Transfer Manager sheet, ko'p bosqichli Undo/Redo (`⌘Z`, `⇧⌘Z`).**
+**UX & Qulaylik yaxshilanishlari: 4 ta asosiy talab to'liq bajarildi (2026-11-14): Clipboard Image Paste (`⌘V`), In-App Modal Settings Sheet (`⌘,`), Total Commander Quick View (`⌃Q`, `Esc`), va Zamonaviy macOS 15 Visual Polish (pill selection, frosted glass, chiclet shortcuts).**
 
-- Asosiy manba — spec: `docs/superpowers/specs/2026-11-14-phase2-file-operations-design.md`. Brainstorm tarixi: `docs/brainstorm/2026-10-21-commander-decisions.md`.
+- Asosiy manba — plan: `docs/superpowers/plans/2026-11-14-phase3-ux-polish.md`. Spec: `docs/superpowers/specs/2026-11-14-phase2-file-operations-design.md`.
 - Bajarilgan plan'lar:
   - 1-bosqich: `phase1a-commanderkit.md`, `phase1b-app-ui.md`, `phase1c-feedback.md`, `phase1d-cut-reveal-columns.md`, `phase1e-multi-rename.md`, `phase1f-redesign-context-menu.md`.
   - 2-bosqich: `phase2a-transfer-queue.md`, `phase2b-stream-file-copier.md`, `phase2c-conflict-resolution.md`, `phase2d-transfer-manager-ui.md`, `phase2e-undo-redo.md`.
-- Testlar: `swift test` — 376 ta test (63 suite), barchasi muvaffaqiyatli.
-- Universal Release: `build/Commander.dmg` (3.2 MB, x86_64 + arm64).
-- Keyingi qadam: 3-bosqich (Qo'shimchalar: ZIP qilish/ochish, boyitilgan Quick View va h.k.) yoki 2-bosqichni foydalanuvchi sinovi.
+  - UX Polish: `2026-11-14-phase3-ux-polish.md`.
+- Testlar: `swift test` — 378 ta test (63 suite), barchasi muvaffaqiyatli.
+- Universal Release: `build/Commander.dmg` (3.3 MB, x86_64 + arm64).
+- Keyingi qadam: 4-bosqich (SFTP/FTP tarmoq transferlari) yoki foydalanuvchi sinovi.
 
 ## Ish tartibi
 

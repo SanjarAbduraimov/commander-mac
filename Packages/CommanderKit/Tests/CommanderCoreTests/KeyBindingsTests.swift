@@ -26,6 +26,7 @@ struct KeyBindingsTests {
             ("cmd+z", .undo), ("cmd+shift+z", .redo),
             ("opt+cmd+t", .openInTerminal), ("opt+return", .openWithApp),
             ("f3", .quickLook), ("cmd+y", .quickLook), ("cmd+n", .newFile),
+            ("ctrl+q", .toggleQuickView),
         ]
         let keys = bindings()
         for (string, command) in expected {
