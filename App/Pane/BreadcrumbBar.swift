@@ -18,8 +18,6 @@ final class BreadcrumbBar: NSView {
         self.side = side
         super.init(frame: .zero)
         wantsLayer = true
-        layer?.cornerRadius = 7
-        layer?.backgroundColor = NSColor.quaternaryLabelColor.withAlphaComponent(0.08).cgColor
         stack.orientation = .horizontal
         stack.spacing = 3
         stack.edgeInsets = NSEdgeInsets(top: 0, left: 8, bottom: 0, right: 8)
@@ -66,7 +64,13 @@ final class BreadcrumbBar: NSView {
         button.isBordered = false
         button.font = NSFont.systemFont(ofSize: 12, weight: isLast ? .semibold : .medium)
         button.contentTintColor = isLast ? NSColor.labelColor : NSColor.secondaryLabelColor
+        if let cell = button.cell as? NSButtonCell {
+            cell.wraps = false
+            cell.isScrollable = false
+            cell.lineBreakMode = .byTruncatingMiddle
+        }
         button.setContentCompressionResistancePriority(.required, for: .horizontal)
+        button.setContentCompressionResistancePriority(.required, for: .vertical)
         button.setAccessibilityLabel(crumb.title)
         button.model = model
         button.destination = { crumb.url }
@@ -85,8 +89,10 @@ final class BreadcrumbBar: NSView {
     /// Left-aligned while it fits; a long path keeps its end visible and clips the leading segments.
     override func layout() {
         super.layout()
-        let size = stack.fittingSize
-        stack.frame = NSRect(x: min(0, bounds.width - size.width), y: ((bounds.height - size.height) / 2).rounded(), width: size.width, height: size.height)
+        let fitting = stack.fittingSize
+        let height = min(fitting.height, bounds.height)
+        let width = fitting.width
+        stack.frame = NSRect(x: min(0, bounds.width - width), y: ((bounds.height - height) / 2).rounded(), width: width, height: height)
     }
 
     override func mouseDown(with event: NSEvent) {

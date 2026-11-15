@@ -124,7 +124,7 @@ final class MainWindowController: NSWindowController {
             let targetWidth = max(CGFloat(model.sidebarWidth), 180)
             split.splitView.setPosition(targetWidth, ofDividerAt: 0)
         } else {
-            sidebarItem.animator().isCollapsed = true
+            sidebarItem.isCollapsed = true
         }
     }
 

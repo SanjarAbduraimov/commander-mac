@@ -17,8 +17,8 @@ final class FileRowView: NSTableRowView {
 
     override func drawBackground(in dirtyRect: NSRect) {
         super.drawBackground(in: dirtyRect)
-        let pillRect = bounds.insetBy(dx: 4, dy: 1)
-        let pillPath = NSBezierPath(roundedRect: pillRect, xRadius: 6, yRadius: 6)
+        let pillRect = bounds.insetBy(dx: 2, dy: 1)
+        let pillPath = NSBezierPath(roundedRect: pillRect, xRadius: 5, yRadius: 5)
 
         if isCursor {
             if isMarked {
@@ -32,8 +32,8 @@ final class FileRowView: NSTableRowView {
                 pillPath.fill()
             }
             // Vertical accent pill indicator on the left
-            let indicatorRect = NSRect(x: 6, y: 3, width: 3, height: bounds.height - 6)
-            let indicatorPath = NSBezierPath(roundedRect: indicatorRect, xRadius: 1.5, yRadius: 1.5)
+            let indicatorRect = NSRect(x: 2, y: 3, width: 2.5, height: bounds.height - 6)
+            let indicatorPath = NSBezierPath(roundedRect: indicatorRect, xRadius: 1.25, yRadius: 1.25)
             NSColor.controlAccentColor.setFill()
             indicatorPath.fill()
         } else if isMarked {

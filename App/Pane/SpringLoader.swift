@@ -77,6 +77,11 @@ class DropButton: NSButton {
 
     override init(frame frameRect: NSRect) {
         super.init(frame: frameRect)
+        if let cell = cell as? NSButtonCell {
+            cell.wraps = false
+            cell.isScrollable = false
+            cell.lineBreakMode = .byTruncatingMiddle
+        }
         registerForDraggedTypes([.fileURL])
     }
 

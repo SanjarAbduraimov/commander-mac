@@ -55,7 +55,7 @@ final class FileTableController: NSObject, NSTableViewDataSource, NSTableViewDel
         let wanted = [Column.mark.rawValue, Column.name.rawValue] + columns.map(\.id.rawValue)
         if table.tableColumns.map(\.identifier.rawValue) != wanted {
             for column in table.tableColumns { table.removeTableColumn(column) }
-            table.addTableColumn(Self.tableColumn(.mark, width: 18))
+            table.addTableColumn(Self.tableColumn(.mark, width: 8))
             table.addTableColumn(Self.tableColumn(.name, width: 200))
             for setting in columns { table.addTableColumn(Self.tableColumn(Column(rawValue: setting.id.rawValue)!, width: setting.width)) }
             table.sizeToFit()
@@ -73,8 +73,8 @@ final class FileTableController: NSObject, NSTableViewDataSource, NSTableViewDel
         tableColumn.width = CGFloat(width)
         switch column {
         case .mark:
-            tableColumn.minWidth = 18
-            tableColumn.maxWidth = 18
+            tableColumn.minWidth = 8
+            tableColumn.maxWidth = 8
             tableColumn.resizingMask = []
         case .name:
             tableColumn.minWidth = 120
@@ -125,6 +125,10 @@ final class FileTableController: NSObject, NSTableViewDataSource, NSTableViewDel
 
     func tableViewColumnDidResize(_ notification: Notification) {
         guard let table = notification.object as? NSTableView else { return }
+        storeColumns(of: table)
+    }
+
+    func columnDidAutoFit(table: NSTableView) {
         storeColumns(of: table)
     }
 
@@ -263,10 +267,10 @@ final class FileTableController: NSObject, NSTableViewDataSource, NSTableViewDel
             cell.addSubview(image)
             cell.imageView = image
             NSLayoutConstraint.activate([
-                image.leadingAnchor.constraint(equalTo: cell.leadingAnchor, constant: column == .mark ? 2 : 0),
+                image.leadingAnchor.constraint(equalTo: cell.leadingAnchor, constant: 0),
                 image.centerYAnchor.constraint(equalTo: cell.centerYAnchor),
-                image.widthAnchor.constraint(equalToConstant: column == .mark ? 12 : iconSize),
-                image.heightAnchor.constraint(equalToConstant: column == .mark ? 12 : iconSize),
+                image.widthAnchor.constraint(equalToConstant: column == .mark ? 7 : iconSize),
+                image.heightAnchor.constraint(equalToConstant: column == .mark ? 7 : iconSize),
             ])
         }
         guard column != .mark else { return cell }

@@ -11,6 +11,7 @@ final class PaneViewController: NSViewController, NSTextFieldDelegate, NSDraggin
     let side: PaneSide
     let table = FileTableView()
     let pathField = NSTextField()
+    private let pathContainer = NSView()
 
     private let tableController: FileTableController
     private lazy var renameEditor = RenameEditor(model: model, side: side, table: table)
@@ -76,18 +77,24 @@ final class PaneViewController: NSViewController, NSTextFieldDelegate, NSDraggin
         parentStrip.onDragHover = { [weak self] in self?.dragHover($0) }
 
         pathField.font = .monospacedSystemFont(ofSize: 12, weight: .regular)
-        pathField.isBordered = true
-        pathField.bezelStyle = .roundedBezel
-        pathField.drawsBackground = true
-        pathField.backgroundColor = .textBackgroundColor
+        pathField.isBordered = false
+        pathField.focusRingType = .none
+        pathField.drawsBackground = false
         pathField.lineBreakMode = .byTruncatingHead
         pathField.setAccessibilityIdentifier("pathEdit.\(side.rawValue)")
         pathField.delegate = self
         pathField.isHidden = true
 
+        pathContainer.translatesAutoresizingMaskIntoConstraints = false
+        pathContainer.wantsLayer = true
+        pathContainer.layer?.cornerRadius = 7
+        pathContainer.layer?.backgroundColor = NSColor.quaternaryLabelColor.withAlphaComponent(0.08).cgColor
+        pathContainer.layer?.borderWidth = 0
+        pathContainer.layer?.borderColor = NSColor.controlAccentColor.cgColor
+
         table.side = side
         table.model = model
-        table.headerView = NSTableHeaderView()
+        table.headerView = FileTableHeaderView()
         table.usesAlternatingRowBackgroundColors = false
         table.selectionHighlightStyle = .none
         table.allowsTypeSelect = false
@@ -155,8 +162,9 @@ final class PaneViewController: NSViewController, NSTextFieldDelegate, NSDraggin
         pathField.translatesAutoresizingMaskIntoConstraints = false
         breadcrumbs.translatesAutoresizingMaskIntoConstraints = false
 
-        pathRow.addSubview(pathField)
-        pathRow.addSubview(breadcrumbs)
+        pathContainer.addSubview(breadcrumbs)
+        pathContainer.addSubview(pathField)
+        pathRow.addSubview(pathContainer)
         pathRow.addSubview(copyPathButton)
         pathRow.addSubview(newItemButton)
 
@@ -174,17 +182,21 @@ final class PaneViewController: NSViewController, NSTextFieldDelegate, NSDraggin
             copyPathButton.heightAnchor.constraint(equalToConstant: 28),
             copyPathButton.widthAnchor.constraint(equalToConstant: 28),
 
-            // Path field: completely separate, stops before copyPathButton
-            pathField.leadingAnchor.constraint(equalTo: pathRow.leadingAnchor, constant: 8),
-            pathField.trailingAnchor.constraint(equalTo: copyPathButton.leadingAnchor, constant: -6),
-            pathField.centerYAnchor.constraint(equalTo: pathRow.centerYAnchor),
-            pathField.heightAnchor.constraint(equalToConstant: 28),
+            // Path container: from left margin to copyPathButton
+            pathContainer.leadingAnchor.constraint(equalTo: pathRow.leadingAnchor, constant: 8),
+            pathContainer.trailingAnchor.constraint(equalTo: copyPathButton.leadingAnchor, constant: -6),
+            pathContainer.centerYAnchor.constraint(equalTo: pathRow.centerYAnchor),
+            pathContainer.heightAnchor.constraint(equalToConstant: 28),
 
-            // Breadcrumbs: completely separate, stops before copyPathButton
-            breadcrumbs.leadingAnchor.constraint(equalTo: pathRow.leadingAnchor, constant: 8),
-            breadcrumbs.trailingAnchor.constraint(lessThanOrEqualTo: copyPathButton.leadingAnchor, constant: -6),
-            breadcrumbs.centerYAnchor.constraint(equalTo: pathRow.centerYAnchor),
-            breadcrumbs.heightAnchor.constraint(equalToConstant: 28),
+            // Inside pathContainer:
+            breadcrumbs.leadingAnchor.constraint(equalTo: pathContainer.leadingAnchor),
+            breadcrumbs.trailingAnchor.constraint(equalTo: pathContainer.trailingAnchor),
+            breadcrumbs.topAnchor.constraint(equalTo: pathContainer.topAnchor),
+            breadcrumbs.bottomAnchor.constraint(equalTo: pathContainer.bottomAnchor),
+
+            pathField.leadingAnchor.constraint(equalTo: pathContainer.leadingAnchor, constant: 8),
+            pathField.trailingAnchor.constraint(equalTo: pathContainer.trailingAnchor, constant: -8),
+            pathField.centerYAnchor.constraint(equalTo: pathContainer.centerYAnchor),
         ])
         let statusRow = padded(statusLabel, height: 27)
         let stack = NSStackView(views: [activeLine, tabBar, pathRow, banner, scrollView, statusRow])
@@ -294,6 +306,8 @@ final class PaneViewController: NSViewController, NSTextFieldDelegate, NSDraggin
     func focusPathField() {
         breadcrumbs.isHidden = true
         pathField.isHidden = false
+        pathContainer.layer?.backgroundColor = NSColor.textBackgroundColor.withAlphaComponent(0.92).cgColor
+        pathContainer.layer?.borderWidth = 1.2
         view.window?.makeFirstResponder(pathField)
         pathField.selectText(nil)
     }
@@ -305,6 +319,8 @@ final class PaneViewController: NSViewController, NSTextFieldDelegate, NSDraggin
             guard let self, self.pathField.currentEditor() == nil else { return }
             self.pathField.isHidden = true
             self.breadcrumbs.isHidden = false
+            self.pathContainer.layer?.backgroundColor = NSColor.quaternaryLabelColor.withAlphaComponent(0.08).cgColor
+            self.pathContainer.layer?.borderWidth = 0
         }
     }
 

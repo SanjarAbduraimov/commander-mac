@@ -169,4 +169,86 @@ final class FileTableView: NSTableView {
             }
         }
     }
+
+    func autoFitColumn(at columnIndex: Int) {
+        guard tableColumns.indices.contains(columnIndex) else { return }
+        let column = tableColumns[columnIndex]
+        guard let colID = FileTableController.Column(rawValue: column.identifier.rawValue), colID != .mark else { return }
+
+        guard let model else { return }
+        let tab = model.tab(side)
+        let items = tab.items
+        let appearance = model.settings.appearance
+        let font = appearance.fontName.flatMap { NSFont(name: $0, size: appearance.fontSize) } ?? .systemFont(ofSize: appearance.fontSize)
+
+        // 1. Header title width + sort indicator & margin space
+        let headerFont = NSFont.systemFont(ofSize: 11, weight: .bold)
+        let titleWidth = (column.title as NSString).size(withAttributes: [.font: headerFont]).width + 28
+
+        // 2. Measure visible & sampled items
+        var maxContentWidth: CGFloat = 0
+        let sample = items.prefix(250)
+
+        for item in sample {
+            let str: String
+            switch colID {
+            case .mark:
+                str = ""
+            case .name:
+                let showsExt = appearance.columns.contains { $0.id == .ext }
+                str = showsExt ? item.baseName : item.name
+            case .ext:
+                str = item.ext
+            case .size:
+                let size = item.size ?? model.folderSize(side, item)
+                str = size.map { ByteCountFormatter.string(fromByteCount: $0, countStyle: .file) } ?? "--"
+            case .modified:
+                str = item.modified.formatted(Date.FormatStyle(date: .numeric, time: .shortened))
+            case .created:
+                str = item.created?.formatted(Date.FormatStyle(date: .numeric, time: .shortened)) ?? "--"
+            case .kind:
+                str = item.kindName
+            }
+
+            let textWidth = (str as NSString).size(withAttributes: [.font: font]).width
+            var rowWidth = textWidth + 16
+            if colID == .name {
+                rowWidth += CGFloat(appearance.iconSize) + 8
+            }
+            if rowWidth > maxContentWidth {
+                maxContentWidth = rowWidth
+            }
+        }
+
+        let minWidth: CGFloat = colID == .ext ? 45 : (colID == .name ? 120 : 65)
+        let maxWidth: CGFloat = colID == .name ? 800 : 350
+        let idealWidth = min(max(max(titleWidth, maxContentWidth), minWidth), maxWidth)
+
+        column.width = idealWidth.rounded()
+
+        if let controller = delegate as? FileTableController {
+            controller.columnDidAutoFit(table: self)
+        }
+    }
+}
+
+final class FileTableHeaderView: NSTableHeaderView {
+    override func mouseDown(with event: NSEvent) {
+        if event.clickCount == 2 {
+            let point = convert(event.locationInWindow, from: nil)
+            let colIndex = column(at: point)
+            if colIndex >= 0, let fileTable = tableView as? FileTableView {
+                let rect = headerRect(ofColumn: colIndex)
+                let targetCol: Int
+                if point.x - rect.minX < 6 && colIndex > 0 {
+                    targetCol = colIndex - 1
+                } else {
+                    targetCol = colIndex
+                }
+                fileTable.autoFitColumn(at: targetCol)
+                return
+            }
+        }
+        super.mouseDown(with: event)
+    }
 }
