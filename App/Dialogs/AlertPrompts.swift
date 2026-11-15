@@ -196,11 +196,20 @@ final class AlertPrompts: OperationPrompts {
             button.layer?.cornerRadius = 6
             button.layer?.masksToBounds = true
 
+            if button.constraints.filter({ $0.firstAttribute == .height }).isEmpty {
+                button.heightAnchor.constraint(equalToConstant: 30).isActive = true
+            }
+            if button.constraints.filter({ $0.firstAttribute == .width }).isEmpty {
+                button.widthAnchor.constraint(greaterThanOrEqualToConstant: 90).isActive = true
+            }
+
             let isDestructive = button.hasDestructiveAction || button.title.localizedCaseInsensitiveContains("delete")
             let isActive = (index == activeIndex)
 
             let paragraph = NSMutableParagraphStyle()
             paragraph.alignment = .center
+
+            let displayTitle = "   \(button.title.trimmingCharacters(in: .whitespaces))   "
 
             if isDestructive {
                 if isActive {
@@ -208,7 +217,7 @@ final class AlertPrompts: OperationPrompts {
                     button.layer?.borderWidth = 2.0
                     button.layer?.borderColor = NSColor.white.cgColor
                     button.attributedTitle = NSAttributedString(
-                        string: button.title,
+                        string: displayTitle,
                         attributes: [
                             .foregroundColor: NSColor.white,
                             .font: NSFont.systemFont(ofSize: 13, weight: .semibold),
@@ -220,7 +229,7 @@ final class AlertPrompts: OperationPrompts {
                     button.layer?.borderWidth = 0.5
                     button.layer?.borderColor = NSColor.systemRed.withAlphaComponent(0.3).cgColor
                     button.attributedTitle = NSAttributedString(
-                        string: button.title,
+                        string: displayTitle,
                         attributes: [
                             .foregroundColor: NSColor.white.withAlphaComponent(0.9),
                             .font: NSFont.systemFont(ofSize: 13, weight: .medium),
@@ -234,7 +243,7 @@ final class AlertPrompts: OperationPrompts {
                     button.layer?.borderWidth = 2.0
                     button.layer?.borderColor = NSColor.white.cgColor
                     button.attributedTitle = NSAttributedString(
-                        string: button.title,
+                        string: displayTitle,
                         attributes: [
                             .foregroundColor: NSColor.white,
                             .font: NSFont.systemFont(ofSize: 13, weight: .semibold),
@@ -246,7 +255,7 @@ final class AlertPrompts: OperationPrompts {
                     button.layer?.borderWidth = 0.5
                     button.layer?.borderColor = NSColor.controlAccentColor.withAlphaComponent(0.3).cgColor
                     button.attributedTitle = NSAttributedString(
-                        string: button.title,
+                        string: displayTitle,
                         attributes: [
                             .foregroundColor: NSColor.white.withAlphaComponent(0.9),
                             .font: NSFont.systemFont(ofSize: 13, weight: .medium),
@@ -260,7 +269,7 @@ final class AlertPrompts: OperationPrompts {
                     button.layer?.borderWidth = 2.0
                     button.layer?.borderColor = NSColor.white.cgColor
                     button.attributedTitle = NSAttributedString(
-                        string: button.title,
+                        string: displayTitle,
                         attributes: [
                             .foregroundColor: NSColor.white,
                             .font: NSFont.systemFont(ofSize: 13, weight: .semibold),
@@ -272,7 +281,7 @@ final class AlertPrompts: OperationPrompts {
                     button.layer?.borderWidth = 0.5
                     button.layer?.borderColor = NSColor.separatorColor.withAlphaComponent(0.5).cgColor
                     button.attributedTitle = NSAttributedString(
-                        string: button.title,
+                        string: displayTitle,
                         attributes: [
                             .foregroundColor: NSColor.white.withAlphaComponent(0.8),
                             .font: NSFont.systemFont(ofSize: 13, weight: .medium),

@@ -4,14 +4,29 @@ import CommanderController
 import CommanderCore
 
 /// Modern macOS 15 delicate sidebar divider.
-/// Replaces the harsh black divider with a subtle, translucent hairline separator.
+/// Provides a comfortable hit target (7px) while drawing a subtle, translucent hairline separator.
 final class ModernSidebarSplitView: NSSplitView {
-    override var dividerThickness: CGFloat { 1 }
+    override var dividerThickness: CGFloat { 7 }
+
+    override func resetCursorRects() {
+        super.resetCursorRects()
+        for i in 0..<max(arrangedSubviews.count - 1, 0) {
+            let rect = dividerRect(at: i)
+            addCursorRect(rect, cursor: .resizeLeftRight)
+        }
+    }
+
+    private func dividerRect(at index: Int) -> NSRect {
+        guard arrangedSubviews.indices.contains(index), arrangedSubviews.indices.contains(index + 1) else { return .zero }
+        let leftFrame = arrangedSubviews[index].frame
+        return NSRect(x: leftFrame.maxX, y: 0, width: dividerThickness, height: bounds.height)
+    }
 
     override func drawDivider(in rect: NSRect) {
         effectiveAppearance.performAsCurrentDrawingAppearance {
-            NSColor.separatorColor.withAlphaComponent(0.35).setFill()
-            rect.fill()
+            let hairline = NSRect(x: (rect.midX - 0.5).rounded(), y: rect.minY, width: 1, height: rect.height)
+            NSColor.separatorColor.withAlphaComponent(0.28).setFill()
+            hairline.fill()
         }
     }
 }
@@ -43,7 +58,7 @@ final class MainWindowController: NSWindowController {
         headerBar = TopHeaderBarView()
 
         let sidebarItem = NSSplitViewItem(viewController: sidebar)
-        sidebarItem.minimumThickness = 110
+        sidebarItem.minimumThickness = 100
         sidebarItem.maximumThickness = 650
         sidebarItem.canCollapse = true
         sidebarItem.holdingPriority = .defaultHigh
