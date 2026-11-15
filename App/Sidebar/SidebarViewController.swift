@@ -70,72 +70,15 @@ final class SidebarViewController: NSViewController, NSOutlineViewDataSource, NS
         scroll.drawsBackground = false
         container.addSubview(scroll)
 
-        let divider = NSBox()
-        divider.boxType = .separator
-        divider.translatesAutoresizingMaskIntoConstraints = false
-        container.addSubview(divider)
-
-        let bottomBar = NSView()
-        bottomBar.translatesAutoresizingMaskIntoConstraints = false
-        container.addSubview(bottomBar)
-
-        let settingsButton = NSButton()
-        settingsButton.translatesAutoresizingMaskIntoConstraints = false
-        settingsButton.bezelStyle = .accessoryBarAction
-        settingsButton.isBordered = false
-        let gear = NSImage(systemSymbolName: "gearshape.fill", accessibilityDescription: "Settings")?.withSymbolConfiguration(.init(pointSize: 12, weight: .medium))
-        settingsButton.image = gear
-        settingsButton.title = " Settings"
-        settingsButton.imagePosition = .imageLeading
-        settingsButton.font = .systemFont(ofSize: 12, weight: .medium)
-        settingsButton.contentTintColor = .secondaryLabelColor
-        settingsButton.toolTip = "Settings (⌘,)"
-        settingsButton.target = self
-        settingsButton.action = #selector(openSettingsClicked)
-        settingsButton.setAccessibilityLabel("Settings")
-        bottomBar.addSubview(settingsButton)
-
-        let shortcutBadge = NSTextField(labelWithString: " ⌘, ")
-        shortcutBadge.translatesAutoresizingMaskIntoConstraints = false
-        shortcutBadge.font = .monospacedSystemFont(ofSize: 10, weight: .semibold)
-        shortcutBadge.textColor = .tertiaryLabelColor
-        shortcutBadge.wantsLayer = true
-        shortcutBadge.layer?.backgroundColor = NSColor.quaternaryLabelColor.withAlphaComponent(0.12).cgColor
-        shortcutBadge.layer?.borderWidth = 0.5
-        shortcutBadge.layer?.borderColor = NSColor.separatorColor.withAlphaComponent(0.5).cgColor
-        shortcutBadge.layer?.cornerRadius = 4
-        bottomBar.addSubview(shortcutBadge)
-
         NSLayoutConstraint.activate([
             scroll.topAnchor.constraint(equalTo: container.topAnchor),
             scroll.leadingAnchor.constraint(equalTo: container.leadingAnchor),
             scroll.trailingAnchor.constraint(equalTo: container.trailingAnchor),
-            scroll.bottomAnchor.constraint(equalTo: divider.topAnchor),
-
-            divider.leadingAnchor.constraint(equalTo: container.leadingAnchor),
-            divider.trailingAnchor.constraint(equalTo: container.trailingAnchor),
-            divider.heightAnchor.constraint(equalToConstant: 1),
-            divider.bottomAnchor.constraint(equalTo: bottomBar.topAnchor),
-
-            bottomBar.leadingAnchor.constraint(equalTo: container.leadingAnchor),
-            bottomBar.trailingAnchor.constraint(equalTo: container.trailingAnchor),
-            bottomBar.bottomAnchor.constraint(equalTo: container.bottomAnchor),
-            bottomBar.heightAnchor.constraint(equalToConstant: 38),
-
-            settingsButton.leadingAnchor.constraint(equalTo: bottomBar.leadingAnchor, constant: 10),
-            settingsButton.centerYAnchor.constraint(equalTo: bottomBar.centerYAnchor),
-            settingsButton.heightAnchor.constraint(equalToConstant: 26),
-
-            shortcutBadge.trailingAnchor.constraint(equalTo: bottomBar.trailingAnchor, constant: -12),
-            shortcutBadge.centerYAnchor.constraint(equalTo: bottomBar.centerYAnchor),
+            scroll.bottomAnchor.constraint(equalTo: container.bottomAnchor),
         ])
 
         view = container
         reload()
-    }
-
-    @objc private func openSettingsClicked() {
-        model.perform(.openSettings)
     }
 
     func reload() {

@@ -58,6 +58,12 @@ final class KeyRouter {
         ) else { return false }
 
         let context = currentContext
+        if context == .table, flags.contains(.command), !flags.contains(.control), event.charactersIgnoringModifiers == "b" {
+            if let mainWindow = window.windowController as? MainWindowController {
+                mainWindow.toggleSidebarAction()
+                return true
+            }
+        }
         if model.handleKey(chord, context: context) { return true }
         if context == .table, modifiers.isDisjoint(with: [.command, .control, .option]),
            let characters = event.characters, characters.count == 1, let character = characters.first,

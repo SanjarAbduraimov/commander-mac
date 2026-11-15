@@ -162,7 +162,7 @@ final class FileTableController: NSObject, NSTableViewDataSource, NSTableViewDel
             cell.textField?.stringValue = showsExtColumn ? item.baseName : item.name
             cell.textField?.font = isCut ? NSFontManager.shared.convert(font, toHaveTrait: .italicFontMask) : font
             cell.textField?.textColor = isCut ? Palette.accent : .labelColor
-            cell.imageView?.image = IconCache.shared.icon(for: item)
+            cell.imageView?.image = IconCache.shared.icon(for: item, size: CGFloat(model.settings.appearance.iconSize))
             // Finder dims hidden items; a cut item is told apart by italics and colour, so both can show at once.
             let alpha: CGFloat = item.isHidden ? 0.5 : 1
             cell.textField?.alphaValue = alpha
@@ -258,6 +258,7 @@ final class FileTableController: NSObject, NSTableViewDataSource, NSTableViewDel
         let iconSize = CGFloat(model.settings.appearance.iconSize)
         if column == .mark || column == .name {
             let image = NSImageView()
+            image.imageScaling = .scaleProportionallyUpOrDown
             image.translatesAutoresizingMaskIntoConstraints = false
             cell.addSubview(image)
             cell.imageView = image

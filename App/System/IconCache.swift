@@ -66,7 +66,9 @@ final class IconCache {
     }
 
     private func sfIcon(_ name: String, tint: NSColor, size: CGFloat) -> NSImage {
-        let config = NSImage.SymbolConfiguration(hierarchicalColor: tint)
+        let pointSize = max(size * 0.85, 10)
+        let config = NSImage.SymbolConfiguration(pointSize: pointSize, weight: .regular)
+            .applying(NSImage.SymbolConfiguration(hierarchicalColor: tint))
         guard let base = NSImage(systemSymbolName: name, accessibilityDescription: nil)?
             .withSymbolConfiguration(config) else {
             let fallback = NSWorkspace.shared.icon(for: .data)

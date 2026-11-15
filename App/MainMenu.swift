@@ -46,7 +46,11 @@ final class MainMenu: NSObject, NSMenuItemValidation {
             command(.unmarkAll), .separator(),
             command(.copyPath), command(.copyName),
         ]))
+        let toggleSidebarItem = NSMenuItem(title: "Toggle Sidebar", action: #selector(MainWindowController.toggleSidebarAction), keyEquivalent: "s")
+        toggleSidebarItem.keyEquivalentModifierMask = [.control, .command]
+
         main.addItem(submenu("View", [
+            toggleSidebarItem, .separator(),
             command(.toggleQuickView), .separator(),
             command(.toggleSinglePane), .separator(),
             command(.toggleHiddenFiles), command(.calculateSize), command(.reload),

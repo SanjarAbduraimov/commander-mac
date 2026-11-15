@@ -24,6 +24,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     func applicationDidFinishLaunching(_ notification: Notification) {
+        NSWindow.allowsAutomaticWindowTabbing = false
         let options = LaunchOptions(arguments: ProcessInfo.processInfo.arguments)
         let bootstrap = AppBootstrap.load(options, lister: DirectoryReader())
         let persistence = SettingsPersistence(store: bootstrap.store)

@@ -4,6 +4,7 @@ import Foundation
 
 extension WindowModel {
     public var recentServers: [String] { session.recentServers }
+    public var sidebarWidth: Double { session.sidebarWidth }
 
     public func setSidebarWidth(_ width: Double) {
         session.sidebarWidth = width

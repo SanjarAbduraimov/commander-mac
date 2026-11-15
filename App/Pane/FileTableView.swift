@@ -94,7 +94,22 @@ final class FileTableView: NSTableView {
             }
             menu.addItem(item)
         }
+
+        menu.addItem(.separator())
+        let telegramItem = NSMenuItem(title: "Telegram", action: #selector(shareToTelegramClicked), keyEquivalent: "")
+        if let paperplane = NSImage(systemSymbolName: "paperplane.fill", accessibilityDescription: "Telegram") {
+            telegramItem.image = paperplane.withSymbolConfiguration(NSImage.SymbolConfiguration(pointSize: 11, weight: .medium))
+        }
+        telegramItem.target = self
+        menu.addItem(telegramItem)
+
         return menu
+    }
+
+    @objc private func shareToTelegramClicked() {
+        guard let model else { return }
+        let urls = model.tab(side).targets.map(\.url)
+        TelegramSharing.share(urls: urls, from: self)
     }
 
     @objc private func performMenuEntry(_ sender: NSMenuItem) {

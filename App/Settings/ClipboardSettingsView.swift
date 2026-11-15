@@ -6,27 +6,53 @@ struct ClipboardSettingsView: View {
     @Bindable var model: SettingsViewModel
 
     var body: some View {
-        Form {
-            Section("Image Paste (Telegram-style)") {
-                Toggle("Confirm before pasting image from clipboard", isOn: $model.clipboard.confirmPasteImage)
-                    .help("When enabled, shows a preview dialog allowing you to name the image before saving.")
-
-                Picker("Default image format", selection: $model.clipboard.defaultImageFormat) {
-                    Text("PNG (lossless)").tag("png")
-                    Text("JPEG (compressed)").tag("jpeg")
-                    Text("TIFF (raw)").tag("tiff")
+        VStack(alignment: .leading, spacing: 18) {
+            SettingsCard("Image Paste (⌘V)") {
+                SettingsRow(title: "Confirmation dialog", subtitle: "Show preview & name prompt before saving image") {
+                    Toggle("", isOn: $model.clipboard.confirmPasteImage)
+                        .labelsHidden()
                 }
 
-                TextField("File naming pattern", text: $model.clipboard.imageNamingPattern)
-                    .help("Date format tokens like yyyy, MM, dd, HH, mm, ss")
+                Divider().opacity(0.3)
+
+                SettingsRow(title: "Default image format", subtitle: "Output image container format") {
+                    Picker("", selection: $model.clipboard.defaultImageFormat) {
+                        Text("PNG (lossless)").tag("png")
+                        Text("JPEG (compressed)").tag("jpeg")
+                        Text("TIFF (raw)").tag("tiff")
+                    }
+                    .frame(width: 180)
+                }
+
+                Divider().opacity(0.3)
+
+                SettingsRow(title: "Naming pattern", subtitle: "Date tokens: yyyy, MM, dd, HH, mm, ss") {
+                    TextField("Pattern", text: $model.clipboard.imageNamingPattern)
+                        .textFieldStyle(.roundedBorder)
+                        .frame(width: 180)
+                }
             }
 
-            Section("Instructions") {
-                Text("Copy any image or screenshot (e.g. from Chrome, Safari, or Telegram), then press ⌘V in Commander to paste it as an image file directly into the current folder.")
-                    .font(.callout)
-                    .foregroundStyle(.secondary)
+            SettingsCard("How it works") {
+                HStack(alignment: .top, spacing: 12) {
+                    Image(systemName: "photo.badge.plus")
+                        .font(.system(size: 22))
+                        .foregroundStyle(Color.accentColor)
+                        .frame(width: 28)
+
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("Instant Clipboard Image Paste")
+                            .font(.system(size: 13, weight: .semibold))
+                            .foregroundStyle(.primary)
+
+                        Text("Copy any image or screenshot from your web browser, Telegram, or Preview to your clipboard. Then focus any folder in Commander and press ⌘V to instantly paste it as an image file directly into that directory.")
+                            .font(.system(size: 12))
+                            .foregroundStyle(.secondary)
+                            .lineSpacing(2)
+                    }
+                }
+                .padding(14)
             }
         }
-        .formStyle(.grouped)
     }
 }

@@ -23,7 +23,9 @@ final class MainWindowController: NSWindowController {
         split.addSplitViewItem(sidebarItem)
         split.addSplitViewItem(NSSplitViewItem(viewController: panes))
 
+        NSWindow.allowsAutomaticWindowTabbing = false
         let window = NSWindow(contentViewController: split)
+        window.tabbingMode = .disallowed
         window.title = "Commander"
         window.setContentSize(NSSize(width: 1100, height: 700))
         window.contentMinSize = NSSize(width: 800, height: 480)
@@ -110,13 +112,19 @@ final class MainWindowController: NSWindowController {
     }
 
     func shareToTelegram(urls: [URL]) {
-        guard !urls.isEmpty else { return }
-        let telegramURL = URL(fileURLWithPath: "/Applications/Telegram.app")
-        if FileManager.default.fileExists(atPath: telegramURL.path) {
-            NSWorkspace.shared.open(urls, withApplicationAt: telegramURL, configuration: NSWorkspace.OpenConfiguration())
-        } else if let view = window?.contentView {
-            let picker = NSSharingServicePicker(items: urls)
-            picker.show(relativeTo: .zero, of: view, preferredEdge: .minY)
+        TelegramSharing.share(urls: urls, from: window?.contentView)
+    }
+
+    @objc func toggleSidebarAction() {
+        guard let split = window?.contentViewController as? NSSplitViewController else { return }
+        guard let sidebarItem = split.splitViewItems.first else { return }
+        let currentWidth = sidebar.viewIfLoaded?.frame.width ?? 0
+        if sidebarItem.isCollapsed || currentWidth < 50 {
+            sidebarItem.isCollapsed = false
+            let targetWidth = max(CGFloat(model.sidebarWidth), 180)
+            split.splitView.setPosition(targetWidth, ofDividerAt: 0)
+        } else {
+            sidebarItem.animator().isCollapsed = true
         }
     }
 

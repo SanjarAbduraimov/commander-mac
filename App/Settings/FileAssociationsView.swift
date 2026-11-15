@@ -9,59 +9,85 @@ struct FileAssociationsView: View {
     @State private var selectedExtension: String?
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Text("Configure which application opens specific file extensions when pressing Enter or double-clicking.")
-                .font(.callout)
-                .foregroundStyle(.secondary)
-
-            List(selection: $selectedExtension) {
+        VStack(alignment: .leading, spacing: 18) {
+            SettingsCard("Custom File Handlers") {
                 if model.fileAssociations.isEmpty {
-                    Text("No custom associations set. macOS defaults will be used.")
-                        .foregroundStyle(.tertiary)
-                        .italic()
-                } else {
-                    ForEach(sortedAssociations, id: \.key) { ext, appPath in
-                        HStack {
-                            Text(".\(ext)")
-                                .fontWeight(.medium)
-                                .frame(width: 80, alignment: .leading)
-                            
-                            let appName = (appPath as NSString).lastPathComponent.replacingOccurrences(of: ".app", with: "")
-                            Text(appName)
-                                .foregroundStyle(.primary)
-
-                            Spacer()
-
-                            Text(appPath)
-                                .font(.caption)
+                    HStack {
+                        Spacer()
+                        VStack(spacing: 6) {
+                            Image(systemName: "app.badge.checkmark")
+                                .font(.system(size: 24))
                                 .foregroundStyle(.tertiary)
-                                .lineLimit(1)
-                                .truncationMode(.middle)
+                            Text("No custom associations set")
+                                .font(.system(size: 13, weight: .medium))
+                                .foregroundStyle(.secondary)
+                            Text("macOS system defaults will be used when opening files.")
+                                .font(.system(size: 11))
+                                .foregroundStyle(.tertiary)
                         }
-                        .tag(ext)
+                        .padding(.vertical, 28)
+                        Spacer()
+                    }
+                } else {
+                    VStack(spacing: 0) {
+                        ForEach(sortedAssociations, id: \.key) { ext, appPath in
+                            let appName = (appPath as NSString).lastPathComponent.replacingOccurrences(of: ".app", with: "")
+                            HStack(spacing: 12) {
+                                Text(".\(ext)")
+                                    .font(.system(size: 13, weight: .semibold).monospaced())
+                                    .foregroundStyle(Color.accentColor)
+                                    .frame(width: 70, alignment: .leading)
+
+                                Text(appName)
+                                    .font(.system(size: 13, weight: .medium))
+                                    .foregroundStyle(.primary)
+
+                                Spacer()
+
+                                Text(appPath)
+                                    .font(.system(size: 11))
+                                    .foregroundStyle(.tertiary)
+                                    .lineLimit(1)
+                                    .truncationMode(.middle)
+                                    .frame(maxWidth: 180)
+
+                                Button {
+                                    model.removeFileAssociation(extension: ext)
+                                } label: {
+                                    Image(systemName: "trash")
+                                        .font(.system(size: 11))
+                                        .foregroundStyle(.red.opacity(0.8))
+                                }
+                                .buttonStyle(.borderless)
+                                .help("Remove association")
+                            }
+                            .padding(.horizontal, 14)
+                            .padding(.vertical, 9)
+
+                            if ext != sortedAssociations.last?.key {
+                                Divider().opacity(0.3)
+                            }
+                        }
                     }
                 }
             }
-            .listStyle(.bordered)
-            .frame(height: 220)
 
-            HStack(spacing: 8) {
-                TextField("Extension (e.g. png, md, ts)", text: $newExtension)
-                    .frame(width: 180)
+            SettingsCard("Add Association") {
+                HStack(spacing: 10) {
+                    TextField("Extension (e.g. pdf, md)", text: $newExtension)
+                        .textFieldStyle(.roundedBorder)
+                        .frame(width: 170)
 
-                Button("Choose App & Add…") {
-                    chooseAppAndAdd()
-                }
-                .disabled(cleanExt.isEmpty)
-
-                Spacer()
-
-                if let selected = selectedExtension {
-                    Button("Remove", role: .destructive) {
-                        model.removeFileAssociation(extension: selected)
-                        selectedExtension = nil
+                    Button("Choose App…") {
+                        chooseAppAndAdd()
                     }
+                    .buttonStyle(.borderedProminent)
+                    .controlSize(.regular)
+                    .disabled(cleanExt.isEmpty)
+
+                    Spacer()
                 }
+                .padding(14)
             }
         }
     }
