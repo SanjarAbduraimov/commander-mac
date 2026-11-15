@@ -34,37 +34,47 @@ final class TabBarView: NSView {
         fatalError("init(coder:) is not used")
     }
 
+    override func viewDidChangeEffectiveAppearance() {
+        super.viewDidChangeEffectiveAppearance()
+        if let shown {
+            let (titles, active) = shown
+            self.shown = nil
+            update(titles: titles, active: active)
+        }
+    }
+
     func update(titles: [String], active: Int) {
         if let shown, shown.titles == titles, shown.active == active { return }
         shown = (titles, active)
         stack.arrangedSubviews.forEach { $0.removeFromSuperview() }
 
-        for (index, title) in titles.enumerated() {
-            let isActive = index == active
-            let tabContainer = NSStackView()
-            tabContainer.orientation = .horizontal
-            tabContainer.spacing = 6
-            tabContainer.alignment = .centerY
-            tabContainer.wantsLayer = true
-            tabContainer.layer?.cornerRadius = 7
-            tabContainer.edgeInsets = NSEdgeInsets(top: 0, left: 10, bottom: 0, right: titles.count > 1 ? 6 : 10)
-            tabContainer.translatesAutoresizingMaskIntoConstraints = false
-            tabContainer.heightAnchor.constraint(equalToConstant: 28).isActive = true
+        effectiveAppearance.performAsCurrentDrawingAppearance {
+            for (index, title) in titles.enumerated() {
+                let isActive = index == active
+                let tabContainer = NSStackView()
+                tabContainer.orientation = .horizontal
+                tabContainer.spacing = 6
+                tabContainer.alignment = .centerY
+                tabContainer.wantsLayer = true
+                tabContainer.layer?.cornerRadius = 7
+                tabContainer.edgeInsets = NSEdgeInsets(top: 0, left: 10, bottom: 0, right: titles.count > 1 ? 6 : 10)
+                tabContainer.translatesAutoresizingMaskIntoConstraints = false
+                tabContainer.heightAnchor.constraint(equalToConstant: 28).isActive = true
 
-            if isActive {
-                tabContainer.layer?.backgroundColor = NSColor.controlBackgroundColor.cgColor
-                tabContainer.layer?.borderWidth = 1
-                tabContainer.layer?.borderColor = NSColor.separatorColor.withAlphaComponent(0.5).cgColor
-                tabContainer.layer?.shadowColor = NSColor.black.cgColor
-                tabContainer.layer?.shadowOpacity = 0.07
-                tabContainer.layer?.shadowRadius = 2
-                tabContainer.layer?.shadowOffset = CGSize(width: 0, height: -1)
-            } else {
-                tabContainer.layer?.backgroundColor = NSColor.quaternaryLabelColor.withAlphaComponent(0.06).cgColor
-                tabContainer.layer?.borderWidth = 1
-                tabContainer.layer?.borderColor = NSColor.separatorColor.withAlphaComponent(0.18).cgColor
-                tabContainer.layer?.shadowOpacity = 0
-            }
+                if isActive {
+                    tabContainer.layer?.backgroundColor = NSColor.controlBackgroundColor.cgColor
+                    tabContainer.layer?.borderWidth = 1
+                    tabContainer.layer?.borderColor = NSColor.separatorColor.withAlphaComponent(0.4).cgColor
+                    tabContainer.layer?.shadowColor = NSColor.black.cgColor
+                    tabContainer.layer?.shadowOpacity = 0.08
+                    tabContainer.layer?.shadowRadius = 2
+                    tabContainer.layer?.shadowOffset = CGSize(width: 0, height: -1)
+                } else {
+                    tabContainer.layer?.backgroundColor = NSColor.quaternaryLabelColor.withAlphaComponent(0.06).cgColor
+                    tabContainer.layer?.borderWidth = 1
+                    tabContainer.layer?.borderColor = NSColor.separatorColor.withAlphaComponent(0.18).cgColor
+                    tabContainer.layer?.shadowOpacity = 0
+                }
 
             // Tab button with icon and title
             let tab = DropButton(frame: .zero)
@@ -135,6 +145,7 @@ final class TabBarView: NSView {
         add.heightAnchor.constraint(equalToConstant: 28).isActive = true
         add.toolTip = "New Tab (⌘T)"
         stack.addArrangedSubview(add)
+        }
     }
 
     @objc private func selectTab(_ sender: NSButton) {

@@ -17,7 +17,7 @@ final class QuickViewPanel: NSView {
     private let iconView = NSImageView()
     private let titleLabel = NSTextField(labelWithString: "Quick View")
     private let detailLabel = NSTextField(labelWithString: "")
-    private let badgeLabel = NSTextField(labelWithString: "QUICK VIEW")
+    private let badgeView = QuickViewBadge()
     private let closeButton = NSButton()
     private let container = NSView()
 
@@ -56,9 +56,20 @@ final class QuickViewPanel: NSView {
         fatalError("init(coder:) is not used")
     }
 
+    override func viewDidChangeEffectiveAppearance() {
+        super.viewDidChangeEffectiveAppearance()
+        updateThemeColors()
+    }
+
+    private func updateThemeColors() {
+        effectiveAppearance.performAsCurrentDrawingAppearance {
+            layer?.backgroundColor = NSColor.windowBackgroundColor.cgColor
+        }
+    }
+
     private func setupViews() {
         wantsLayer = true
-        layer?.backgroundColor = NSColor.windowBackgroundColor.cgColor
+        updateThemeColors()
 
         // Header bar
         headerBar.material = .headerView
@@ -83,13 +94,7 @@ final class QuickViewPanel: NSView {
         detailLabel.textColor = NSColor.secondaryLabelColor
         detailLabel.translatesAutoresizingMaskIntoConstraints = false
 
-        badgeLabel.font = NSFont.systemFont(ofSize: 9, weight: .bold)
-        badgeLabel.textColor = NSColor.controlAccentColor
-        badgeLabel.wantsLayer = true
-        badgeLabel.layer?.backgroundColor = NSColor.controlAccentColor.withAlphaComponent(0.12).cgColor
-        badgeLabel.layer?.cornerRadius = 4
-        badgeLabel.alignment = .center
-        badgeLabel.translatesAutoresizingMaskIntoConstraints = false
+        badgeView.translatesAutoresizingMaskIntoConstraints = false
 
         if let xmark = NSImage(systemSymbolName: "xmark.circle.fill", accessibilityDescription: "Close Quick View") {
             closeButton.image = xmark.withSymbolConfiguration(NSImage.SymbolConfiguration(pointSize: 14, weight: .medium))
@@ -109,7 +114,7 @@ final class QuickViewPanel: NSView {
         titlesStack.spacing = 1
         titlesStack.translatesAutoresizingMaskIntoConstraints = false
 
-        let headerStack = NSStackView(views: [iconView, titlesStack, NSView(), badgeLabel, closeButton])
+        let headerStack = NSStackView(views: [iconView, titlesStack, NSView(), badgeView, closeButton])
         headerStack.orientation = .horizontal
         headerStack.alignment = .centerY
         headerStack.spacing = 8
@@ -141,8 +146,8 @@ final class QuickViewPanel: NSView {
             iconView.widthAnchor.constraint(equalToConstant: 24),
             iconView.heightAnchor.constraint(equalToConstant: 24),
 
-            badgeLabel.heightAnchor.constraint(equalToConstant: 18),
-            badgeLabel.widthAnchor.constraint(equalToConstant: 80),
+            badgeView.heightAnchor.constraint(equalToConstant: 18),
+            badgeView.widthAnchor.constraint(equalToConstant: 78),
 
             closeButton.widthAnchor.constraint(equalToConstant: 20),
             closeButton.heightAnchor.constraint(equalToConstant: 20),
@@ -210,11 +215,34 @@ final class QuickViewPanel: NSView {
         }
     }
 
+    var isPlayingMedia: Bool {
+        avPlayerView?.player != nil
+    }
+
+    @discardableResult
+    func togglePlayPause() -> Bool {
+        guard let player = avPlayerView?.player else { return false }
+        if player.timeControlStatus == .playing {
+            player.pause()
+        } else {
+            player.play()
+        }
+        return true
+    }
+
+    func stop() {
+        cleanupMedia()
+        removeCurrentSubviews(except: emptyLabel)
+    }
+
     private func cleanupMedia() {
         if let player = avPlayerView?.player {
             player.pause()
+            player.replaceCurrentItem(with: nil)
             avPlayerView?.player = nil
         }
+        avPlayerView?.removeFromSuperview()
+        avPlayerView = nil
     }
 
     private static func isText(url: URL) -> Bool {
@@ -443,5 +471,28 @@ final class QuickViewPanel: NSView {
         formatter.dateStyle = .medium
         formatter.timeStyle = .short
         return formatter.string(from: date)
+    }
+}
+
+final class QuickViewBadge: NSView {
+    override func draw(_ dirtyRect: NSRect) {
+        let path = NSBezierPath(roundedRect: bounds, xRadius: 4, yRadius: 4)
+        NSColor.controlAccentColor.withAlphaComponent(0.12).setFill()
+        path.fill()
+
+        let font = NSFont.systemFont(ofSize: 9, weight: .bold)
+        let str = "QUICK VIEW" as NSString
+        let attrs: [NSAttributedString.Key: Any] = [
+            .font: font,
+            .foregroundColor: NSColor.controlAccentColor
+        ]
+        let size = str.size(withAttributes: attrs)
+        let rect = NSRect(
+            x: ((bounds.width - size.width) / 2).rounded(),
+            y: ((bounds.height - size.height) / 2).rounded() - 0.5,
+            width: size.width,
+            height: size.height
+        )
+        str.draw(in: rect, withAttributes: attrs)
     }
 }

@@ -90,10 +90,14 @@ final class AppKitEffects: WindowEffects {
     }
 
     static func applyTheme(_ theme: Theme) {
-        NSApp.appearance = switch theme {
+        let appearance: NSAppearance? = switch theme {
         case .system: nil
         case .light: NSAppearance(named: .aqua)
         case .dark: NSAppearance(named: .darkAqua)
+        }
+        NSApp.appearance = appearance
+        for window in NSApp.windows {
+            window.appearance = appearance
         }
     }
     func showConnectToServer() {

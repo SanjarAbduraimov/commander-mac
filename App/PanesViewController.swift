@@ -194,7 +194,10 @@ final class PanesViewController: NSViewController, NSSplitViewDelegate {
     }
 
     func updateQuickView() {
-        guard let quickSide = model.quickViewSide else { return }
+        guard let quickSide = model.quickViewSide else {
+            quickViewPanel.stop()
+            return
+        }
         let browsingSide: PaneSide = quickSide == .left ? .right : .left
         let currentItem = model.tab(browsingSide).cursorItem
         quickViewPanel.preview(item: currentItem)

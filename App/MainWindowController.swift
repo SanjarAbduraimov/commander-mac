@@ -9,6 +9,7 @@ final class MainWindowController: NSWindowController {
     let sidebar: SidebarViewController
     let model: WindowModel
     private var resizeObserver: NSObjectProtocol?
+    private var clickObserver: Any?
 
     init(model: WindowModel, sidebarWidth: Double) {
         self.model = model
@@ -45,6 +46,22 @@ final class MainWindowController: NSWindowController {
                 guard let self, let width = self.sidebar.viewIfLoaded?.frame.width, width > 0 else { return }
                 self.model.setSidebarWidth(Double(width))
             }
+        }
+        clickObserver = NSEvent.addLocalMonitorForEvents(matching: .leftMouseDown) { [weak self] event in
+            MainActor.assumeIsolated {
+                guard let self, let window = self.window, event.window === window else { return }
+                for side in [PaneSide.left, .right] {
+                    let p = self.pane(side)
+                    if !p.pathField.isHidden {
+                        let clickPoint = event.locationInWindow
+                        let containerRect = p.pathField.superview?.convert(p.pathField.superview?.bounds ?? .zero, to: nil) ?? .zero
+                        if !containerRect.contains(clickPoint) {
+                            window.makeFirstResponder(p.table)
+                        }
+                    }
+                }
+            }
+            return event
         }
     }
 

@@ -64,6 +64,14 @@ final class KeyRouter {
                 return true
             }
         }
+        if context == .table, event.keyCode == 49, modifiers.isEmpty { // Space
+            if let mainWindow = window.windowController as? MainWindowController,
+               model.quickViewSide != nil,
+               mainWindow.panes.quickViewPanel.isPlayingMedia {
+                mainWindow.panes.quickViewPanel.togglePlayPause()
+                return true
+            }
+        }
         if model.handleKey(chord, context: context) { return true }
         if context == .table, modifiers.isDisjoint(with: [.command, .control, .option]),
            let characters = event.characters, characters.count == 1, let character = characters.first,

@@ -27,9 +27,7 @@ final class NewItemButton: NSView {
     private func setupViews() {
         wantsLayer = true
         layer?.cornerRadius = 7
-        layer?.borderWidth = 1
-        layer?.borderColor = NSColor.separatorColor.withAlphaComponent(0.45).cgColor
-        layer?.backgroundColor = NSColor.controlBackgroundColor.cgColor
+        updateColors()
 
         let stack = NSStackView()
         stack.orientation = .horizontal
@@ -140,4 +138,17 @@ final class NewItemButton: NSView {
     @objc private func menuNewTextDoc() { onNewTextDocument?() }
     @objc private func menuNewMarkdownDoc() { onNewMarkdownDocument?() }
     @objc private func menuPasteImage() { onPasteImage?() }
+
+    override func viewDidChangeEffectiveAppearance() {
+        super.viewDidChangeEffectiveAppearance()
+        updateColors()
+    }
+
+    private func updateColors() {
+        effectiveAppearance.performAsCurrentDrawingAppearance {
+            layer?.borderWidth = 1
+            layer?.borderColor = NSColor.separatorColor.withAlphaComponent(0.45).cgColor
+            layer?.backgroundColor = NSColor.controlBackgroundColor.cgColor
+        }
+    }
 }

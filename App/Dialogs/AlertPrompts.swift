@@ -106,6 +106,75 @@ final class AlertPrompts: OperationPrompts {
 
     private func present(_ alert: NSAlert) async -> NSApplication.ModalResponse {
         guard let window else { return alert.runModal() }
-        return await alert.beginSheetModal(for: window)
+        if alert.accessoryView == nil, let first = alert.buttons.first {
+            alert.window.initialFirstResponder = first
+        }
+
+        var monitor: Any?
+        let cleanup: @MainActor () -> Void = {
+            if let m = monitor {
+                NSEvent.removeMonitor(m)
+                monitor = nil
+            }
+        }
+
+        monitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { [weak self] event in
+            nonisolated(unsafe) let event = event
+            let consumed = MainActor.assumeIsolated {
+                self?.handleAlertKeyEvent(event, alert: alert) ?? false
+            }
+            return consumed ? nil : event
+        }
+
+        let response = await alert.beginSheetModal(for: window)
+        cleanup()
+        return response
+    }
+
+    @MainActor
+    private func handleAlertKeyEvent(_ event: NSEvent, alert: NSAlert) -> Bool {
+        guard event.window === alert.window else { return false }
+        let buttons = alert.buttons
+        guard !buttons.isEmpty else { return false }
+
+        // If user is editing a text field / combo box accessory, let text navigation handle arrow keys
+        if alert.window.firstResponder is NSText {
+            if event.keyCode == 36 || event.keyCode == 76 { // Return
+                buttons.first?.performClick(nil)
+                return true
+            }
+            return false
+        }
+
+        // Tab (48), Left Arrow (123), Right Arrow (124)
+        if event.keyCode == 48 || event.keyCode == 123 || event.keyCode == 124 {
+            let currentFocus = alert.window.firstResponder as? NSButton
+            let currentIndex = buttons.firstIndex { $0 === currentFocus } ?? 0
+            let delta = (event.keyCode == 123) ? -1 : 1
+            let nextIndex = (currentIndex + delta + buttons.count) % buttons.count
+            alert.window.makeFirstResponder(buttons[nextIndex])
+            return true
+        }
+
+        // Enter / Return (36, 76) or Space (49)
+        if event.keyCode == 36 || event.keyCode == 76 || event.keyCode == 49 {
+            if let currentFocus = alert.window.firstResponder as? NSButton {
+                currentFocus.performClick(nil)
+                return true
+            } else if let first = buttons.first {
+                first.performClick(nil)
+                return true
+            }
+        }
+
+        // Esc (53)
+        if event.keyCode == 53 {
+            if let cancel = buttons.last {
+                cancel.performClick(nil)
+                return true
+            }
+        }
+
+        return false
     }
 }
