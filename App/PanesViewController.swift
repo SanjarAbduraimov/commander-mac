@@ -2,6 +2,92 @@ import AppKit
 import CommanderController
 import CommanderCore
 
+/// Modern macOS 15 dual-pane splitter with subtle background, delicate hairline and interactive centered pill grip.
+final class ModernSplitView: NSSplitView {
+    private var isHovered = false
+    private var trackingArea: NSTrackingArea?
+
+    override var dividerThickness: CGFloat { 9 }
+
+    override func updateTrackingAreas() {
+        super.updateTrackingAreas()
+        if let trackingArea { removeTrackingArea(trackingArea) }
+        let area = NSTrackingArea(
+            rect: bounds,
+            options: [.mouseEnteredAndExited, .mouseMoved, .activeInActiveApp, .inVisibleRect],
+            owner: self,
+            userInfo: nil
+        )
+        addTrackingArea(area)
+        self.trackingArea = area
+    }
+
+    override func mouseMoved(with event: NSEvent) {
+        super.mouseMoved(with: event)
+        let point = convert(event.locationInWindow, from: nil)
+        let hovered = arrangedSubviews.indices.dropLast().contains { index in
+            dividerRect(at: index).insetBy(dx: -1, dy: 0).contains(point)
+        }
+        if hovered != isHovered {
+            isHovered = hovered
+            needsDisplay = true
+        }
+    }
+
+    override func mouseExited(with event: NSEvent) {
+        super.mouseExited(with: event)
+        if isHovered {
+            isHovered = false
+            needsDisplay = true
+        }
+    }
+
+    override func resetCursorRects() {
+        super.resetCursorRects()
+        for index in 0..<max(arrangedSubviews.count - 1, 0) {
+            let rect = dividerRect(at: index)
+            addCursorRect(rect, cursor: .resizeLeftRight)
+        }
+    }
+
+    private func dividerRect(at index: Int) -> NSRect {
+        guard arrangedSubviews.indices.contains(index), arrangedSubviews.indices.contains(index + 1) else {
+            return .zero
+        }
+        let firstFrame = arrangedSubviews[index].frame
+        return NSRect(x: firstFrame.maxX, y: 0, width: dividerThickness, height: bounds.height)
+    }
+
+    override func drawDivider(in rect: NSRect) {
+        // Modern subtle gutter background
+        NSColor.windowBackgroundColor.setFill()
+        rect.fill()
+
+        // Delicate 1px center hairline separator
+        let hairlineRect = NSRect(x: (rect.midX - 0.5).rounded(), y: 0, width: 1, height: rect.height)
+        NSColor.separatorColor.withAlphaComponent(0.45).setFill()
+        hairlineRect.fill()
+
+        // Centered pill grip handle
+        let handleHeight: CGFloat = 36
+        let handleWidth: CGFloat = 4
+        let handleRect = NSRect(
+            x: (rect.midX - handleWidth / 2).rounded(),
+            y: ((rect.height - handleHeight) / 2).rounded(),
+            width: handleWidth,
+            height: handleHeight
+        )
+        let handlePath = NSBezierPath(roundedRect: handleRect, xRadius: 2, yRadius: 2)
+
+        if isHovered {
+            NSColor.controlAccentColor.setFill()
+        } else {
+            NSColor.tertiaryLabelColor.withAlphaComponent(0.65).setFill()
+        }
+        handlePath.fill()
+    }
+}
+
 /// The two panes side by side; the selection bar and the footer go below them.
 @MainActor
 final class PanesViewController: NSViewController, NSSplitViewDelegate {
@@ -11,7 +97,7 @@ final class PanesViewController: NSViewController, NSSplitViewDelegate {
     let selectionBar: SelectionBarView
     let footer: FooterView
     let model: WindowModel
-    private let split = NSSplitView()
+    private let split = ModernSplitView()
     private var shownSinglePane: Bool?
     private var shownQuickViewSide: PaneSide?
 
@@ -35,7 +121,6 @@ final class PanesViewController: NSViewController, NSSplitViewDelegate {
 
     override func loadView() {
         split.isVertical = true
-        split.dividerStyle = .thin
         split.delegate = self
         addChild(left)
         addChild(right)

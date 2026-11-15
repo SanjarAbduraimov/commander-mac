@@ -2,6 +2,7 @@ import AppKit
 import CommanderController
 import CommanderCore
 
+/// Modern macOS 15 segmented pill button: "+ New" with dropdown options.
 @MainActor
 final class NewItemButton: NSView {
     var onNewFolder: (() -> Void)?
@@ -15,16 +16,26 @@ final class NewItemButton: NSView {
 
     override init(frame: NSRect) {
         super.init(frame: frame)
+        setupViews()
+    }
+
+    @available(*, unavailable)
+    required init?(coder: NSCoder) {
+        fatalError("init(coder:) is not used")
+    }
+
+    private func setupViews() {
         wantsLayer = true
-        layer?.cornerRadius = 5
+        layer?.cornerRadius = 7
         layer?.borderWidth = 1
-        layer?.borderColor = NSColor.separatorColor.cgColor
+        layer?.borderColor = NSColor.separatorColor.withAlphaComponent(0.45).cgColor
         layer?.backgroundColor = NSColor.controlBackgroundColor.cgColor
 
         let stack = NSStackView()
         stack.orientation = .horizontal
         stack.spacing = 0
         stack.alignment = .centerY
+        stack.edgeInsets = NSEdgeInsets(top: 0, left: 6, bottom: 0, right: 0)
         stack.translatesAutoresizingMaskIntoConstraints = false
         addSubview(stack)
 
@@ -33,18 +44,19 @@ final class NewItemButton: NSView {
             stack.trailingAnchor.constraint(equalTo: trailingAnchor),
             stack.topAnchor.constraint(equalTo: topAnchor),
             stack.bottomAnchor.constraint(equalTo: bottomAnchor),
-            heightAnchor.constraint(equalToConstant: 22),
+            heightAnchor.constraint(equalToConstant: 28),
         ])
 
         // Main action button: "+ New"
         mainButton.title = " New"
         if let plus = NSImage(systemSymbolName: "plus", accessibilityDescription: "New") {
-            let config = NSImage.SymbolConfiguration(pointSize: 10, weight: .semibold)
+            let config = NSImage.SymbolConfiguration(pointSize: 11, weight: .bold)
             mainButton.image = plus.withSymbolConfiguration(config)
             mainButton.imagePosition = .imageLeading
         }
+        mainButton.contentTintColor = NSColor.controlAccentColor
         mainButton.isBordered = false
-        mainButton.font = .systemFont(ofSize: 11, weight: .medium)
+        mainButton.font = NSFont.systemFont(ofSize: 12, weight: .semibold)
         mainButton.target = self
         mainButton.action = #selector(mainClicked)
         mainButton.setAccessibilityLabel("New Folder")
@@ -53,27 +65,26 @@ final class NewItemButton: NSView {
         // Subtle vertical separator between button and dropdown arrow
         let sep = NSBox()
         sep.boxType = .separator
+        sep.translatesAutoresizingMaskIntoConstraints = false
         sep.widthAnchor.constraint(equalToConstant: 1).isActive = true
-        sep.heightAnchor.constraint(equalToConstant: 14).isActive = true
+        sep.heightAnchor.constraint(equalToConstant: 16).isActive = true
         stack.addArrangedSubview(sep)
 
         // Dropdown arrow button
         if let chevron = NSImage(systemSymbolName: "chevron.down", accessibilityDescription: "More options") {
-            let config = NSImage.SymbolConfiguration(pointSize: 8, weight: .bold)
+            let config = NSImage.SymbolConfiguration(pointSize: 9, weight: .bold)
             dropdownButton.image = chevron.withSymbolConfiguration(config)
         } else {
             dropdownButton.title = "▾"
         }
+        dropdownButton.contentTintColor = NSColor.secondaryLabelColor
         dropdownButton.isBordered = false
         dropdownButton.target = self
         dropdownButton.action = #selector(dropdownClicked)
-        dropdownButton.widthAnchor.constraint(equalToConstant: 16).isActive = true
+        dropdownButton.translatesAutoresizingMaskIntoConstraints = false
+        dropdownButton.widthAnchor.constraint(equalToConstant: 22).isActive = true
+        dropdownButton.heightAnchor.constraint(equalToConstant: 28).isActive = true
         stack.addArrangedSubview(dropdownButton)
-    }
-
-    @available(*, unavailable)
-    required init?(coder: NSCoder) {
-        fatalError("init(coder:) is not used")
     }
 
     @objc private func mainClicked() {
@@ -99,29 +110,29 @@ final class NewItemButton: NSView {
 
         let txtItem = NSMenuItem(title: "Text Document (.txt)", action: #selector(menuNewTextDoc), keyEquivalent: "")
         if let icon = NSImage(systemSymbolName: "doc.text.fill", accessibilityDescription: nil) {
-            txtItem.image = icon.withSymbolConfiguration(NSImage.SymbolConfiguration(hierarchicalColor: .systemCyan))
+            txtItem.image = icon.withSymbolConfiguration(NSImage.SymbolConfiguration(hierarchicalColor: .systemTeal))
         }
         txtItem.target = self
         menu.addItem(txtItem)
 
-        let mdItem = NSMenuItem(title: "Markdown File (.md)", action: #selector(menuNewMarkdownDoc), keyEquivalent: "")
-        if let icon = NSImage(systemSymbolName: "doc.richtext.fill", accessibilityDescription: nil) {
-            mdItem.image = icon.withSymbolConfiguration(NSImage.SymbolConfiguration(hierarchicalColor: .systemOrange))
+        let mdItem = NSMenuItem(title: "Markdown Document (.md)", action: #selector(menuNewMarkdownDoc), keyEquivalent: "")
+        if let icon = NSImage(systemSymbolName: "doc.plaintext.fill", accessibilityDescription: nil) {
+            mdItem.image = icon.withSymbolConfiguration(NSImage.SymbolConfiguration(hierarchicalColor: .systemPurple))
         }
         mdItem.target = self
         menu.addItem(mdItem)
 
-        menu.addItem(NSMenuItem.separator())
+        menu.addItem(.separator())
 
-        let pasteItem = NSMenuItem(title: "Paste Image from Clipboard (⌘V)", action: #selector(menuPasteImage), keyEquivalent: "")
-        if let icon = NSImage(systemSymbolName: "doc.on.clipboard.fill", accessibilityDescription: nil) {
-            pasteItem.image = icon.withSymbolConfiguration(NSImage.SymbolConfiguration(hierarchicalColor: .systemPurple))
+        let pasteImgItem = NSMenuItem(title: "Paste Image from Clipboard (⌘V)", action: #selector(menuPasteImage), keyEquivalent: "")
+        if let icon = NSImage(systemSymbolName: "photo.on.rectangle.angled", accessibilityDescription: nil) {
+            pasteImgItem.image = icon.withSymbolConfiguration(NSImage.SymbolConfiguration(hierarchicalColor: .systemGreen))
         }
-        pasteItem.target = self
-        menu.addItem(pasteItem)
+        pasteImgItem.target = self
+        menu.addItem(pasteImgItem)
 
-        let point = NSPoint(x: 0, y: bounds.height + 4)
-        menu.popUp(positioning: nil, at: point, in: self)
+        let location = NSPoint(x: 0, y: bounds.height + 4)
+        menu.popUp(positioning: nil, at: location, in: self)
     }
 
     @objc private func menuNewFolder() { onNewFolder?() }

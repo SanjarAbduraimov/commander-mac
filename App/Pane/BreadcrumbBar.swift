@@ -18,11 +18,11 @@ final class BreadcrumbBar: NSView {
         self.side = side
         super.init(frame: .zero)
         wantsLayer = true
-        layer?.cornerRadius = 6
-        layer?.backgroundColor = NSColor.quaternaryLabelColor.withAlphaComponent(0.06).cgColor
+        layer?.cornerRadius = 7
+        layer?.backgroundColor = NSColor.quaternaryLabelColor.withAlphaComponent(0.08).cgColor
         stack.orientation = .horizontal
-        stack.spacing = 2
-        stack.edgeInsets = NSEdgeInsets(top: 2, left: 6, bottom: 2, right: 6)
+        stack.spacing = 3
+        stack.edgeInsets = NSEdgeInsets(top: 0, left: 8, bottom: 0, right: 8)
         // Placed by frame in `layout()`: as constraints, a long path's width would widen the whole pane.
         stack.translatesAutoresizingMaskIntoConstraints = true
         addSubview(stack)
@@ -43,23 +43,29 @@ final class BreadcrumbBar: NSView {
         stack.arrangedSubviews.forEach { $0.removeFromSuperview() }
         let crumbs = Breadcrumbs.of(path)
         for (index, crumb) in crumbs.enumerated() {
-            if index > 1 {
+            if index > 0 {
                 let separator = NSTextField(labelWithString: "›")
-                separator.textColor = .tertiaryLabelColor
-                separator.font = .systemFont(ofSize: 11)
+                separator.textColor = NSColor.tertiaryLabelColor
+                separator.font = NSFont.systemFont(ofSize: 12, weight: .bold)
                 stack.addArrangedSubview(separator)
             }
-            stack.addArrangedSubview(segment(crumb, isLast: index == crumbs.count - 1))
+            stack.addArrangedSubview(segment(crumb, index: index, isLast: index == crumbs.count - 1))
         }
         needsLayout = true
     }
 
-    private func segment(_ crumb: Breadcrumb, isLast: Bool) -> NSView {
+    private func segment(_ crumb: Breadcrumb, index: Int, isLast: Bool) -> NSView {
         let button = DropButton(frame: .zero)
-        button.title = crumb.title
+        if index == 0, let home = NSImage(systemSymbolName: "house.fill", accessibilityDescription: "Home / Root") {
+            button.image = home.withSymbolConfiguration(NSImage.SymbolConfiguration(pointSize: 11, weight: .medium))
+            button.imagePosition = .imageLeading
+            button.title = " /"
+        } else {
+            button.title = crumb.title
+        }
         button.isBordered = false
-        button.font = .systemFont(ofSize: 11, weight: isLast ? .semibold : .regular)
-        button.contentTintColor = isLast ? .labelColor : .secondaryLabelColor
+        button.font = NSFont.systemFont(ofSize: 12, weight: isLast ? .semibold : .medium)
+        button.contentTintColor = isLast ? NSColor.labelColor : NSColor.secondaryLabelColor
         button.setContentCompressionResistancePriority(.required, for: .horizontal)
         button.setAccessibilityLabel(crumb.title)
         button.model = model

@@ -137,18 +137,19 @@ final class PaneViewController: NSViewController, NSTextFieldDelegate, NSDraggin
             model.perform(.pasteImage)
         }
 
-        let pathRow = padded(pathField, height: 26)
+        let pathRow = padded(pathField, height: 36)
         breadcrumbs.translatesAutoresizingMaskIntoConstraints = false
         pathRow.addSubview(breadcrumbs)
         pathRow.addSubview(newItemButton)
         NSLayoutConstraint.activate([
-            breadcrumbs.leadingAnchor.constraint(equalTo: pathRow.leadingAnchor, constant: 6),
-            breadcrumbs.trailingAnchor.constraint(lessThanOrEqualTo: newItemButton.leadingAnchor, constant: -6),
-            breadcrumbs.topAnchor.constraint(equalTo: pathRow.topAnchor),
-            breadcrumbs.bottomAnchor.constraint(equalTo: pathRow.bottomAnchor),
+            breadcrumbs.leadingAnchor.constraint(equalTo: pathRow.leadingAnchor, constant: 8),
+            breadcrumbs.trailingAnchor.constraint(lessThanOrEqualTo: newItemButton.leadingAnchor, constant: -8),
+            breadcrumbs.centerYAnchor.constraint(equalTo: pathRow.centerYAnchor),
+            breadcrumbs.heightAnchor.constraint(equalToConstant: 28),
 
-            newItemButton.trailingAnchor.constraint(equalTo: pathRow.trailingAnchor, constant: -6),
+            newItemButton.trailingAnchor.constraint(equalTo: pathRow.trailingAnchor, constant: -8),
             newItemButton.centerYAnchor.constraint(equalTo: pathRow.centerYAnchor),
+            newItemButton.heightAnchor.constraint(equalToConstant: 28),
         ])
         let statusRow = padded(statusLabel, height: 27)
         let stack = NSStackView(views: [activeLine, tabBar, pathRow, banner, scrollView, statusRow])
