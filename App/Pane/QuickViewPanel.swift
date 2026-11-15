@@ -1,5 +1,8 @@
 import AppKit
 import Quartz
+import AVKit
+import AVFoundation
+import PDFKit
 import UniformTypeIdentifiers
 import CommanderController
 import CommanderCore
@@ -18,12 +21,21 @@ final class QuickViewPanel: NSView {
     private let closeButton = NSButton()
     private let container = NSView()
 
-    private var previewView: QLPreviewView?
+    private var currentImageView: NSImageView?
+    private var avPlayerView: AVPlayerView?
+    private var pdfView: PDFView?
     private var textScrollView: NSScrollView?
     private var textView: NSTextView?
+    private var previewView: QLPreviewView?
     private var folderCard: NSView?
     private let emptyLabel = NSTextField(labelWithString: "Select a file to preview")
 
+    private static let imageExtensions: Set<String> = [
+        "jpg", "jpeg", "png", "gif", "webp", "svg", "tiff", "tif", "bmp", "heic", "ico", "icns"
+    ]
+    private static let mediaExtensions: Set<String> = [
+        "mp4", "mov", "m4v", "mp3", "wav", "m4a", "aac", "flac", "ogg", "aiff"
+    ]
     private static let textExtensions: Set<String> = [
         "txt", "text", "md", "markdown", "json", "swift", "py", "js", "ts", "jsx", "tsx",
         "html", "htm", "css", "scss", "sass", "c", "cpp", "cc", "cxx", "h", "hpp", "m", "mm",
@@ -31,6 +43,8 @@ final class QuickViewPanel: NSView {
         "sql", "log", "diff", "patch", "env", "plist", "csv", "tsv", "conf", "ini", "lua",
         "dockerfile", "makefile", "podfile"
     ]
+
+    override var acceptsFirstResponder: Bool { false }
 
     override init(frame: NSRect) {
         super.init(frame: frame)
@@ -117,7 +131,7 @@ final class QuickViewPanel: NSView {
         NSLayoutConstraint.activate([
             headerBar.topAnchor.constraint(equalTo: topAnchor),
             headerBar.leadingAnchor.constraint(equalTo: leadingAnchor),
-            headerBar.trailingAnchor.constraint(equalTo: headerBar.trailingAnchor),
+            headerBar.trailingAnchor.constraint(equalTo: trailingAnchor),
             headerBar.heightAnchor.constraint(equalToConstant: 42),
 
             topBorder.bottomAnchor.constraint(equalTo: headerBar.bottomAnchor),
@@ -147,11 +161,21 @@ final class QuickViewPanel: NSView {
         ])
     }
 
+    override func keyDown(with event: NSEvent) {
+        if event.keyCode == 53 { // Esc
+            onClose?()
+            return
+        }
+        super.keyDown(with: event)
+    }
+
     @objc private func closeClicked() {
         onClose?()
     }
 
     func preview(item: FileItem?) {
+        cleanupMedia()
+
         guard let item else {
             clearContent()
             titleLabel.stringValue = "Quick View"
@@ -165,17 +189,31 @@ final class QuickViewPanel: NSView {
         titleLabel.stringValue = item.name
         iconView.image = NSWorkspace.shared.icon(forFile: item.url.path)
 
+        let ext = item.url.pathExtension.lowercased()
+        let sizeStr = item.size.map { ByteCountFormatter.string(fromByteCount: $0, countStyle: .file) } ?? "--"
+
         if item.isNavigable {
             detailLabel.stringValue = "\(item.kindName) • Modified \(formatDate(item.modified))"
             showFolderCard(item: item)
+        } else if Self.imageExtensions.contains(ext) {
+            showImagePreview(url: item.url, sizeStr: sizeStr, kindName: item.kindName)
+        } else if Self.mediaExtensions.contains(ext) {
+            showAVPreview(url: item.url, sizeStr: sizeStr, kindName: item.kindName)
+        } else if ext == "pdf" {
+            showPDFPreview(url: item.url, sizeStr: sizeStr)
         } else if Self.isText(url: item.url) {
-            let sizeStr = item.size.map { ByteCountFormatter.string(fromByteCount: $0, countStyle: .file) } ?? "--"
             detailLabel.stringValue = "\(sizeStr) • Text/Code Document"
             showTextPreview(url: item.url)
         } else {
-            let sizeStr = item.size.map { ByteCountFormatter.string(fromByteCount: $0, countStyle: .file) } ?? "--"
             detailLabel.stringValue = "\(sizeStr) • \(item.kindName)"
             showQuickLookPreview(url: item.url)
+        }
+    }
+
+    private func cleanupMedia() {
+        if let player = avPlayerView?.player {
+            player.pause()
+            avPlayerView?.player = nil
         }
     }
 
@@ -187,6 +225,86 @@ final class QuickViewPanel: NSView {
             return type.conforms(to: .text) || type.conforms(to: .sourceCode) || type.conforms(to: .json)
         }
         return false
+    }
+
+    private func showImagePreview(url: URL, sizeStr: String, kindName: String) {
+        removeCurrentSubviews(except: emptyLabel)
+
+        let imageView = NSImageView()
+        imageView.imageScaling = .scaleProportionallyUpOrDown
+        imageView.translatesAutoresizingMaskIntoConstraints = false
+        imageView.refusesFirstResponder = true
+
+        if let image = NSImage(contentsOf: url) {
+            imageView.image = image
+            if let rep = image.representations.first {
+                detailLabel.stringValue = "\(rep.pixelsWide) × \(rep.pixelsHigh) • \(sizeStr) • \(kindName)"
+            } else {
+                detailLabel.stringValue = "\(sizeStr) • \(kindName)"
+            }
+        } else {
+            imageView.image = NSWorkspace.shared.icon(forFile: url.path)
+            detailLabel.stringValue = "\(sizeStr) • \(kindName)"
+        }
+
+        container.addSubview(imageView)
+        currentImageView = imageView
+
+        NSLayoutConstraint.activate([
+            imageView.topAnchor.constraint(equalTo: container.topAnchor, constant: 12),
+            imageView.leadingAnchor.constraint(equalTo: container.leadingAnchor, constant: 12),
+            imageView.trailingAnchor.constraint(equalTo: container.trailingAnchor, constant: -12),
+            imageView.bottomAnchor.constraint(equalTo: container.bottomAnchor, constant: -12),
+        ])
+    }
+
+    private func showAVPreview(url: URL, sizeStr: String, kindName: String) {
+        removeCurrentSubviews(except: emptyLabel)
+
+        let playerView = AVPlayerView()
+        playerView.translatesAutoresizingMaskIntoConstraints = false
+        playerView.controlsStyle = .inline
+
+        let player = AVPlayer(url: url)
+        playerView.player = player
+        player.play()
+
+        container.addSubview(playerView)
+        avPlayerView = playerView
+
+        detailLabel.stringValue = "\(sizeStr) • \(kindName)"
+
+        NSLayoutConstraint.activate([
+            playerView.topAnchor.constraint(equalTo: container.topAnchor),
+            playerView.leadingAnchor.constraint(equalTo: container.leadingAnchor),
+            playerView.trailingAnchor.constraint(equalTo: container.trailingAnchor),
+            playerView.bottomAnchor.constraint(equalTo: container.bottomAnchor),
+        ])
+    }
+
+    private func showPDFPreview(url: URL, sizeStr: String) {
+        removeCurrentSubviews(except: emptyLabel)
+
+        let pdf = PDFView()
+        pdf.translatesAutoresizingMaskIntoConstraints = false
+        pdf.autoScales = true
+
+        if let doc = PDFDocument(url: url) {
+            pdf.document = doc
+            detailLabel.stringValue = "\(doc.pageCount) page\(doc.pageCount == 1 ? "" : "s") • \(sizeStr) • PDF"
+        } else {
+            detailLabel.stringValue = "\(sizeStr) • PDF Document"
+        }
+
+        container.addSubview(pdf)
+        pdfView = pdf
+
+        NSLayoutConstraint.activate([
+            pdf.topAnchor.constraint(equalTo: container.topAnchor),
+            pdf.leadingAnchor.constraint(equalTo: container.leadingAnchor),
+            pdf.trailingAnchor.constraint(equalTo: container.trailingAnchor),
+            pdf.bottomAnchor.constraint(equalTo: container.bottomAnchor),
+        ])
     }
 
     private func showFolderCard(item: FileItem) {
@@ -251,7 +369,7 @@ final class QuickViewPanel: NSView {
 
         let textView = NSTextView()
         textView.isEditable = false
-        textView.isSelectable = true
+        textView.isSelectable = false
         textView.font = NSFont.monospacedSystemFont(ofSize: 12, weight: .regular)
         textView.textColor = NSColor.labelColor
         textView.backgroundColor = NSColor.controlBackgroundColor
@@ -285,26 +403,21 @@ final class QuickViewPanel: NSView {
     }
 
     private func showQuickLookPreview(url: URL) {
-        if previewView == nil {
-            removeCurrentSubviews(except: emptyLabel)
-            let ql = QLPreviewView(frame: .zero, style: .normal)
-            ql?.translatesAutoresizingMaskIntoConstraints = false
-            if let qlView = ql {
-                container.addSubview(qlView)
-                previewView = qlView
-                NSLayoutConstraint.activate([
-                    qlView.topAnchor.constraint(equalTo: container.topAnchor),
-                    qlView.leadingAnchor.constraint(equalTo: container.leadingAnchor),
-                    qlView.trailingAnchor.constraint(equalTo: container.trailingAnchor),
-                    qlView.bottomAnchor.constraint(equalTo: container.bottomAnchor),
-                ])
-            }
-        } else {
-            removeCurrentSubviews(except: previewView, emptyLabel)
+        removeCurrentSubviews(except: emptyLabel)
+        let ql = QLPreviewView(frame: .zero, style: .normal)
+        ql?.translatesAutoresizingMaskIntoConstraints = false
+        if let qlView = ql {
+            container.addSubview(qlView)
+            previewView = qlView
+            NSLayoutConstraint.activate([
+                qlView.topAnchor.constraint(equalTo: container.topAnchor),
+                qlView.leadingAnchor.constraint(equalTo: container.leadingAnchor),
+                qlView.trailingAnchor.constraint(equalTo: container.trailingAnchor),
+                qlView.bottomAnchor.constraint(equalTo: container.bottomAnchor),
+            ])
+            qlView.previewItem = url as NSURL
+            qlView.refreshPreviewItem()
         }
-
-        previewView?.previewItem = url as NSURL
-        previewView?.refreshPreviewItem()
     }
 
     private func removeCurrentSubviews(except keep: NSView?...) {
@@ -312,12 +425,16 @@ final class QuickViewPanel: NSView {
         for sub in container.subviews where !set.contains(sub) {
             sub.removeFromSuperview()
         }
+        if let iv = currentImageView, !set.contains(iv) { currentImageView = nil }
+        if let av = avPlayerView, !set.contains(av) { avPlayerView = nil }
+        if let pv = pdfView, !set.contains(pv) { pdfView = nil }
         if let folder = folderCard, !set.contains(folder) { folderCard = nil }
         if let scroll = textScrollView, !set.contains(scroll) { textScrollView = nil; textView = nil }
         if let ql = previewView, !set.contains(ql) { previewView = nil }
     }
 
     private func clearContent() {
+        cleanupMedia()
         removeCurrentSubviews(except: emptyLabel)
     }
 

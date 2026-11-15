@@ -4,18 +4,28 @@ import SwiftUI
 
 @MainActor
 final class SettingsWindowController {
-    private static var activeSheet: NSWindow?
+    private static var activeOverlay: NSView?
+
+    static var isOpen: Bool {
+        activeOverlay != nil
+    }
+
+    static func dismissActive() {
+        guard let current = activeOverlay else { return }
+        let window = current.window
+        current.removeFromSuperview()
+        activeOverlay = nil
+        if let window {
+            window.makeFirstResponder(nil)
+        }
+    }
 
     static func show(model: WindowModel, over hostWindow: NSWindow? = nil) {
-        let window = hostWindow ?? NSApp.keyWindow
-        if let current = activeSheet {
-            if let window, window.attachedSheet == current {
-                window.endSheet(current)
-                activeSheet = nil
-                return
-            }
+        if isOpen {
+            dismissActive()
+            return
         }
-        guard let window else { return }
+        guard let window = hostWindow ?? NSApp.keyWindow, let contentView = window.contentView else { return }
 
         // Columns change from the table header, not from this window; keep the window's stale copy from undoing them.
         let viewModel = SettingsViewModel(settings: model.settings) { [model] changed in
@@ -30,33 +40,23 @@ final class SettingsWindowController {
         )
 
         let dismiss: () -> Void = {
-            if let sheet = activeSheet {
-                window.endSheet(sheet)
-                activeSheet = nil
-            }
+            dismissActive()
         }
 
-        let rootView = SettingsSheetView(model: viewModel, singlePane: singlePane, onDismiss: dismiss)
-        let hostingController = NSHostingController(rootView: rootView)
-        let sheet = SettingsSheetWindow(contentViewController: hostingController)
-        sheet.onDismiss = dismiss
-        sheet.styleMask = [.titled, .fullSizeContentView]
-        sheet.titleVisibility = .hidden
-        sheet.titlebarAppearsTransparent = true
-        activeSheet = sheet
-        window.beginSheet(sheet)
-    }
-}
+        let rootView = SettingsModalOverlay(model: viewModel, singlePane: singlePane, onDismiss: dismiss)
+        let hostingView = NSHostingView(rootView: rootView)
+        hostingView.translatesAutoresizingMaskIntoConstraints = false
+        contentView.addSubview(hostingView, positioned: .above, relativeTo: nil)
 
-private final class SettingsSheetWindow: NSWindow {
-    var onDismiss: (() -> Void)?
+        NSLayoutConstraint.activate([
+            hostingView.topAnchor.constraint(equalTo: contentView.topAnchor),
+            hostingView.bottomAnchor.constraint(equalTo: contentView.bottomAnchor),
+            hostingView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor),
+            hostingView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor),
+        ])
 
-    override func cancelOperation(_ sender: Any?) {
-        if let onDismiss {
-            onDismiss()
-        } else {
-            super.cancelOperation(sender)
-        }
+        activeOverlay = hostingView
+        window.makeFirstResponder(hostingView)
     }
 }
 
@@ -80,7 +80,7 @@ enum SettingsTab: String, CaseIterable, Identifiable {
     }
 }
 
-struct SettingsSheetView: View {
+struct SettingsModalOverlay: View {
     @Bindable var model: SettingsViewModel
     let singlePane: Binding<Bool>
     let onDismiss: () -> Void
@@ -88,81 +88,104 @@ struct SettingsSheetView: View {
     @State private var selectedTab: SettingsTab = .appearance
 
     var body: some View {
-        VStack(spacing: 0) {
-            // Header
-            HStack(spacing: 12) {
-                Image(systemName: "gearshape.circle.fill")
-                    .font(.system(size: 26))
-                    .foregroundStyle(.blue)
+        ZStack {
+            // Semi-transparent backdrop - clicking outside closes the modal!
+            Color.black.opacity(0.42)
+                .ignoresSafeArea()
+                .onTapGesture {
+                    onDismiss()
+                }
 
-                Text("Settings")
-                    .font(.title3.bold())
+            // Centered Modal Dialog Card
+            VStack(spacing: 0) {
+                // Header
+                HStack(spacing: 12) {
+                    Image(systemName: "gearshape.circle.fill")
+                        .font(.system(size: 24))
+                        .foregroundStyle(.blue)
 
-                Spacer()
+                    Text("Settings")
+                        .font(.title3.bold())
 
-                // Modern Segmented Pill Selector
-                HStack(spacing: 3) {
-                    ForEach(SettingsTab.allCases) { tab in
-                        Button {
-                            selectedTab = tab
-                        } label: {
-                            HStack(spacing: 5) {
-                                Image(systemName: tab.icon)
-                                    .font(.system(size: 11, weight: .semibold))
-                                Text(tab.rawValue)
-                                    .font(.system(size: 12, weight: selectedTab == tab ? .semibold : .regular))
+                    Spacer()
+
+                    // Modern Segmented Pill Selector
+                    HStack(spacing: 3) {
+                        ForEach(SettingsTab.allCases) { tab in
+                            Button {
+                                selectedTab = tab
+                            } label: {
+                                HStack(spacing: 5) {
+                                    Image(systemName: tab.icon)
+                                        .font(.system(size: 11, weight: .semibold))
+                                    Text(tab.rawValue)
+                                        .font(.system(size: 12, weight: selectedTab == tab ? .semibold : .regular))
+                                }
+                                .padding(.horizontal, 10)
+                                .padding(.vertical, 5)
+                                .background(selectedTab == tab ? Color.accentColor : Color.clear)
+                                .foregroundStyle(selectedTab == tab ? Color.white : Color.primary)
+                                .clipShape(Capsule())
                             }
-                            .padding(.horizontal, 10)
-                            .padding(.vertical, 5)
-                            .background(selectedTab == tab ? Color.accentColor : Color.clear)
-                            .foregroundStyle(selectedTab == tab ? Color.white : Color.primary)
-                            .clipShape(Capsule())
+                            .buttonStyle(.plain)
                         }
-                        .buttonStyle(.plain)
+                    }
+                    .padding(3)
+                    .background(Color(NSColor.controlBackgroundColor))
+                    .clipShape(Capsule())
+                    .overlay(Capsule().stroke(Color(NSColor.separatorColor), lineWidth: 0.5))
+
+                    Spacer()
+
+                    // Circular 'X' close button (requested instead of Done)
+                    Button(action: onDismiss) {
+                        Image(systemName: "xmark")
+                            .font(.system(size: 11, weight: .bold))
+                            .foregroundStyle(.secondary)
+                            .frame(width: 26, height: 26)
+                            .background(Color(NSColor.quaternaryLabelColor).opacity(0.18))
+                            .clipShape(Circle())
+                    }
+                    .buttonStyle(.plain)
+                    .help("Close Settings (Esc)")
+                    .keyboardShortcut(.cancelAction)
+                }
+                .padding(.horizontal, 20)
+                .padding(.top, 16)
+                .padding(.bottom, 12)
+                .background(Color(NSColor.windowBackgroundColor))
+
+                Divider()
+
+                // Selected Tab Content
+                Group {
+                    switch selectedTab {
+                    case .appearance:
+                        AppearanceView(model: model, singlePane: singlePane)
+                    case .behavior:
+                        BehaviorView(model: model)
+                    case .clipboard:
+                        ClipboardSettingsView(model: model)
+                    case .associations:
+                        FileAssociationsView(model: model)
+                    case .shortcuts:
+                        ShortcutsView(model: model)
                     }
                 }
-                .padding(3)
-                .background(Color(NSColor.controlBackgroundColor))
-                .clipShape(Capsule())
-                .overlay(Capsule().stroke(Color(NSColor.separatorColor), lineWidth: 0.5))
-
-                Spacer()
-
-                Button("Done", action: onDismiss)
-                    .keyboardShortcut(.defaultAction)
-                    .buttonStyle(.borderedProminent)
-                    .controlSize(.regular)
-
-                Button("", action: onDismiss)
-                    .keyboardShortcut(.cancelAction)
-                    .opacity(0)
-                    .frame(width: 0, height: 0)
+                .padding(18)
+                .frame(width: 680, height: 490)
+                .background(Color(NSColor.controlBackgroundColor).opacity(0.4))
             }
-            .padding(.horizontal, 20)
-            .padding(.top, 16)
-            .padding(.bottom, 12)
-            .background(Color(NSColor.windowBackgroundColor))
-
-            Divider()
-
-            // Selected Tab Content
-            Group {
-                switch selectedTab {
-                case .appearance:
-                    AppearanceView(model: model, singlePane: singlePane)
-                case .behavior:
-                    BehaviorView(model: model)
-                case .clipboard:
-                    ClipboardSettingsView(model: model)
-                case .associations:
-                    FileAssociationsView(model: model)
-                case .shortcuts:
-                    ShortcutsView(model: model)
-                }
+            .clipShape(RoundedRectangle(cornerRadius: 14))
+            .overlay(
+                RoundedRectangle(cornerRadius: 14)
+                    .stroke(Color(NSColor.separatorColor).opacity(0.5), lineWidth: 1)
+            )
+            .shadow(color: Color.black.opacity(0.38), radius: 24, x: 0, y: 12)
+            .contentShape(Rectangle())
+            .onTapGesture {
+                // Absorbs taps inside the dialog card so backdrop onTapGesture doesn't fire
             }
-            .padding(18)
-            .frame(width: 680, height: 490)
-            .background(Color(NSColor.controlBackgroundColor).opacity(0.4))
         }
         .onExitCommand(perform: onDismiss)
     }

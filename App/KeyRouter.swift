@@ -18,6 +18,7 @@ final class KeyRouter {
     /// marked files behind it while the user edits a field in the sheet.
     var currentContext: FocusContext {
         guard let window else { return .table }
+        if SettingsWindowController.isOpen { return .textField }
         return window.attachedSheet != nil || window.firstResponder is NSText ? .textField : .table
     }
 
@@ -33,6 +34,18 @@ final class KeyRouter {
 
     private func consumes(_ event: NSEvent) -> Bool {
         guard let window, event.window === window, window.attachedSheet == nil else { return false }
+        if SettingsWindowController.isOpen {
+            if event.keyCode == 53 { // Esc
+                SettingsWindowController.dismissActive()
+                return true
+            }
+            let flags = event.modifierFlags.intersection(.deviceIndependentFlagsMask)
+            if flags.contains(.command), event.charactersIgnoringModifiers == "," {
+                SettingsWindowController.dismissActive()
+                return true
+            }
+            return false
+        }
         let flags = event.modifierFlags.intersection(.deviceIndependentFlagsMask)
         var modifiers: KeyChord.Modifiers = []
         if flags.contains(.control) { modifiers.insert(.control) }

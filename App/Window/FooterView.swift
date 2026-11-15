@@ -122,6 +122,34 @@ final class FooterView: NSView {
         }
         line.addArrangedSubview(trailingSpacer)
 
+        let isQuickViewActive = model.quickViewSide != nil
+        let quickViewButton = NSButton()
+        quickViewButton.bezelStyle = .accessoryBarAction
+        quickViewButton.isBordered = false
+        let eye = NSImage(systemSymbolName: isQuickViewActive ? "eye.fill" : "eye", accessibilityDescription: "Quick View")?.withSymbolConfiguration(.init(pointSize: 11, weight: .semibold))
+        quickViewButton.image = eye
+        quickViewButton.title = " Quick View"
+        quickViewButton.imagePosition = .imageLeading
+        quickViewButton.font = .systemFont(ofSize: 11, weight: .medium)
+        quickViewButton.contentTintColor = isQuickViewActive ? .controlAccentColor : .secondaryLabelColor
+        quickViewButton.toolTip = isQuickViewActive ? "Close Quick View (Esc or ⌃Q)" : "Quick View in Opposite Pane (⌃Q)"
+        quickViewButton.target = self
+        quickViewButton.action = #selector(quickViewClicked)
+
+        let ctrlQ = NSTextField(labelWithString: " ⌃Q ")
+        ctrlQ.font = .monospacedSystemFont(ofSize: 10, weight: .semibold)
+        ctrlQ.textColor = isQuickViewActive ? .controlAccentColor : .secondaryLabelColor
+        ctrlQ.wantsLayer = true
+        ctrlQ.layer?.backgroundColor = isQuickViewActive ? NSColor.controlAccentColor.withAlphaComponent(0.18).cgColor : NSColor.quaternaryLabelColor.withAlphaComponent(0.14).cgColor
+        ctrlQ.layer?.borderWidth = 0.5
+        ctrlQ.layer?.borderColor = NSColor.separatorColor.withAlphaComponent(0.6).cgColor
+        ctrlQ.layer?.cornerRadius = 4
+
+        let quickViewStack = NSStackView(views: [ctrlQ, quickViewButton])
+        quickViewStack.spacing = 4
+        quickViewStack.alignment = .centerY
+        line.addArrangedSubview(quickViewStack)
+
         let settingsButton = NSButton()
         settingsButton.bezelStyle = .accessoryBarAction
         settingsButton.isBordered = false
@@ -151,6 +179,10 @@ final class FooterView: NSView {
 
         stack.addArrangedSubview(line)
         leadingSpacer.widthAnchor.constraint(equalTo: trailingSpacer.widthAnchor).isActive = true
+    }
+
+    @objc private func quickViewClicked() {
+        model.perform(.toggleQuickView)
     }
 
     @objc private func openSettingsClicked() {

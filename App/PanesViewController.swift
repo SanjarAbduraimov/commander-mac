@@ -182,6 +182,12 @@ final class PanesViewController: NSViewController, NSSplitViewDelegate {
             if !single {
                 split.setPosition((split.bounds.width / 2).rounded(), ofDividerAt: 0)
             }
+
+            let browsingSide: PaneSide = quickSide == .left ? .right : (quickSide == .right ? .left : model.state.activeSide)
+            let activePane = browsingSide == .left ? left : right
+            DispatchQueue.main.async {
+                activePane.focusTable()
+            }
         }
 
         updateQuickView()
@@ -192,6 +198,9 @@ final class PanesViewController: NSViewController, NSSplitViewDelegate {
         let browsingSide: PaneSide = quickSide == .left ? .right : .left
         let currentItem = model.tab(browsingSide).cursorItem
         quickViewPanel.preview(item: currentItem)
+
+        let activePane = browsingSide == .left ? left : right
+        activePane.focusTable()
     }
 
     /// Window resizes grow both panes alike instead of only the first one.
