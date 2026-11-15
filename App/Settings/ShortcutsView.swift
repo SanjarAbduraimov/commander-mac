@@ -77,6 +77,7 @@ struct ShortcutsView: View {
                             }
                             .padding(.horizontal, 14)
                             .padding(.vertical, 8)
+                            .contentShape(Rectangle())
 
                             if row.command != model.rows.last?.command {
                                 Divider().opacity(0.25)

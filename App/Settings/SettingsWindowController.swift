@@ -155,14 +155,17 @@ struct SettingsModalOverlay: View {
                                         .font(.system(size: 13, weight: selectedTab == tab ? .semibold : .regular))
                                         .foregroundStyle(selectedTab == tab ? Color.white : Color.primary)
 
-                                    Spacer()
+                                    Spacer(minLength: 0)
                                 }
                                 .padding(.horizontal, 10)
-                                .padding(.vertical, 7)
+                                .padding(.vertical, 8)
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                                .contentShape(Rectangle())
                                 .background(selectedTab == tab ? Color.accentColor : Color.clear)
                                 .clipShape(RoundedRectangle(cornerRadius: 7))
                             }
                             .buttonStyle(.plain)
+                            .contentShape(Rectangle())
                         }
 
                         Spacer()
@@ -287,5 +290,6 @@ struct SettingsRow<Trailing: View>: View {
         }
         .padding(.horizontal, 14)
         .padding(.vertical, 10)
+        .contentShape(Rectangle())
     }
 }

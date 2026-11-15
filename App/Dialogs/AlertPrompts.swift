@@ -104,10 +104,19 @@ final class AlertPrompts: OperationPrompts {
         Task { _ = await present(alert) }
     }
 
+    private var alertActiveIndex: Int = 0
+
     private func present(_ alert: NSAlert) async -> NSApplication.ModalResponse {
         guard let window else { return alert.runModal() }
-        if alert.accessoryView == nil, let first = alert.buttons.first {
-            alert.window.initialFirstResponder = first
+        alertActiveIndex = 0
+        styleAlertButtons(alert, activeIndex: 0)
+
+        DispatchQueue.main.async { [weak self] in
+            guard let self else { return }
+            self.styleAlertButtons(alert, activeIndex: self.alertActiveIndex)
+            if let first = alert.buttons.first {
+                alert.window.makeFirstResponder(first)
+            }
         }
 
         var monitor: Any?
@@ -148,18 +157,17 @@ final class AlertPrompts: OperationPrompts {
 
         // Tab (48), Left Arrow (123), Right Arrow (124)
         if event.keyCode == 48 || event.keyCode == 123 || event.keyCode == 124 {
-            let currentFocus = alert.window.firstResponder as? NSButton
-            let currentIndex = buttons.firstIndex { $0 === currentFocus } ?? 0
             let delta = (event.keyCode == 123) ? -1 : 1
-            let nextIndex = (currentIndex + delta + buttons.count) % buttons.count
-            alert.window.makeFirstResponder(buttons[nextIndex])
+            alertActiveIndex = (alertActiveIndex + delta + buttons.count) % buttons.count
+            alert.window.makeFirstResponder(buttons[alertActiveIndex])
+            styleAlertButtons(alert, activeIndex: alertActiveIndex)
             return true
         }
 
         // Enter / Return (36, 76) or Space (49)
         if event.keyCode == 36 || event.keyCode == 76 || event.keyCode == 49 {
-            if let currentFocus = alert.window.firstResponder as? NSButton {
-                currentFocus.performClick(nil)
+            if buttons.indices.contains(alertActiveIndex) {
+                buttons[alertActiveIndex].performClick(nil)
                 return true
             } else if let first = buttons.first {
                 first.performClick(nil)
@@ -176,5 +184,103 @@ final class AlertPrompts: OperationPrompts {
         }
 
         return false
+    }
+
+    @MainActor
+    private func styleAlertButtons(_ alert: NSAlert, activeIndex: Int) {
+        let buttons = alert.buttons
+        for (index, button) in buttons.enumerated() {
+            button.wantsLayer = true
+            button.isBordered = false
+            button.focusRingType = .none
+            button.layer?.cornerRadius = 6
+            button.layer?.masksToBounds = true
+
+            let isDestructive = button.hasDestructiveAction || button.title.localizedCaseInsensitiveContains("delete")
+            let isActive = (index == activeIndex)
+
+            let paragraph = NSMutableParagraphStyle()
+            paragraph.alignment = .center
+
+            if isDestructive {
+                if isActive {
+                    button.layer?.backgroundColor = NSColor.systemRed.cgColor
+                    button.layer?.borderWidth = 2.0
+                    button.layer?.borderColor = NSColor.white.cgColor
+                    button.attributedTitle = NSAttributedString(
+                        string: button.title,
+                        attributes: [
+                            .foregroundColor: NSColor.white,
+                            .font: NSFont.systemFont(ofSize: 13, weight: .semibold),
+                            .paragraphStyle: paragraph
+                        ]
+                    )
+                } else {
+                    button.layer?.backgroundColor = NSColor.systemRed.withAlphaComponent(0.45).cgColor
+                    button.layer?.borderWidth = 0.5
+                    button.layer?.borderColor = NSColor.systemRed.withAlphaComponent(0.3).cgColor
+                    button.attributedTitle = NSAttributedString(
+                        string: button.title,
+                        attributes: [
+                            .foregroundColor: NSColor.white.withAlphaComponent(0.9),
+                            .font: NSFont.systemFont(ofSize: 13, weight: .medium),
+                            .paragraphStyle: paragraph
+                        ]
+                    )
+                }
+            } else if index == 0 && buttons.count > 1 {
+                if isActive {
+                    button.layer?.backgroundColor = NSColor.controlAccentColor.cgColor
+                    button.layer?.borderWidth = 2.0
+                    button.layer?.borderColor = NSColor.white.cgColor
+                    button.attributedTitle = NSAttributedString(
+                        string: button.title,
+                        attributes: [
+                            .foregroundColor: NSColor.white,
+                            .font: NSFont.systemFont(ofSize: 13, weight: .semibold),
+                            .paragraphStyle: paragraph
+                        ]
+                    )
+                } else {
+                    button.layer?.backgroundColor = NSColor.controlAccentColor.withAlphaComponent(0.45).cgColor
+                    button.layer?.borderWidth = 0.5
+                    button.layer?.borderColor = NSColor.controlAccentColor.withAlphaComponent(0.3).cgColor
+                    button.attributedTitle = NSAttributedString(
+                        string: button.title,
+                        attributes: [
+                            .foregroundColor: NSColor.white.withAlphaComponent(0.9),
+                            .font: NSFont.systemFont(ofSize: 13, weight: .medium),
+                            .paragraphStyle: paragraph
+                        ]
+                    )
+                }
+            } else {
+                if isActive {
+                    button.layer?.backgroundColor = NSColor(white: 0.45, alpha: 0.85).cgColor
+                    button.layer?.borderWidth = 2.0
+                    button.layer?.borderColor = NSColor.white.cgColor
+                    button.attributedTitle = NSAttributedString(
+                        string: button.title,
+                        attributes: [
+                            .foregroundColor: NSColor.white,
+                            .font: NSFont.systemFont(ofSize: 13, weight: .semibold),
+                            .paragraphStyle: paragraph
+                        ]
+                    )
+                } else {
+                    button.layer?.backgroundColor = NSColor(white: 0.28, alpha: 0.65).cgColor
+                    button.layer?.borderWidth = 0.5
+                    button.layer?.borderColor = NSColor.separatorColor.withAlphaComponent(0.5).cgColor
+                    button.attributedTitle = NSAttributedString(
+                        string: button.title,
+                        attributes: [
+                            .foregroundColor: NSColor.white.withAlphaComponent(0.8),
+                            .font: NSFont.systemFont(ofSize: 13, weight: .medium),
+                            .paragraphStyle: paragraph
+                        ]
+                    )
+                }
+            }
+        }
     }
 }
