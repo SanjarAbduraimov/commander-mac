@@ -92,4 +92,38 @@ final class BreadcrumbBar: NSView {
     override func mouseDown(with event: NSEvent) {
         onEdit?()
     }
+
+    override func menu(for event: NSEvent) -> NSMenu? {
+        let menu = NSMenu(title: "Path")
+        let copyPath = NSMenuItem(title: "Copy Full Path", action: #selector(copyCurrentPath), keyEquivalent: "")
+        copyPath.target = self
+        menu.addItem(copyPath)
+
+        let copyName = NSMenuItem(title: "Copy Folder Name", action: #selector(copyFolderName), keyEquivalent: "")
+        copyName.target = self
+        menu.addItem(copyName)
+
+        menu.addItem(.separator())
+        let editItem = NSMenuItem(title: "Edit Path Field… (⌘L)", action: #selector(triggerEdit), keyEquivalent: "")
+        editItem.target = self
+        menu.addItem(editItem)
+
+        return menu
+    }
+
+    @objc private func copyCurrentPath() {
+        guard let path = shownPath else { return }
+        NSPasteboard.general.clearContents()
+        NSPasteboard.general.setString(path.path, forType: .string)
+    }
+
+    @objc private func copyFolderName() {
+        guard let path = shownPath else { return }
+        NSPasteboard.general.clearContents()
+        NSPasteboard.general.setString(path.lastPathComponent, forType: .string)
+    }
+
+    @objc private func triggerEdit() {
+        onEdit?()
+    }
 }

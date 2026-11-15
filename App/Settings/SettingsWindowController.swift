@@ -38,12 +38,25 @@ final class SettingsWindowController {
 
         let rootView = SettingsSheetView(model: viewModel, singlePane: singlePane, onDismiss: dismiss)
         let hostingController = NSHostingController(rootView: rootView)
-        let sheet = NSWindow(contentViewController: hostingController)
+        let sheet = SettingsSheetWindow(contentViewController: hostingController)
+        sheet.onDismiss = dismiss
         sheet.styleMask = [.titled, .fullSizeContentView]
         sheet.titleVisibility = .hidden
         sheet.titlebarAppearsTransparent = true
         activeSheet = sheet
         window.beginSheet(sheet)
+    }
+}
+
+private final class SettingsSheetWindow: NSWindow {
+    var onDismiss: (() -> Void)?
+
+    override func cancelOperation(_ sender: Any?) {
+        if let onDismiss {
+            onDismiss()
+        } else {
+            super.cancelOperation(sender)
+        }
     }
 }
 
@@ -119,6 +132,11 @@ struct SettingsSheetView: View {
                     .keyboardShortcut(.defaultAction)
                     .buttonStyle(.borderedProminent)
                     .controlSize(.regular)
+
+                Button("", action: onDismiss)
+                    .keyboardShortcut(.cancelAction)
+                    .opacity(0)
+                    .frame(width: 0, height: 0)
             }
             .padding(.horizontal, 20)
             .padding(.top, 16)

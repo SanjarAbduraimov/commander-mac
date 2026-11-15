@@ -101,7 +101,9 @@ final class FooterView: NSView {
         let line = NSStackView()
         line.orientation = .horizontal
         line.spacing = 14
-        line.addArrangedSubview(NSView())
+        let leadingSpacer = NSView()
+        let trailingSpacer = NSView()
+        line.addArrangedSubview(leadingSpacer)
         for hint in hints {
             let key = NSTextField(labelWithString: " \(hint.keys) ")
             key.font = .monospacedSystemFont(ofSize: 10, weight: .semibold)
@@ -118,11 +120,41 @@ final class FooterView: NSView {
             pair.spacing = 5
             line.addArrangedSubview(pair)
         }
-        line.addArrangedSubview(NSView())
+        line.addArrangedSubview(trailingSpacer)
+
+        let settingsButton = NSButton()
+        settingsButton.bezelStyle = .accessoryBarAction
+        settingsButton.isBordered = false
+        let gear = NSImage(systemSymbolName: "gearshape.fill", accessibilityDescription: "Settings")?.withSymbolConfiguration(.init(pointSize: 11, weight: .semibold))
+        settingsButton.image = gear
+        settingsButton.title = " Settings"
+        settingsButton.imagePosition = .imageLeading
+        settingsButton.font = .systemFont(ofSize: 11, weight: .medium)
+        settingsButton.contentTintColor = .secondaryLabelColor
+        settingsButton.toolTip = "Settings (⌘,)"
+        settingsButton.target = self
+        settingsButton.action = #selector(openSettingsClicked)
+
+        let cmdComma = NSTextField(labelWithString: " ⌘, ")
+        cmdComma.font = .monospacedSystemFont(ofSize: 10, weight: .semibold)
+        cmdComma.textColor = .secondaryLabelColor
+        cmdComma.wantsLayer = true
+        cmdComma.layer?.backgroundColor = NSColor.quaternaryLabelColor.withAlphaComponent(0.14).cgColor
+        cmdComma.layer?.borderWidth = 0.5
+        cmdComma.layer?.borderColor = NSColor.separatorColor.withAlphaComponent(0.6).cgColor
+        cmdComma.layer?.cornerRadius = 4
+
+        let settingsStack = NSStackView(views: [cmdComma, settingsButton])
+        settingsStack.spacing = 4
+        settingsStack.alignment = .centerY
+        line.addArrangedSubview(settingsStack)
+
         stack.addArrangedSubview(line)
-        if let first = line.arrangedSubviews.first, let last = line.arrangedSubviews.last {
-            first.widthAnchor.constraint(equalTo: last.widthAnchor).isActive = true
-        }
+        leadingSpacer.widthAnchor.constraint(equalTo: trailingSpacer.widthAnchor).isActive = true
+    }
+
+    @objc private func openSettingsClicked() {
+        model.perform(.openSettings)
     }
 
     private func clear() {

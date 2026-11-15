@@ -22,6 +22,7 @@ final class PaneViewController: NSViewController, NSTextFieldDelegate, NSDraggin
     private let activeLine = NSBox()
     private let scrollView = NSScrollView()
     private let banner = AccessBannerView()
+    private let copyPathButton = NSButton()
 
     /// What the table currently shows, to reload only the rows a change touched.
     private var shownNames: [String] = []
@@ -74,9 +75,11 @@ final class PaneViewController: NSViewController, NSTextFieldDelegate, NSDraggin
         parentStrip.onSpringLoad = { [model, side] in model.springLoadParent(side) }
         parentStrip.onDragHover = { [weak self] in self?.dragHover($0) }
 
-        pathField.font = .monospacedSystemFont(ofSize: 11, weight: .regular)
-        pathField.isBordered = false
-        pathField.drawsBackground = false
+        pathField.font = .monospacedSystemFont(ofSize: 12, weight: .regular)
+        pathField.isBordered = true
+        pathField.bezelStyle = .roundedBezel
+        pathField.drawsBackground = true
+        pathField.backgroundColor = .textBackgroundColor
         pathField.lineBreakMode = .byTruncatingHead
         pathField.setAccessibilityIdentifier("pathEdit.\(side.rawValue)")
         pathField.delegate = self
@@ -137,19 +140,51 @@ final class PaneViewController: NSViewController, NSTextFieldDelegate, NSDraggin
             model.perform(.pasteImage)
         }
 
-        let pathRow = padded(pathField, height: 36)
-        breadcrumbs.translatesAutoresizingMaskIntoConstraints = false
-        pathRow.addSubview(breadcrumbs)
-        pathRow.addSubview(newItemButton)
-        NSLayoutConstraint.activate([
-            breadcrumbs.leadingAnchor.constraint(equalTo: pathRow.leadingAnchor, constant: 8),
-            breadcrumbs.trailingAnchor.constraint(lessThanOrEqualTo: newItemButton.leadingAnchor, constant: -8),
-            breadcrumbs.centerYAnchor.constraint(equalTo: pathRow.centerYAnchor),
-            breadcrumbs.heightAnchor.constraint(equalToConstant: 28),
+        copyPathButton.translatesAutoresizingMaskIntoConstraints = false
+        copyPathButton.isBordered = false
+        copyPathButton.bezelStyle = .accessoryBarAction
+        let copyIcon = NSImage(systemSymbolName: "doc.on.doc", accessibilityDescription: "Copy Path")?.withSymbolConfiguration(.init(pointSize: 11, weight: .medium))
+        copyPathButton.image = copyIcon
+        copyPathButton.contentTintColor = .secondaryLabelColor
+        copyPathButton.toolTip = "Copy Path"
+        copyPathButton.target = self
+        copyPathButton.action = #selector(copyPathClicked)
 
+        let pathRow = NSView()
+        pathRow.translatesAutoresizingMaskIntoConstraints = false
+        pathField.translatesAutoresizingMaskIntoConstraints = false
+        breadcrumbs.translatesAutoresizingMaskIntoConstraints = false
+
+        pathRow.addSubview(pathField)
+        pathRow.addSubview(breadcrumbs)
+        pathRow.addSubview(copyPathButton)
+        pathRow.addSubview(newItemButton)
+
+        NSLayoutConstraint.activate([
+            pathRow.heightAnchor.constraint(equalToConstant: 36),
+
+            // New item button on the far right
             newItemButton.trailingAnchor.constraint(equalTo: pathRow.trailingAnchor, constant: -8),
             newItemButton.centerYAnchor.constraint(equalTo: pathRow.centerYAnchor),
             newItemButton.heightAnchor.constraint(equalToConstant: 28),
+
+            // Copy path button directly to the left of newItemButton
+            copyPathButton.trailingAnchor.constraint(equalTo: newItemButton.leadingAnchor, constant: -6),
+            copyPathButton.centerYAnchor.constraint(equalTo: pathRow.centerYAnchor),
+            copyPathButton.heightAnchor.constraint(equalToConstant: 28),
+            copyPathButton.widthAnchor.constraint(equalToConstant: 28),
+
+            // Path field: completely separate, stops before copyPathButton
+            pathField.leadingAnchor.constraint(equalTo: pathRow.leadingAnchor, constant: 8),
+            pathField.trailingAnchor.constraint(equalTo: copyPathButton.leadingAnchor, constant: -6),
+            pathField.centerYAnchor.constraint(equalTo: pathRow.centerYAnchor),
+            pathField.heightAnchor.constraint(equalToConstant: 28),
+
+            // Breadcrumbs: completely separate, stops before copyPathButton
+            breadcrumbs.leadingAnchor.constraint(equalTo: pathRow.leadingAnchor, constant: 8),
+            breadcrumbs.trailingAnchor.constraint(lessThanOrEqualTo: copyPathButton.leadingAnchor, constant: -6),
+            breadcrumbs.centerYAnchor.constraint(equalTo: pathRow.centerYAnchor),
+            breadcrumbs.heightAnchor.constraint(equalToConstant: 28),
         ])
         let statusRow = padded(statusLabel, height: 27)
         let stack = NSStackView(views: [activeLine, tabBar, pathRow, banner, scrollView, statusRow])
@@ -270,6 +305,23 @@ final class PaneViewController: NSViewController, NSTextFieldDelegate, NSDraggin
             guard let self, self.pathField.currentEditor() == nil else { return }
             self.pathField.isHidden = true
             self.breadcrumbs.isHidden = false
+        }
+    }
+
+    @objc private func copyPathClicked() {
+        let url = model.tab(side).path
+        NSPasteboard.general.clearContents()
+        NSPasteboard.general.setString(url.path, forType: .string)
+
+        let checkmark = NSImage(systemSymbolName: "checkmark", accessibilityDescription: "Copied")?.withSymbolConfiguration(.init(pointSize: 11, weight: .bold))
+        copyPathButton.image = checkmark
+        copyPathButton.contentTintColor = .systemGreen
+
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.2) { [weak self] in
+            guard let self else { return }
+            let copyIcon = NSImage(systemSymbolName: "doc.on.doc", accessibilityDescription: "Copy Path")?.withSymbolConfiguration(.init(pointSize: 11, weight: .medium))
+            self.copyPathButton.image = copyIcon
+            self.copyPathButton.contentTintColor = .secondaryLabelColor
         }
     }
 
