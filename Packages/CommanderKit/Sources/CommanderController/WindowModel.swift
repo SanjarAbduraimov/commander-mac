@@ -45,6 +45,8 @@ public final class WindowModel {
     var sizeRun: SizeRun?
     /// Names of the items on the clipboard from ⌘X, by standardized folder path; shown as cut until pasted or replaced.
     var cutNamesByFolder: [String: Set<String>] = [:]
+    /// Names of the items on the clipboard from ⌘C, by standardized folder path.
+    var copiedNamesByFolder: [String: Set<String>] = [:]
     /// The last Multi-Rename, as the renames that undo it (new name → old name).
     var multiRenameUndo: [RenamePair]?
     public var undoStack = UndoStack()

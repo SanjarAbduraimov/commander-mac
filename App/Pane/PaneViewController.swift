@@ -34,6 +34,8 @@ final class PaneViewController: NSViewController, NSTextFieldDelegate, NSDraggin
     private var shownAppearance: AppearanceSettings?
     private var shownFolderSizes: [String: Int64] = [:]
     private var shownCut: Set<String> = []
+    private var shownCopied: Set<String> = []
+    private let toastView = ToastHUDView()
 
     init(model: WindowModel, side: PaneSide) {
         self.model = model
@@ -223,6 +225,15 @@ final class PaneViewController: NSViewController, NSTextFieldDelegate, NSDraggin
             parentStrip.heightAnchor.constraint(equalToConstant: 28),
         ])
 
+        toastView.translatesAutoresizingMaskIntoConstraints = false
+        root.addSubview(toastView)
+        NSLayoutConstraint.activate([
+            toastView.centerXAnchor.constraint(equalTo: root.centerXAnchor),
+            toastView.bottomAnchor.constraint(equalTo: statusRow.topAnchor, constant: -10),
+        ])
+
+        updatePathContainerColors()
+
         // Clicking anywhere in the pane makes it active; the recognizer must not swallow the click.
         let click = NSClickGestureRecognizer(target: self, action: #selector(paneClicked))
         click.delaysPrimaryMouseButtonEvents = false
@@ -242,6 +253,7 @@ final class PaneViewController: NSViewController, NSTextFieldDelegate, NSDraggin
         tabBar.update(titles: pane.tabs.map { Self.title(for: $0.path) }, active: pane.activeTabIndex)
         if pathField.currentEditor() == nil { pathField.stringValue = tab.path.path }
         breadcrumbs.show(tab.path)
+        updatePathContainerColors()
         let folderSizes = model.folderSizes(side)
         statusLabel.stringValue = PaneText.status(tab, folderSizes: folderSizes)
         banner.show(model.banner(side))
@@ -254,6 +266,7 @@ final class PaneViewController: NSViewController, NSTextFieldDelegate, NSDraggin
         let names = tab.items.map(\.name)
         let appearance = model.settings.appearance
         let cut = model.cutNames(in: tab.path)
+        let copied = model.copiedNames(in: tab.path)
         tableController.applyColumns(to: table)
         if names != shownNames || active != shownActive || appearance != shownAppearance {
             let interval = Self.signposter.beginInterval("Render")
@@ -261,7 +274,7 @@ final class PaneViewController: NSViewController, NSTextFieldDelegate, NSDraggin
             table.reloadData()
             Self.signposter.endInterval("Render", interval)
         } else {
-            reloadChangedRows(tab, names: names, cut: cut)
+            reloadChangedRows(tab, names: names, cut: cut, copied: copied)
             let sizeColumn = table.column(withIdentifier: NSUserInterfaceItemIdentifier(FileTableController.Column.size.rawValue))
             if folderSizes != shownFolderSizes, sizeColumn >= 0 {
                 table.reloadData(forRowIndexes: IndexSet(integersIn: 0..<names.count), columnIndexes: IndexSet(integer: sizeColumn))
@@ -269,6 +282,7 @@ final class PaneViewController: NSViewController, NSTextFieldDelegate, NSDraggin
         }
         shownFolderSizes = folderSizes
         shownCut = cut
+        shownCopied = copied
         showSortIndicator(tab.sort)
         // Background refreshes (watcher, folder sizes) must not yank a wheel-scrolled view back to the cursor.
         let followCursor = tab.cursor != shownCursor || tab.path != shownPath
@@ -290,8 +304,10 @@ final class PaneViewController: NSViewController, NSTextFieldDelegate, NSDraggin
         }
     }
 
-    private func reloadChangedRows(_ tab: TabState, names: [String], cut: Set<String>) {
-        var changed = shownMarked.symmetricDifference(tab.marked).union(shownCut.symmetricDifference(cut))
+    private func reloadChangedRows(_ tab: TabState, names: [String], cut: Set<String>, copied: Set<String>) {
+        var changed = shownMarked.symmetricDifference(tab.marked)
+            .union(shownCut.symmetricDifference(cut))
+            .union(shownCopied.symmetricDifference(copied))
         if shownCursor != tab.cursor {
             changed.formUnion([shownCursor, tab.cursor].compactMap { $0 })
         }
@@ -303,11 +319,29 @@ final class PaneViewController: NSViewController, NSTextFieldDelegate, NSDraggin
         }
     }
 
+    private func updatePathContainerColors() {
+        view.effectiveAppearance.performAsCurrentDrawingAppearance {
+            if pathField.isHidden {
+                pathContainer.layer?.backgroundColor = NSColor.quaternaryLabelColor.withAlphaComponent(0.08).cgColor
+                pathContainer.layer?.borderWidth = 0
+                pathContainer.layer?.borderColor = NSColor.clear.cgColor
+            } else {
+                pathContainer.layer?.backgroundColor = NSColor.controlBackgroundColor.cgColor
+                pathContainer.layer?.borderWidth = 1.5
+                pathContainer.layer?.borderColor = NSColor.controlAccentColor.cgColor
+            }
+            pathField.textColor = NSColor.controlTextColor
+        }
+    }
+
+    func showToast(icon: String, message: String) {
+        toastView.show(icon: icon, message: message)
+    }
+
     func focusPathField() {
         breadcrumbs.isHidden = true
         pathField.isHidden = false
-        pathContainer.layer?.backgroundColor = NSColor.textBackgroundColor.withAlphaComponent(0.92).cgColor
-        pathContainer.layer?.borderWidth = 1.2
+        updatePathContainerColors()
         view.window?.makeFirstResponder(pathField)
         pathField.selectText(nil)
     }
@@ -319,8 +353,7 @@ final class PaneViewController: NSViewController, NSTextFieldDelegate, NSDraggin
             guard let self, self.pathField.currentEditor() == nil else { return }
             self.pathField.isHidden = true
             self.breadcrumbs.isHidden = false
-            self.pathContainer.layer?.backgroundColor = NSColor.quaternaryLabelColor.withAlphaComponent(0.08).cgColor
-            self.pathContainer.layer?.borderWidth = 0
+            self.updatePathContainerColors()
         }
     }
 
@@ -491,5 +524,101 @@ final class PaneViewController: NSViewController, NSTextFieldDelegate, NSDraggin
             field.centerYAnchor.constraint(equalTo: container.centerYAnchor),
         ])
         return container
+    }
+}
+
+@MainActor
+final class ToastHUDView: NSView {
+    private let iconView = NSImageView()
+    private let label = NSTextField(labelWithString: "")
+    private var hideWorkItem: DispatchWorkItem?
+
+    override init(frame: NSRect) {
+        super.init(frame: frame)
+        setup()
+    }
+
+    @available(*, unavailable)
+    required init?(coder: NSCoder) { fatalError() }
+
+    private func setup() {
+        wantsLayer = true
+        layer?.cornerRadius = 14
+        layer?.shadowColor = NSColor.black.cgColor
+        layer?.shadowOpacity = 0.18
+        layer?.shadowRadius = 8
+        layer?.shadowOffset = CGSize(width: 0, height: -2)
+        alphaValue = 0
+        isHidden = true
+
+        iconView.translatesAutoresizingMaskIntoConstraints = false
+        iconView.contentTintColor = .controlAccentColor
+
+        label.font = .systemFont(ofSize: 12, weight: .semibold)
+        label.textColor = .labelColor
+        label.translatesAutoresizingMaskIntoConstraints = false
+
+        let stack = NSStackView(views: [iconView, label])
+        stack.orientation = .horizontal
+        stack.spacing = 8
+        stack.alignment = .centerY
+        stack.edgeInsets = NSEdgeInsets(top: 0, left: 12, bottom: 0, right: 14)
+        stack.translatesAutoresizingMaskIntoConstraints = false
+        addSubview(stack)
+
+        NSLayoutConstraint.activate([
+            stack.leadingAnchor.constraint(equalTo: leadingAnchor),
+            stack.trailingAnchor.constraint(equalTo: trailingAnchor),
+            stack.topAnchor.constraint(equalTo: topAnchor),
+            stack.bottomAnchor.constraint(equalTo: bottomAnchor),
+            heightAnchor.constraint(equalToConstant: 28),
+        ])
+    }
+
+    override func viewDidChangeEffectiveAppearance() {
+        super.viewDidChangeEffectiveAppearance()
+        updateColors()
+    }
+
+    private func updateColors() {
+        effectiveAppearance.performAsCurrentDrawingAppearance {
+            layer?.backgroundColor = NSColor.windowBackgroundColor.withAlphaComponent(0.96).cgColor
+            layer?.borderWidth = 1
+            layer?.borderColor = NSColor.separatorColor.withAlphaComponent(0.4).cgColor
+        }
+    }
+
+    func show(icon: String, message: String) {
+        hideWorkItem?.cancel()
+        updateColors()
+
+        let img = NSImage(systemSymbolName: icon, accessibilityDescription: nil)?
+            .withSymbolConfiguration(.init(pointSize: 11, weight: .bold))
+        iconView.image = img
+        label.stringValue = message
+
+        isHidden = false
+        NSAnimationContext.runAnimationGroup { ctx in
+            ctx.duration = 0.15
+            animator().alphaValue = 1
+        }
+
+        let work = DispatchWorkItem { [weak self] in
+            guard let self else { return }
+            MainActor.assumeIsolated {
+                NSAnimationContext.runAnimationGroup({ ctx in
+                    ctx.duration = 0.25
+                    self.animator().alphaValue = 0
+                }, completionHandler: {
+                    MainActor.assumeIsolated {
+                        if self.alphaValue == 0 {
+                            self.isHidden = true
+                        }
+                    }
+                })
+            }
+        }
+        hideWorkItem = work
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.2, execute: work)
     }
 }

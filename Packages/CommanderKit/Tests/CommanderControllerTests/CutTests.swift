@@ -87,4 +87,26 @@ struct CutTests {
         #expect(model.cutNames(in: root) == ["b.txt", "c.txt"])
         #expect(model.cutNames(in: root.appendingPathComponent("a")).isEmpty)
     }
+
+    @Test func unmarkAllClearsCut() async {
+        let model = await startedHarness().model
+        model.mutateTab(.left) { $0.setCursor(name: "b.txt") }
+        model.perform(.cutToClipboard)
+        #expect(model.isCut(item(model, .left, "b.txt")))
+        #expect(model.isEnabled(.unmarkAll, context: .table))
+
+        model.perform(.unmarkAll)
+        #expect(!model.isCut(item(model, .left, "b.txt")))
+    }
+
+    @Test func unmarkAllClearsCopied() async {
+        let model = await startedHarness().model
+        model.mutateTab(.left) { $0.setCursor(name: "b.txt") }
+        model.perform(.copyToClipboard)
+        #expect(model.isCopied(item(model, .left, "b.txt")))
+        #expect(model.isEnabled(.unmarkAll, context: .table))
+
+        model.perform(.unmarkAll)
+        #expect(!model.isCopied(item(model, .left, "b.txt")))
+    }
 }

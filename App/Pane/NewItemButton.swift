@@ -48,13 +48,13 @@ final class NewItemButton: NSView {
         // Main action button: "+ New"
         mainButton.title = " New"
         if let plus = NSImage(systemSymbolName: "plus", accessibilityDescription: "New") {
-            let config = NSImage.SymbolConfiguration(pointSize: 11, weight: .bold)
+            let config = NSImage.SymbolConfiguration(pointSize: 10.5, weight: .semibold)
             mainButton.image = plus.withSymbolConfiguration(config)
             mainButton.imagePosition = .imageLeading
         }
-        mainButton.contentTintColor = NSColor.controlAccentColor
+        mainButton.contentTintColor = NSColor.labelColor
         mainButton.isBordered = false
-        mainButton.font = NSFont.systemFont(ofSize: 12, weight: .semibold)
+        mainButton.font = NSFont.systemFont(ofSize: 12, weight: .medium)
         mainButton.target = self
         mainButton.action = #selector(mainClicked)
         mainButton.setAccessibilityLabel("New Folder")
@@ -70,7 +70,7 @@ final class NewItemButton: NSView {
 
         // Dropdown arrow button
         if let chevron = NSImage(systemSymbolName: "chevron.down", accessibilityDescription: "More options") {
-            let config = NSImage.SymbolConfiguration(pointSize: 9, weight: .bold)
+            let config = NSImage.SymbolConfiguration(pointSize: 8.5, weight: .semibold)
             dropdownButton.image = chevron.withSymbolConfiguration(config)
         } else {
             dropdownButton.title = "▾"
@@ -80,7 +80,7 @@ final class NewItemButton: NSView {
         dropdownButton.target = self
         dropdownButton.action = #selector(dropdownClicked)
         dropdownButton.translatesAutoresizingMaskIntoConstraints = false
-        dropdownButton.widthAnchor.constraint(equalToConstant: 22).isActive = true
+        dropdownButton.widthAnchor.constraint(equalToConstant: 20).isActive = true
         dropdownButton.heightAnchor.constraint(equalToConstant: 28).isActive = true
         stack.addArrangedSubview(dropdownButton)
     }
@@ -147,8 +147,10 @@ final class NewItemButton: NSView {
     private func updateColors() {
         effectiveAppearance.performAsCurrentDrawingAppearance {
             layer?.borderWidth = 1
-            layer?.borderColor = NSColor.separatorColor.withAlphaComponent(0.45).cgColor
-            layer?.backgroundColor = NSColor.controlBackgroundColor.cgColor
+            layer?.borderColor = NSColor.separatorColor.withAlphaComponent(0.25).cgColor
+            layer?.backgroundColor = NSColor.quaternaryLabelColor.withAlphaComponent(0.08).cgColor
+            mainButton.contentTintColor = NSColor.labelColor
+            dropdownButton.contentTintColor = NSColor.secondaryLabelColor
         }
     }
 }

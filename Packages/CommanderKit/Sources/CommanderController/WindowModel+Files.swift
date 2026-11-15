@@ -105,14 +105,21 @@ extension WindowModel {
             }
         case .copyToClipboard, .cutToClipboard:
             guard !urls.isEmpty else { return }
-            pasteboard.writeFiles(urls, cut: command == .cutToClipboard)
-            setCut(command == .cutToClipboard ? urls : [])
+            let isCut = command == .cutToClipboard
+            pasteboard.writeFiles(urls, cut: isCut)
+            setCut(isCut ? urls : [])
+            setCopied(isCut ? [] : urls)
+            let count = urls.count
+            let noun = count == 1 ? "1 item" : "\(count) items"
+            let msg = isCut ? "Cut \(noun) to clipboard" : "Copied \(noun) to clipboard"
+            effects.showToast(side, icon: isCut ? "scissors" : "doc.on.doc.fill", message: msg)
         case .paste:
             if let (sources, isCut) = pasteboard.readFiles() {
                 if isCut {
                     operations.start(.move(sources: sources, destination: tab.path))
                     pasteboard.clearCut()
                     setCut([])
+                    setCopied([])
                 } else {
                     operations.start(.copy(sources: sources, destination: tab.path))
                 }
@@ -123,10 +130,14 @@ extension WindowModel {
             guard !urls.isEmpty else { return }
             pasteboard.writeString(urls.map(\.path).joined(separator: "\n"))
             setCut([])
+            setCopied([])
+            effects.showToast(side, icon: "doc.on.doc.fill", message: "Path copied to clipboard")
         case .copyName:
             guard !urls.isEmpty else { return }
             pasteboard.writeString(tab.targets.map(\.name).joined(separator: "\n"))
             setCut([])
+            setCopied([])
+            effects.showToast(side, icon: "doc.on.doc.fill", message: "Name copied to clipboard")
         case .revealInFinder:
             guard !urls.isEmpty else { return }
             effects.revealInFinder(urls)

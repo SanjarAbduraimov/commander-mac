@@ -90,6 +90,7 @@ extension WindowEffects {
     public func open(_ url: URL) {
         open(url, withApp: nil)
     }
+    public func showToast(_ side: PaneSide, icon: String, message: String) {}
 }
 
 public struct WindowEnvironment: Sendable {

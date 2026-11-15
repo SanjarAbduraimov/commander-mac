@@ -32,6 +32,11 @@ extension WindowModel {
                 closeQuickView()
                 return
             }
+            if !cutNamesByFolder.isEmpty || !copiedNamesByFolder.isEmpty {
+                setCut([])
+                setCopied([])
+                pasteboard.clearCut()
+            }
             mutateTab(side) { $0.clearMarks() }
         case .open: openCursorItem(side)
         case .goUp: mutatePane(side) { $0.activeTab.goUp() }
@@ -102,7 +107,7 @@ extension WindowModel {
         case .newFile, .pasteImage: return true
         case .switchPane: return !isSinglePane
         case .toggleQuickView: return !isSinglePane
-        case .unmarkAll: return !tab.marked.isEmpty || quickViewSide != nil
+        case .unmarkAll: return !tab.marked.isEmpty || !cutNamesByFolder.isEmpty || !copiedNamesByFolder.isEmpty || quickViewSide != nil
         case .undoMultiRename: return canUndoMultiRename
         case .undo: return undoStack.canUndo
         case .redo: return undoStack.canRedo

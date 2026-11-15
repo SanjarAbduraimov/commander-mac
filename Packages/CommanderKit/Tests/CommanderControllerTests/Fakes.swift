@@ -99,6 +99,9 @@ final class RecordingEffects: WindowEffects {
     private(set) var destinationRequests: [DestinationRequest] = []
     private(set) var alerts: [AlertMessage] = []
     private(set) var beeps = 0
+    private(set) var toasts: [(side: PaneSide, icon: String, message: String)] = []
+
+    func showToast(_ side: PaneSide, icon: String, message: String) { toasts.append((side, icon, message)) }
 
     func stateDidChange(_ change: StateChange) { changes.append(change) }
     func focusPathField(_ side: PaneSide) { focusedPathFields.append(side) }

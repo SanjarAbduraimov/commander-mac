@@ -89,6 +89,10 @@ final class AppKitEffects: WindowEffects {
         SettingsWindowController.show(model: model, over: windowController?.window)
     }
 
+    func showToast(_ side: PaneSide, icon: String, message: String) {
+        windowController?.pane(side).showToast(icon: icon, message: message)
+    }
+
     static func applyTheme(_ theme: Theme) {
         let appearance: NSAppearance? = switch theme {
         case .system: nil

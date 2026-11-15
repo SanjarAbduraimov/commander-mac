@@ -13,6 +13,7 @@ final class FileTableController: NSObject, NSTableViewDataSource, NSTableViewDel
     private static let dateStyle = Date.FormatStyle(date: .numeric, time: .shortened)
     private static let markImage = NSImage(systemSymbolName: "checkmark.circle.fill", accessibilityDescription: "Marked")
     private static let cutImage = NSImage(systemSymbolName: "scissors", accessibilityDescription: "Cut")
+    private static let copyImage = NSImage(systemSymbolName: "doc.on.doc.fill", accessibilityDescription: "Copied")
 
     enum DropHighlight: Equatable {
         case none, table, row(String)
@@ -159,16 +160,43 @@ final class FileTableController: NSObject, NSTableViewDataSource, NSTableViewDel
         switch column {
         case .mark:
             let isCut = model.isCut(item)
-            cell.imageView?.image = isCut ? Self.cutImage : tab.marked.contains(item.name) ? Self.markImage : nil
-            cell.imageView?.contentTintColor = isCut ? Palette.accent : Palette.markSymbol
+            let isCopied = model.isCopied(item)
+            let isMarked = tab.marked.contains(item.name)
+            if isCut {
+                cell.imageView?.image = Self.cutImage
+                cell.imageView?.contentTintColor = Palette.accent
+            } else if isCopied {
+                cell.imageView?.image = Self.copyImage
+                cell.imageView?.contentTintColor = Palette.accent
+            } else if isMarked {
+                cell.imageView?.image = Self.markImage
+                cell.imageView?.contentTintColor = Palette.markSymbol
+            } else {
+                cell.imageView?.image = nil
+            }
         case .name:
             let isCut = model.isCut(item)
+            let isCopied = model.isCopied(item)
             cell.textField?.stringValue = showsExtColumn ? item.baseName : item.name
-            cell.textField?.font = isCut ? NSFontManager.shared.convert(font, toHaveTrait: .italicFontMask) : font
-            cell.textField?.textColor = isCut ? Palette.accent : .labelColor
+            let traits: NSFontTraitMask = isCut ? .italicFontMask : (isCopied ? .boldFontMask : [])
+            cell.textField?.font = traits.isEmpty ? font : NSFontManager.shared.convert(font, toHaveTrait: traits)
+            cell.textField?.textColor = (isCut || isCopied) ? Palette.accent : .labelColor
             cell.imageView?.image = IconCache.shared.icon(for: item, size: CGFloat(model.settings.appearance.iconSize))
-            // Finder dims hidden items; a cut item is told apart by italics and colour, so both can show at once.
-            let alpha: CGFloat = item.isHidden ? 0.5 : 1
+            
+            // Transparency calculation:
+            // 1. Normal: 1.0
+            // 2. Hidden: 0.55
+            // 3. Cut: 0.45 (or 0.28 if hidden)
+            // 4. Copied: 0.85 (or 0.48 if hidden)
+            let alpha: CGFloat = if isCut {
+                item.isHidden ? 0.28 : 0.45
+            } else if isCopied {
+                item.isHidden ? 0.48 : 0.85
+            } else if item.isHidden {
+                0.55
+            } else {
+                1.0
+            }
             cell.textField?.alphaValue = alpha
             cell.imageView?.alphaValue = alpha
         case .ext:

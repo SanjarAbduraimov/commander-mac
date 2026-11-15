@@ -21,6 +21,25 @@ extension WindowModel {
         effects.stateDidChange(.pane(.right))
     }
 
+    public func isCopied(_ item: FileItem) -> Bool {
+        !copiedNamesByFolder.isEmpty && copiedNames(in: item.url.deletingLastPathComponent()).contains(item.name)
+    }
+
+    /// Names copied from `folder`. Kept per folder so a render checks one folder, not every item's path.
+    public func copiedNames(in folder: URL) -> Set<String> {
+        guard !copiedNamesByFolder.isEmpty else { return [] }
+        return copiedNamesByFolder[folder.standardizedFileURL.path] ?? []
+    }
+
+    func setCopied(_ urls: [URL]) {
+        let grouped = Dictionary(grouping: urls) { $0.deletingLastPathComponent().standardizedFileURL.path }
+            .mapValues { Set($0.map(\.lastPathComponent)) }
+        guard grouped != copiedNamesByFolder else { return }
+        copiedNamesByFolder = grouped
+        effects.stateDidChange(.pane(.left))
+        effects.stateDidChange(.pane(.right))
+    }
+
     /// Another app may have replaced the clipboard while we were in the background.
     func refreshCut() {
         guard !cutNamesByFolder.isEmpty, pasteboard.readFiles()?.isCut != true else { return }
