@@ -4,7 +4,7 @@ Total Commander uslubidagi ikki panelli, klaviatura bilan tez ishlaydigan, yengi
 
 ## Joriy holat
 
-**UX & Qulaylik yaxshilanishlari: 4 ta asosiy talab to'liq bajarildi (2026-11-14): Clipboard Image Paste (`⌘V`), In-App Modal Settings Sheet (`⌘,`), Total Commander Quick View (`⌃Q`, `Esc`), va Zamonaviy macOS 15 Visual Polish (pill selection, frosted glass, chiclet shortcuts).**
+**UX & Qulaylik yaxshilanishlari: 4 ta asosiy talab to'liq bajarildi (2026-11-14): Clipboard Image Paste (`⌘V`), In-App Modal Settings Sheet (`⌘,`), Total Commander Quick View (`⌃Q`, `Esc`), va Zamonaviy macOS 15 Visual Polish (pill selection, frosted glass, chiclet shortcuts, spacious tabs, modern interactive split divider).**
 
 - Asosiy manba — plan: `docs/superpowers/plans/2026-11-14-phase3-ux-polish.md`. Spec: `docs/superpowers/specs/2026-11-14-phase2-file-operations-design.md`.
 - Bajarilgan plan'lar:
