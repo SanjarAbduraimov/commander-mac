@@ -7,6 +7,8 @@ import CommanderCore
 final class MainWindowController: NSWindowController {
     let panes: PanesViewController
     let sidebar: SidebarViewController
+    let split: NSSplitViewController
+    let headerBar: TopHeaderBarView
     let model: WindowModel
     private var resizeObserver: NSObjectProtocol?
     private var clickObserver: Any?
@@ -15,24 +17,80 @@ final class MainWindowController: NSWindowController {
         self.model = model
         panes = PanesViewController(model: model)
         sidebar = SidebarViewController(model: model)
+        headerBar = TopHeaderBarView()
 
         let sidebarItem = NSSplitViewItem(sidebarWithViewController: sidebar)
         sidebarItem.minimumThickness = 150
         sidebarItem.maximumThickness = 400
 
-        let split = NSSplitViewController()
+        split = NSSplitViewController()
         split.addSplitViewItem(sidebarItem)
         split.addSplitViewItem(NSSplitViewItem(viewController: panes))
 
+        let rootController = NSViewController()
+        let rootStack = NSStackView(views: [headerBar, split.view])
+        rootStack.orientation = .vertical
+        rootStack.spacing = 0
+        rootStack.alignment = .width
+        rootStack.translatesAutoresizingMaskIntoConstraints = false
+
+        rootController.addChild(split)
+        rootController.view = NSView()
+        rootController.view.addSubview(rootStack)
+
+        NSLayoutConstraint.activate([
+            headerBar.heightAnchor.constraint(equalToConstant: 42),
+            rootStack.leadingAnchor.constraint(equalTo: rootController.view.leadingAnchor),
+            rootStack.trailingAnchor.constraint(equalTo: rootController.view.trailingAnchor),
+            rootStack.topAnchor.constraint(equalTo: rootController.view.topAnchor),
+            rootStack.bottomAnchor.constraint(equalTo: rootController.view.bottomAnchor),
+        ])
+
         NSWindow.allowsAutomaticWindowTabbing = false
-        let window = NSWindow(contentViewController: split)
+        let window = NSWindow(contentViewController: rootController)
+        window.styleMask = [.titled, .closable, .miniaturizable, .resizable, .fullSizeContentView]
+        window.titleVisibility = .hidden
+        window.titlebarAppearsTransparent = true
         window.tabbingMode = .disallowed
         window.title = "Commander"
         window.setContentSize(NSSize(width: 1100, height: 700))
         window.contentMinSize = NSSize(width: 800, height: 480)
+        window.isReleasedWhenClosed = false
+        window.collectionBehavior = [.fullScreenPrimary, .participatesInCycle]
         window.center()
         window.setFrameAutosaveName("MainWindow")
+
+        if let screen = NSScreen.main {
+            let visible = screen.visibleFrame
+            let frame = window.frame
+            if !visible.intersects(frame) || frame.width < 400 || frame.height < 300 {
+                window.setFrame(NSRect(
+                    x: max(visible.minX + 50, visible.midX - 550),
+                    y: max(visible.minY + 50, visible.midY - 350),
+                    width: min(1100, visible.width - 100),
+                    height: min(700, visible.height - 100)
+                ), display: true)
+            }
+        }
+
         super.init(window: window)
+
+        headerBar.onToggleSidebar = { [weak self] in
+            self?.toggleSidebarAction()
+        }
+        headerBar.onBack = { [model] in
+            model.perform(.goBack)
+        }
+        headerBar.onForward = { [model] in
+            model.perform(.goForward)
+        }
+        headerBar.onToggleQuickView = { [model] in
+            model.perform(.toggleQuickView)
+        }
+        headerBar.onOpenSettings = { [model] in
+            model.perform(.openSettings)
+        }
+
         panes.footer.onOpenTransferManager = { [weak self] in
             self?.showTransferManager()
         }
@@ -45,6 +103,7 @@ final class MainWindowController: NSWindowController {
             MainActor.assumeIsolated {
                 guard let self, let width = self.sidebar.viewIfLoaded?.frame.width, width > 0 else { return }
                 self.model.setSidebarWidth(Double(width))
+                self.updateHeaderBarState()
             }
         }
         clickObserver = NSEvent.addLocalMonitorForEvents(matching: .leftMouseDown) { [weak self] event in
@@ -63,6 +122,7 @@ final class MainWindowController: NSWindowController {
             }
             return event
         }
+        updateHeaderBarState()
     }
 
     func showConnectToServer() {
@@ -133,7 +193,6 @@ final class MainWindowController: NSWindowController {
     }
 
     @objc func toggleSidebarAction() {
-        guard let split = window?.contentViewController as? NSSplitViewController else { return }
         guard let sidebarItem = split.splitViewItems.first else { return }
         let currentWidth = sidebar.viewIfLoaded?.frame.width ?? 0
         if sidebarItem.isCollapsed || currentWidth < 50 {
@@ -143,6 +202,19 @@ final class MainWindowController: NSWindowController {
         } else {
             sidebarItem.isCollapsed = true
         }
+        updateHeaderBarState()
+    }
+
+    func updateHeaderBarState() {
+        let activeTab = model.tab(model.state.activeSide)
+        headerBar.canGoBack = activeTab.canGoBack
+        headerBar.canGoForward = activeTab.canGoForward
+
+        let sidebarItem = split.splitViewItems.first
+        let isCollapsed = (sidebarItem?.isCollapsed ?? false) || (sidebar.viewIfLoaded?.frame.width ?? 0) < 50
+        headerBar.isSidebarCollapsed = isCollapsed
+
+        headerBar.isQuickViewActive = model.quickViewSide != nil
     }
 
     @available(*, unavailable)

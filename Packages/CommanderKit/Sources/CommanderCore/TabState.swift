@@ -4,6 +4,8 @@ public struct TabState: Sendable {
     public private(set) var path: URL
     public private(set) var backHistory: [URL] = []
     public private(set) var forwardHistory: [URL] = []
+    public var canGoBack: Bool { !backHistory.isEmpty }
+    public var canGoForward: Bool { !forwardHistory.isEmpty }
     public private(set) var items: [FileItem] = []
     public internal(set) var cursor: String?
     public internal(set) var marked: Set<String> = []

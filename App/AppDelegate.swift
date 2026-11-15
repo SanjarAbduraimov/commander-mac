@@ -56,7 +56,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         NSApp.mainMenu = mainMenu.build()
         effects.onSettingsApplied = { [mainMenu] in mainMenu?.refreshKeyEquivalents() }
         windowController.showWindow(nil)
-        NSApp.activate()
+        windowController.window?.makeKeyAndOrderFront(nil)
+        windowController.window?.orderFrontRegardless()
+        NSApp.activate(ignoringOtherApps: true)
         model.start()
         observeSystem(model)
         NSApp.servicesProvider = self
@@ -80,9 +82,27 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             }
         }
         // SMB shares send no change events; coming back to the app is when their folders get re-read.
-        NotificationCenter.default.addObserver(forName: NSApplication.didBecomeActiveNotification, object: nil, queue: .main) { _ in
-            MainActor.assumeIsolated { model.appDidBecomeActive() }
+        NotificationCenter.default.addObserver(forName: NSApplication.didBecomeActiveNotification, object: nil, queue: .main) { [weak self] _ in
+            MainActor.assumeIsolated {
+                model.appDidBecomeActive()
+                if let window = self?.windowController?.window, !window.isVisible || window.isMiniaturized {
+                    window.deminiaturize(nil)
+                    window.makeKeyAndOrderFront(nil)
+                }
+            }
         }
+    }
+
+    func applicationShouldHandleReopen(_ sender: NSApplication, hasVisibleWindows flag: Bool) -> Bool {
+        if let window = windowController?.window {
+            if window.isMiniaturized {
+                window.deminiaturize(nil)
+            }
+            window.makeKeyAndOrderFront(nil)
+            window.orderFrontRegardless()
+        }
+        NSApp.activate(ignoringOtherApps: true)
+        return true
     }
 
     func applicationShouldTerminate(_ sender: NSApplication) -> NSApplication.TerminateReply {

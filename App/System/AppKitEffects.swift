@@ -21,6 +21,7 @@ final class AppKitEffects: WindowEffects {
             if windowController.model.quickViewSide != nil {
                 windowController.panes.updateQuickView()
             }
+            windowController.updateHeaderBarState()
         case .window, .settings:
             windowController.panes.applyLayout()
             windowController.pane(.left).render()
@@ -31,6 +32,7 @@ final class AppKitEffects: WindowEffects {
                 Self.applyTheme(windowController.model.settings.appearance.theme)
                 onSettingsApplied?()
             }
+            windowController.updateHeaderBarState()
             // Keyboard focus follows the active pane, unless the user is typing in a text field.
             if let window = windowController.window, !(window.firstResponder is NSText) {
                 windowController.pane(windowController.activeSide).focusTable()
@@ -39,6 +41,7 @@ final class AppKitEffects: WindowEffects {
             windowController.panes.footer.render()
         case .sidebar:
             windowController.sidebar.reload()
+            windowController.updateHeaderBarState()
         }
     }
 
