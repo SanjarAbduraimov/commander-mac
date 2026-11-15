@@ -232,13 +232,13 @@ final class PaneViewController: NSViewController, NSTextFieldDelegate, NSDraggin
             toastView.bottomAnchor.constraint(equalTo: statusRow.topAnchor, constant: -10),
         ])
 
-        updatePathContainerColors()
-
         // Clicking anywhere in the pane makes it active; the recognizer must not swallow the click.
         let click = NSClickGestureRecognizer(target: self, action: #selector(paneClicked))
         click.delaysPrimaryMouseButtonEvents = false
         root.addGestureRecognizer(click)
         view = root
+
+        updatePathContainerColors()
     }
 
     override func viewDidLayout() {
@@ -320,7 +320,8 @@ final class PaneViewController: NSViewController, NSTextFieldDelegate, NSDraggin
     }
 
     private func updatePathContainerColors() {
-        view.effectiveAppearance.performAsCurrentDrawingAppearance {
+        let appearance = viewIfLoaded?.effectiveAppearance ?? NSApp.effectiveAppearance
+        appearance.performAsCurrentDrawingAppearance {
             if pathField.isHidden {
                 pathContainer.layer?.backgroundColor = NSColor.quaternaryLabelColor.withAlphaComponent(0.08).cgColor
                 pathContainer.layer?.borderWidth = 0
