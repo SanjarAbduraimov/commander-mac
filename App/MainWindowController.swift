@@ -3,6 +3,29 @@ import SwiftUI
 import CommanderController
 import CommanderCore
 
+/// Modern macOS 15 delicate sidebar divider.
+/// Replaces the harsh black divider with a subtle, translucent hairline separator.
+final class ModernSidebarSplitView: NSSplitView {
+    override var dividerThickness: CGFloat { 1 }
+
+    override func drawDivider(in rect: NSRect) {
+        effectiveAppearance.performAsCurrentDrawingAppearance {
+            NSColor.separatorColor.withAlphaComponent(0.35).setFill()
+            rect.fill()
+        }
+    }
+}
+
+final class MainSplitViewController: NSSplitViewController {
+    override func loadView() {
+        let custom = ModernSidebarSplitView()
+        custom.isVertical = true
+        custom.dividerStyle = .thin
+        self.splitView = custom
+        self.view = custom
+    }
+}
+
 @MainActor
 final class MainWindowController: NSWindowController {
     let panes: PanesViewController
@@ -20,15 +43,15 @@ final class MainWindowController: NSWindowController {
         headerBar = TopHeaderBarView()
 
         let sidebarItem = NSSplitViewItem(viewController: sidebar)
-        sidebarItem.minimumThickness = 160
-        sidebarItem.maximumThickness = 450
+        sidebarItem.minimumThickness = 110
+        sidebarItem.maximumThickness = 650
         sidebarItem.canCollapse = true
         sidebarItem.holdingPriority = .defaultHigh
 
         let panesItem = NSSplitViewItem(viewController: panes)
         panesItem.holdingPriority = .defaultLow
 
-        split = NSSplitViewController()
+        split = MainSplitViewController()
         split.addSplitViewItem(sidebarItem)
         split.addSplitViewItem(panesItem)
 
@@ -113,7 +136,7 @@ final class MainWindowController: NSWindowController {
                 guard let self else { return }
                 let sidebarItem = self.split.splitViewItems.first
                 guard !(sidebarItem?.isCollapsed ?? false) else { return }
-                guard let width = self.sidebar.viewIfLoaded?.frame.width, width >= 150 else { return }
+                guard let width = self.sidebar.viewIfLoaded?.frame.width, width >= 80 else { return }
                 self.model.setSidebarWidth(Double(width))
                 self.updateHeaderBarState()
             }

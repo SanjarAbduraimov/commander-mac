@@ -200,6 +200,7 @@ final class SidebarViewController: NSViewController, NSOutlineViewDataSource, NS
         image.heightAnchor.constraint(equalToConstant: 16).isActive = true
         let title = NSTextField(labelWithString: name)
         title.lineBreakMode = .byTruncatingTail
+        title.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
         let text = NSStackView(views: [title])
         text.orientation = .vertical
         text.alignment = .leading
