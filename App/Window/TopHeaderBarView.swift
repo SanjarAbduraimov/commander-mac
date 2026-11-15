@@ -55,6 +55,7 @@ final class TopHeaderBarView: NSView {
     private let quickViewButton = HeaderIconButton()
     private let settingsButton = HeaderIconButton()
     private let leadingSpacer = NSView()
+    private var leadingSpacerWidthConstraint: NSLayoutConstraint?
 
     override init(frame: NSRect) {
         super.init(frame: frame)
@@ -135,13 +136,16 @@ final class TopHeaderBarView: NSView {
         addSubview(leftCluster)
         addSubview(rightCluster)
 
+        let spacerWidth = leadingSpacer.widthAnchor.constraint(equalToConstant: 74)
+        leadingSpacerWidthConstraint = spacerWidth
+
         NSLayoutConstraint.activate([
             visualEffect.leadingAnchor.constraint(equalTo: leadingAnchor),
             visualEffect.trailingAnchor.constraint(equalTo: trailingAnchor),
             visualEffect.topAnchor.constraint(equalTo: topAnchor),
             visualEffect.bottomAnchor.constraint(equalTo: bottomAnchor),
 
-            leadingSpacer.widthAnchor.constraint(equalToConstant: 74),
+            spacerWidth,
             leadingSpacer.heightAnchor.constraint(equalToConstant: 28),
 
             leftCluster.leadingAnchor.constraint(equalTo: leadingAnchor),
@@ -150,6 +154,22 @@ final class TopHeaderBarView: NSView {
             rightCluster.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -12),
             rightCluster.centerYAnchor.constraint(equalTo: centerYAnchor),
         ])
+    }
+
+    override func viewDidMoveToWindow() {
+        super.viewDidMoveToWindow()
+        guard let window else { return }
+        updateFullScreenSpacing(isFullScreen: window.styleMask.contains(.fullScreen))
+        NotificationCenter.default.addObserver(forName: NSWindow.willEnterFullScreenNotification, object: window, queue: .main) { [weak self] _ in
+            MainActor.assumeIsolated { self?.updateFullScreenSpacing(isFullScreen: true) }
+        }
+        NotificationCenter.default.addObserver(forName: NSWindow.willExitFullScreenNotification, object: window, queue: .main) { [weak self] _ in
+            MainActor.assumeIsolated { self?.updateFullScreenSpacing(isFullScreen: false) }
+        }
+    }
+
+    private func updateFullScreenSpacing(isFullScreen: Bool) {
+        leadingSpacerWidthConstraint?.constant = isFullScreen ? 12 : 74
     }
 
     @available(*, unavailable)

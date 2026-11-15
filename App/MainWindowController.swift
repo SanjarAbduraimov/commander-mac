@@ -19,31 +19,40 @@ final class MainWindowController: NSWindowController {
         sidebar = SidebarViewController(model: model)
         headerBar = TopHeaderBarView()
 
-        let sidebarItem = NSSplitViewItem(sidebarWithViewController: sidebar)
-        sidebarItem.minimumThickness = 150
-        sidebarItem.maximumThickness = 400
+        let sidebarItem = NSSplitViewItem(viewController: sidebar)
+        sidebarItem.minimumThickness = 160
+        sidebarItem.maximumThickness = 450
+        sidebarItem.canCollapse = true
+        sidebarItem.holdingPriority = .defaultHigh
+
+        let panesItem = NSSplitViewItem(viewController: panes)
+        panesItem.holdingPriority = .defaultLow
 
         split = NSSplitViewController()
         split.addSplitViewItem(sidebarItem)
-        split.addSplitViewItem(NSSplitViewItem(viewController: panes))
+        split.addSplitViewItem(panesItem)
 
         let rootController = NSViewController()
-        let rootStack = NSStackView(views: [headerBar, split.view])
-        rootStack.orientation = .vertical
-        rootStack.spacing = 0
-        rootStack.alignment = .width
-        rootStack.translatesAutoresizingMaskIntoConstraints = false
-
+        let rootView = NSView()
+        rootController.view = rootView
         rootController.addChild(split)
-        rootController.view = NSView()
-        rootController.view.addSubview(rootStack)
+
+        headerBar.translatesAutoresizingMaskIntoConstraints = false
+        split.view.translatesAutoresizingMaskIntoConstraints = false
+
+        rootView.addSubview(headerBar)
+        rootView.addSubview(split.view)
 
         NSLayoutConstraint.activate([
-            headerBar.heightAnchor.constraint(equalToConstant: 42),
-            rootStack.leadingAnchor.constraint(equalTo: rootController.view.leadingAnchor),
-            rootStack.trailingAnchor.constraint(equalTo: rootController.view.trailingAnchor),
-            rootStack.topAnchor.constraint(equalTo: rootController.view.topAnchor),
-            rootStack.bottomAnchor.constraint(equalTo: rootController.view.bottomAnchor),
+            headerBar.heightAnchor.constraint(equalToConstant: 40),
+            headerBar.topAnchor.constraint(equalTo: rootView.topAnchor),
+            headerBar.leadingAnchor.constraint(equalTo: rootView.leadingAnchor),
+            headerBar.trailingAnchor.constraint(equalTo: rootView.trailingAnchor),
+
+            split.view.topAnchor.constraint(equalTo: headerBar.bottomAnchor),
+            split.view.leadingAnchor.constraint(equalTo: rootView.leadingAnchor),
+            split.view.trailingAnchor.constraint(equalTo: rootView.trailingAnchor),
+            split.view.bottomAnchor.constraint(equalTo: rootView.bottomAnchor),
         ])
 
         NSWindow.allowsAutomaticWindowTabbing = false
@@ -101,7 +110,10 @@ final class MainWindowController: NSWindowController {
             forName: NSSplitView.didResizeSubviewsNotification, object: split.splitView, queue: .main
         ) { [weak self] _ in
             MainActor.assumeIsolated {
-                guard let self, let width = self.sidebar.viewIfLoaded?.frame.width, width > 0 else { return }
+                guard let self else { return }
+                let sidebarItem = self.split.splitViewItems.first
+                guard !(sidebarItem?.isCollapsed ?? false) else { return }
+                guard let width = self.sidebar.viewIfLoaded?.frame.width, width >= 150 else { return }
                 self.model.setSidebarWidth(Double(width))
                 self.updateHeaderBarState()
             }
@@ -194,11 +206,12 @@ final class MainWindowController: NSWindowController {
 
     @objc func toggleSidebarAction() {
         guard let sidebarItem = split.splitViewItems.first else { return }
-        let currentWidth = sidebar.viewIfLoaded?.frame.width ?? 0
-        if sidebarItem.isCollapsed || currentWidth < 50 {
+        if sidebarItem.isCollapsed {
             sidebarItem.isCollapsed = false
             let targetWidth = max(CGFloat(model.sidebarWidth), 180)
-            split.splitView.setPosition(targetWidth, ofDividerAt: 0)
+            DispatchQueue.main.async { [weak self] in
+                self?.split.splitView.setPosition(targetWidth, ofDividerAt: 0)
+            }
         } else {
             sidebarItem.isCollapsed = true
         }

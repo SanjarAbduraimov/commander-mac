@@ -44,12 +44,20 @@ final class SidebarViewController: NSViewController, NSOutlineViewDataSource, NS
     }
 
     override func loadView() {
+        let visualEffect = NSVisualEffectView()
+        visualEffect.material = .sidebar
+        visualEffect.blendingMode = .behindWindow
+        visualEffect.state = .followsWindowActiveState
+
         let column = NSTableColumn(identifier: NSUserInterfaceItemIdentifier("place"))
+        column.resizingMask = .autoresizingMask
         outline.addTableColumn(column)
         outline.outlineTableColumn = column
         outline.headerView = nil
         outline.style = .sourceList
         outline.floatsGroupRows = false
+        outline.columnAutoresizingStyle = .uniformColumnAutoresizingStyle
+        outline.autoresizesOutlineColumn = true
         outline.dataSource = self
         outline.delegate = self
         outline.target = self
@@ -60,81 +68,26 @@ final class SidebarViewController: NSViewController, NSOutlineViewDataSource, NS
         menu.delegate = self
         outline.menu = menu
 
-        let container = NSView()
-        container.translatesAutoresizingMaskIntoConstraints = false
-
         let scroll = NSScrollView()
         scroll.translatesAutoresizingMaskIntoConstraints = false
         scroll.documentView = outline
         scroll.hasVerticalScroller = true
+        scroll.hasHorizontalScroller = false
+        scroll.horizontalScrollElasticity = .none
         scroll.drawsBackground = false
-        container.addSubview(scroll)
+        scroll.autohidesScrollers = true
 
-        let divider = NSBox()
-        divider.boxType = .separator
-        divider.translatesAutoresizingMaskIntoConstraints = false
-        container.addSubview(divider)
-
-        let bottomBar = NSView()
-        bottomBar.translatesAutoresizingMaskIntoConstraints = false
-        container.addSubview(bottomBar)
-
-        let settingsButton = NSButton()
-        settingsButton.translatesAutoresizingMaskIntoConstraints = false
-        settingsButton.bezelStyle = .accessoryBarAction
-        settingsButton.isBordered = false
-        let gear = NSImage(systemSymbolName: "gearshape.fill", accessibilityDescription: "Settings")?.withSymbolConfiguration(.init(pointSize: 11, weight: .medium))
-        settingsButton.image = gear
-        settingsButton.title = " Settings"
-        settingsButton.imagePosition = .imageLeading
-        settingsButton.font = .systemFont(ofSize: 11.5, weight: .medium)
-        settingsButton.contentTintColor = .secondaryLabelColor
-        settingsButton.toolTip = "Settings (⌘,)"
-        settingsButton.target = self
-        settingsButton.action = #selector(openSettingsClicked)
-        bottomBar.addSubview(settingsButton)
-
-        let shortcutBadge = NSTextField(labelWithString: " ⌘, ")
-        shortcutBadge.translatesAutoresizingMaskIntoConstraints = false
-        shortcutBadge.font = .monospacedSystemFont(ofSize: 9.5, weight: .semibold)
-        shortcutBadge.textColor = .tertiaryLabelColor
-        shortcutBadge.wantsLayer = true
-        shortcutBadge.layer?.backgroundColor = NSColor.quaternaryLabelColor.withAlphaComponent(0.12).cgColor
-        shortcutBadge.layer?.borderWidth = 0.5
-        shortcutBadge.layer?.borderColor = NSColor.separatorColor.withAlphaComponent(0.5).cgColor
-        shortcutBadge.layer?.cornerRadius = 4
-        bottomBar.addSubview(shortcutBadge)
+        visualEffect.addSubview(scroll)
 
         NSLayoutConstraint.activate([
-            scroll.topAnchor.constraint(equalTo: container.topAnchor),
-            scroll.leadingAnchor.constraint(equalTo: container.leadingAnchor),
-            scroll.trailingAnchor.constraint(equalTo: container.trailingAnchor),
-            scroll.bottomAnchor.constraint(equalTo: divider.topAnchor),
-
-            divider.leadingAnchor.constraint(equalTo: container.leadingAnchor),
-            divider.trailingAnchor.constraint(equalTo: container.trailingAnchor),
-            divider.heightAnchor.constraint(equalToConstant: 1),
-            divider.bottomAnchor.constraint(equalTo: bottomBar.topAnchor),
-
-            bottomBar.leadingAnchor.constraint(equalTo: container.leadingAnchor),
-            bottomBar.trailingAnchor.constraint(equalTo: container.trailingAnchor),
-            bottomBar.bottomAnchor.constraint(equalTo: container.bottomAnchor),
-            bottomBar.heightAnchor.constraint(equalToConstant: 34),
-
-            settingsButton.leadingAnchor.constraint(equalTo: bottomBar.leadingAnchor, constant: 8),
-            settingsButton.centerYAnchor.constraint(equalTo: bottomBar.centerYAnchor),
-            settingsButton.heightAnchor.constraint(equalToConstant: 24),
-
-            shortcutBadge.trailingAnchor.constraint(equalTo: bottomBar.trailingAnchor, constant: -10),
-            shortcutBadge.centerYAnchor.constraint(equalTo: bottomBar.centerYAnchor),
+            scroll.topAnchor.constraint(equalTo: visualEffect.topAnchor),
+            scroll.leadingAnchor.constraint(equalTo: visualEffect.leadingAnchor),
+            scroll.trailingAnchor.constraint(equalTo: visualEffect.trailingAnchor),
+            scroll.bottomAnchor.constraint(equalTo: visualEffect.bottomAnchor),
         ])
 
-        view = container
+        view = visualEffect
         reload()
-    }
-
-    @objc private func openSettingsClicked() {
-        model.perform(.openSettings)
     }
 
     func reload() {
