@@ -48,7 +48,7 @@ Talab: to'liq Xcode (Command Line Tools'da `Testing` moduli yo'q). Barcha buyruq
 
 - Controller testlari: `swift test --package-path Packages/CommanderKit --filter <Suite>` (CommanderController ham shu package'da)
 - Xcode loyihasini generatsiya qilish: `xcodegen generate`
-- App build: `xcodebuild -project Commander.xcodeproj -scheme Commander -destination 'platform=macOS,arch=x86_64' build`
+- App build: `xcodebuild -project Commander.xcodeproj -scheme Commander -destination 'generic/platform=macOS' build`
 - UI smoke testlar: `xcodebuild test -project Commander.xcodeproj -scheme Commander -destination 'platform=macOS,arch=x86_64'` (birinchi marta macOS UI automation uchun Touch ID / parol so'raydi)
 - O'rnatiladigan DMG (Universal: Apple silicon + Intel, Release): `scripts/make-dmg.sh` → `build/Commander.dmg`. Developer ID yo'q — "Apple could not verify…" ogohlantirishi chiqadi; birinchi ochish: System Settings → Privacy & Security → **Open Anyway** (macOS 15 da o'ng tugma → Open endi ishlamaydi) yoki `xattr -dr com.apple.quarantine /Applications/Commander.app`.
 - Ilova ikonkasi: `swift scripts/make-icon.swift App/Assets.xcassets/AppIcon.appiconset` (kod bilan chiziladi).
