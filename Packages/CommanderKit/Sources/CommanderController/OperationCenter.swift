@@ -73,10 +73,16 @@ public final class OperationCenter {
 
     public func cancel(_ id: UUID) {
         tasks[id]?.cancel()
+        if let index = operations.firstIndex(where: { $0.id == id }) {
+            operations.remove(at: index)
+        }
+        onChange?()
     }
 
     public func cancelAll() {
         for task in tasks.values { task.cancel() }
+        operations.removeAll()
+        onChange?()
     }
 
     public func waitUntilIdle() async {

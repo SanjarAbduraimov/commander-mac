@@ -104,9 +104,8 @@ extension WindowModel {
         if Self.targetCommands.contains(command) { return !tab.targets.isEmpty }
         switch command {
         case .rename, .openWithApp, .quickLook: return tab.cursorItem != nil
-        case .newFile, .pasteImage: return true
+        case .newFile, .pasteImage, .toggleQuickView: return true
         case .switchPane: return !isSinglePane
-        case .toggleQuickView: return !isSinglePane
         case .unmarkAll: return !tab.marked.isEmpty || !cutNamesByFolder.isEmpty || !copiedNamesByFolder.isEmpty || quickViewSide != nil
         case .undoMultiRename: return canUndoMultiRename
         case .undo: return undoStack.canUndo
@@ -193,6 +192,7 @@ extension WindowModel {
         guard let entry = undoStack.popUndo() else { return }
         track {
             await self.applyUndoAction(entry.action, isUndo: true)
+            self.effects.showToast(self.state.activeSide, icon: "arrow.uturn.backward", message: "Undone: \(entry.description)")
         }
     }
 
@@ -200,6 +200,7 @@ extension WindowModel {
         guard let entry = undoStack.popRedo() else { return }
         track {
             await self.applyUndoAction(entry.action, isUndo: false)
+            self.effects.showToast(self.state.activeSide, icon: "arrow.uturn.forward", message: "Redone: \(entry.description)")
         }
     }
 

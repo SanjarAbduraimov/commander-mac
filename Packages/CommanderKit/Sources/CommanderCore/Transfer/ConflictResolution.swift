@@ -7,6 +7,7 @@ public struct ConflictDetails: Equatable, Sendable {
     public let targetSize: Int64
     public let sourceModified: Date
     public let targetModified: Date
+    public let isDirectory: Bool
 
     public init(
         sourceURL: URL,
@@ -14,7 +15,8 @@ public struct ConflictDetails: Equatable, Sendable {
         sourceSize: Int64,
         targetSize: Int64,
         sourceModified: Date,
-        targetModified: Date
+        targetModified: Date,
+        isDirectory: Bool = false
     ) {
         self.sourceURL = sourceURL
         self.targetURL = targetURL
@@ -22,6 +24,7 @@ public struct ConflictDetails: Equatable, Sendable {
         self.targetSize = targetSize
         self.sourceModified = sourceModified
         self.targetModified = targetModified
+        self.isDirectory = isDirectory
     }
 
     public var isSourceNewer: Bool {

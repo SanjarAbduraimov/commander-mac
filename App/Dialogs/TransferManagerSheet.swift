@@ -67,7 +67,7 @@ struct TransferManagerView: View {
                 }
                 .frame(maxWidth: .infinity, minHeight: 180)
             } else {
-                ScrollView {
+                ScrollView(.vertical) {
                     VStack(spacing: 10) {
                         ForEach(operations) { op in
                             OperationCard(op: op) {
@@ -76,9 +76,10 @@ struct TransferManagerView: View {
                             }
                         }
                     }
-                    .padding(.vertical, 4)
+                    .padding(.horizontal, 2)
+                    .padding(.vertical, 6)
                 }
-                .frame(maxHeight: 300)
+                .frame(minHeight: 120, maxHeight: 320)
             }
 
             Divider()

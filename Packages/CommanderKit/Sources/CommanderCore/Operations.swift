@@ -34,6 +34,7 @@ public struct Conflict: Sendable {
         let dstSize = (dstAttrs[.size] as? NSNumber)?.int64Value ?? 0
         let srcMod = (srcAttrs[.modificationDate] as? Date) ?? Date()
         let dstMod = (dstAttrs[.modificationDate] as? Date) ?? Date()
+        let isDir = (srcAttrs[.type] as? FileAttributeType) == .typeDirectory
 
         return ConflictDetails(
             sourceURL: source,
@@ -41,7 +42,8 @@ public struct Conflict: Sendable {
             sourceSize: srcSize,
             targetSize: dstSize,
             sourceModified: srcMod,
-            targetModified: dstMod
+            targetModified: dstMod,
+            isDirectory: isDir
         )
     }
 }

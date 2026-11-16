@@ -17,3 +17,7 @@ Package.resolved.bak
 
 # XcodeGen output
 App/Info.plist
+
+# Binary artifacts
+*.dmg
+

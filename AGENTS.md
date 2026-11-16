@@ -1,6 +1,6 @@
 # Commander for Mac
 
-Total Commander uslubidagi ikki panelli, klaviatura bilan tez ishlaydigan, yengil macOS file manager. Muallifning shaxsiy vositasi — App Store, litsenziya yoki tarqatish rejasi yo'q.
+Total Commander uslubidagi ikki panelli, klaviatura bilan tez ishlaydigan, yengil macOS file manager. Open-source (MIT litsenziyasi).
 
 ## Joriy holat
 
@@ -11,8 +11,8 @@ Total Commander uslubidagi ikki panelli, klaviatura bilan tez ishlaydigan, yengi
   - 1-bosqich: `phase1a-commanderkit.md`, `phase1b-app-ui.md`, `phase1c-feedback.md`, `phase1d-cut-reveal-columns.md`, `phase1e-multi-rename.md`, `phase1f-redesign-context-menu.md`.
   - 2-bosqich: `phase2a-transfer-queue.md`, `phase2b-stream-file-copier.md`, `phase2c-conflict-resolution.md`, `phase2d-transfer-manager-ui.md`, `phase2e-undo-redo.md`.
   - UX Polish: `2026-11-14-phase3-ux-polish.md`.
-- Testlar: `swift test` — 378 ta test (63 suite), barchasi muvaffaqiyatli.
-- Universal Release: `build/Commander.dmg` (3.3 MB, x86_64 + arm64).
+- Testlar: `swift test` — 381 ta test (63 suite), barchasi muvaffaqiyatli.
+- Universal Release: `build/Commander.dmg` (3.6 MB, x86_64 + arm64).
 - Keyingi qadam: 4-bosqich (SFTP/FTP tarmoq transferlari) yoki foydalanuvchi sinovi.
 
 ## Ish tartibi

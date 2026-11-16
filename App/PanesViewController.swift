@@ -7,11 +7,33 @@ final class ModernSplitView: NSSplitView {
     private var isHovered = false
     private var trackingArea: NSTrackingArea?
 
-    override var dividerThickness: CGFloat { 9 }
+    override var dividerThickness: CGFloat {
+        guard arrangedSubviews.count > 1 else { return 0 }
+        return 9
+    }
+
+    override func adjustSubviews() {
+        if arrangedSubviews.count == 1, let singleView = arrangedSubviews.first {
+            singleView.frame = bounds
+            return
+        }
+        super.adjustSubviews()
+    }
+
+    override func layout() {
+        super.layout()
+        if arrangedSubviews.count == 1, let singleView = arrangedSubviews.first {
+            singleView.frame = bounds
+        }
+    }
 
     override func updateTrackingAreas() {
         super.updateTrackingAreas()
         if let trackingArea { removeTrackingArea(trackingArea) }
+        guard arrangedSubviews.count > 1 else {
+            trackingArea = nil
+            return
+        }
         let area = NSTrackingArea(
             rect: bounds,
             options: [.mouseEnteredAndExited, .mouseMoved, .activeInActiveApp, .inVisibleRect],
@@ -24,6 +46,13 @@ final class ModernSplitView: NSSplitView {
 
     override func mouseMoved(with event: NSEvent) {
         super.mouseMoved(with: event)
+        guard arrangedSubviews.count > 1 else {
+            if isHovered {
+                isHovered = false
+                needsDisplay = true
+            }
+            return
+        }
         let point = convert(event.locationInWindow, from: nil)
         let hovered = arrangedSubviews.indices.dropLast().contains { index in
             dividerRect(at: index).insetBy(dx: -1, dy: 0).contains(point)
@@ -44,6 +73,7 @@ final class ModernSplitView: NSSplitView {
 
     override func resetCursorRects() {
         super.resetCursorRects()
+        guard arrangedSubviews.count > 1 else { return }
         for index in 0..<max(arrangedSubviews.count - 1, 0) {
             let rect = dividerRect(at: index)
             addCursorRect(rect, cursor: .resizeLeftRight)
@@ -51,7 +81,9 @@ final class ModernSplitView: NSSplitView {
     }
 
     private func dividerRect(at index: Int) -> NSRect {
-        guard arrangedSubviews.indices.contains(index), arrangedSubviews.indices.contains(index + 1) else {
+        guard arrangedSubviews.count > 1,
+              arrangedSubviews.indices.contains(index),
+              arrangedSubviews.indices.contains(index + 1) else {
             return .zero
         }
         let firstFrame = arrangedSubviews[index].frame
@@ -59,6 +91,7 @@ final class ModernSplitView: NSSplitView {
     }
 
     override func drawDivider(in rect: NSRect) {
+        guard arrangedSubviews.count > 1 else { return }
         // Modern subtle gutter background
         NSColor.windowBackgroundColor.setFill()
         rect.fill()
@@ -158,9 +191,14 @@ final class PanesViewController: NSViewController, NSSplitViewDelegate {
                 split.removeArrangedSubview(subview)
                 subview.removeFromSuperview()
             }
+            for subview in split.subviews {
+                subview.removeFromSuperview()
+            }
 
-            if single {
+            if single && quickSide == nil {
+                left.view.frame = split.bounds
                 split.addArrangedSubview(left.view)
+                left.view.frame = split.bounds
             } else {
                 // Left slot
                 if quickSide == .left {
@@ -178,10 +216,12 @@ final class PanesViewController: NSViewController, NSSplitViewDelegate {
             }
 
             split.adjustSubviews()
-            split.layoutSubtreeIfNeeded()
-            if !single {
+            if single && quickSide == nil {
+                left.view.frame = split.bounds
+            } else {
                 split.setPosition((split.bounds.width / 2).rounded(), ofDividerAt: 0)
             }
+            split.layoutSubtreeIfNeeded()
 
             let browsingSide: PaneSide = quickSide == .left ? .right : (quickSide == .right ? .left : model.state.activeSide)
             let activePane = browsingSide == .left ? left : right
@@ -208,7 +248,12 @@ final class PanesViewController: NSViewController, NSSplitViewDelegate {
 
     /// Window resizes grow both panes alike instead of only the first one.
     func splitView(_ splitView: NSSplitView, resizeSubviewsWithOldSize oldSize: NSSize) {
-        guard splitView.arrangedSubviews.count > 1 else { return splitView.adjustSubviews() }
+        guard splitView.arrangedSubviews.count > 1 else {
+            if let first = splitView.arrangedSubviews.first {
+                first.frame = splitView.bounds
+            }
+            return splitView.adjustSubviews()
+        }
         let ratio = oldSize.width > 0 ? left.view.frame.width / oldSize.width : 0.5
         splitView.adjustSubviews()
         splitView.setPosition((splitView.bounds.width * ratio).rounded(), ofDividerAt: 0)

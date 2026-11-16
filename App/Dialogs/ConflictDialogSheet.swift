@@ -47,7 +47,7 @@ struct ConflictDialogView: View {
                     .font(.system(size: 28))
                     .foregroundStyle(.orange)
                 VStack(alignment: .leading, spacing: 2) {
-                    Text("File Already Exists")
+                    Text(details?.isDirectory == true ? "Folder Already Exists" : "File Already Exists")
                         .font(.headline)
                     Text("“\(conflict.existing.lastPathComponent)” already exists in this location.")
                         .font(.subheadline)
@@ -62,7 +62,7 @@ struct ConflictDialogView: View {
                 // Existing / Target
                 VStack(alignment: .leading, spacing: 6) {
                     HStack {
-                        Text("Existing File (Destination)")
+                        Text(details?.isDirectory == true ? "Existing Folder (Destination)" : "Existing File (Destination)")
                             .font(.caption.bold())
                             .foregroundStyle(.secondary)
                         Spacer()
@@ -84,9 +84,15 @@ struct ConflictDialogView: View {
                             .font(.body.bold())
                             .lineLimit(1)
                         if let d = details {
-                            Text("Size: \(ByteCountFormatter.string(fromByteCount: d.targetSize, countStyle: .file)) (\(d.targetSize) bytes)")
-                                .font(.caption)
-                                .foregroundStyle(.secondary)
+                            if d.isDirectory {
+                                Text("Kind: Folder")
+                                    .font(.caption)
+                                    .foregroundStyle(.secondary)
+                            } else {
+                                Text("Size: \(ByteCountFormatter.string(fromByteCount: d.targetSize, countStyle: .file)) (\(d.targetSize) bytes)")
+                                    .font(.caption)
+                                    .foregroundStyle(.secondary)
+                            }
                             Text("Modified: \(DateFormatter.localizedString(from: d.targetModified, dateStyle: .medium, timeStyle: .short))")
                                 .font(.caption)
                                 .foregroundStyle(.secondary)
@@ -102,7 +108,7 @@ struct ConflictDialogView: View {
                 // New / Source
                 VStack(alignment: .leading, spacing: 6) {
                     HStack {
-                        Text("New File (Source)")
+                        Text(details?.isDirectory == true ? "New Folder (Source)" : "New File (Source)")
                             .font(.caption.bold())
                             .foregroundStyle(.secondary)
                         Spacer()
@@ -124,9 +130,15 @@ struct ConflictDialogView: View {
                             .font(.body.bold())
                             .lineLimit(1)
                         if let d = details {
-                            Text("Size: \(ByteCountFormatter.string(fromByteCount: d.sourceSize, countStyle: .file)) (\(d.sourceSize) bytes)")
-                                .font(.caption)
-                                .foregroundStyle(.secondary)
+                            if d.isDirectory {
+                                Text("Kind: Folder")
+                                    .font(.caption)
+                                    .foregroundStyle(.secondary)
+                            } else {
+                                Text("Size: \(ByteCountFormatter.string(fromByteCount: d.sourceSize, countStyle: .file)) (\(d.sourceSize) bytes)")
+                                    .font(.caption)
+                                    .foregroundStyle(.secondary)
+                            }
                             Text("Modified: \(DateFormatter.localizedString(from: d.sourceModified, dateStyle: .medium, timeStyle: .short))")
                                 .font(.caption)
                                 .foregroundStyle(.secondary)

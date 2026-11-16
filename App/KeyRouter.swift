@@ -72,6 +72,24 @@ final class KeyRouter {
                 return true
             }
         }
+        if context == .table, model.quickViewSide != nil,
+           let mainWindow = window.windowController as? MainWindowController,
+           mainWindow.panes.quickViewPanel.isShowingImage {
+            if (modifiers == .command && (event.charactersIgnoringModifiers == "=" || event.charactersIgnoringModifiers == "+"))
+                || (modifiers.isEmpty && (event.characters == "+" || event.characters == "=")) {
+                mainWindow.panes.quickViewPanel.zoomInClicked()
+                return true
+            }
+            if (modifiers == .command && event.charactersIgnoringModifiers == "-")
+                || (modifiers.isEmpty && event.characters == "-") {
+                mainWindow.panes.quickViewPanel.zoomOutClicked()
+                return true
+            }
+            if modifiers == .command && event.charactersIgnoringModifiers == "0" {
+                mainWindow.panes.quickViewPanel.zoomResetClicked()
+                return true
+            }
+        }
         if model.handleKey(chord, context: context) { return true }
         if context == .table, modifiers.isDisjoint(with: [.command, .control, .option]),
            let characters = event.characters, characters.count == 1, let character = characters.first,

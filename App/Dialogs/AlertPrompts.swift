@@ -45,24 +45,15 @@ final class AlertPrompts: OperationPrompts {
     }
 
     func confirmPermanentDelete(_ urls: [URL]) async -> Bool {
-        let alert = NSAlert()
-        alert.alertStyle = .critical
-        alert.messageText = "These items can't be moved to the Trash."
+        let title = "These items can't be moved to the Trash."
         let names = urls.prefix(5).map(\.lastPathComponent).joined(separator: "\n")
         let more = urls.count > 5 ? "\n…and \(urls.count - 5) more" : ""
-        alert.informativeText = "They will be deleted immediately. You can't undo this action.\n\n\(names)\(more)"
-        let delete = alert.addButton(withTitle: "Delete")
-        delete.hasDestructiveAction = true
-        delete.keyEquivalent = "\r"
-        let cancel = alert.addButton(withTitle: "Cancel")
-        cancel.keyEquivalent = "\u{1b}"
-        return await present(alert) == .alertFirstButtonReturn
+        let detail = "They will be deleted immediately. You can't undo this action.\n\n\(names)\(more)"
+        return await showDeletePrompt(title: title, detail: detail)
     }
 
     func confirmDeleteImmediately(_ urls: [URL]) async -> Bool {
-        let alert = NSAlert()
-        alert.alertStyle = .critical
-        alert.messageText = urls.count == 1
+        let title = urls.count == 1
             ? "Delete “\(urls[0].lastPathComponent)” immediately?"
             : "Delete \(urls.count) items immediately?"
         var detail = "You can't undo this action."
@@ -71,6 +62,17 @@ final class AlertPrompts: OperationPrompts {
             let more = urls.count > 5 ? "\n…and \(urls.count - 5) more" : ""
             detail += "\n\n\(names)\(more)"
         }
+        return await showDeletePrompt(title: title, detail: detail)
+    }
+
+    private func showDeletePrompt(title: String, detail: String) async -> Bool {
+        if let window {
+            return await DeleteConfirmPresenter.show(over: window, title: title, detail: detail)
+        }
+
+        let alert = NSAlert()
+        alert.alertStyle = .critical
+        alert.messageText = title
         alert.informativeText = detail
         let delete = alert.addButton(withTitle: "Delete")
         delete.hasDestructiveAction = true
@@ -142,7 +144,7 @@ final class AlertPrompts: OperationPrompts {
 
     @MainActor
     private func handleAlertKeyEvent(_ event: NSEvent, alert: NSAlert) -> Bool {
-        guard event.window === alert.window else { return false }
+        guard event.window === alert.window || event.window === window || event.window?.attachedSheet === alert.window else { return false }
         let buttons = alert.buttons
         guard !buttons.isEmpty else { return false }
 
@@ -209,7 +211,7 @@ final class AlertPrompts: OperationPrompts {
             let paragraph = NSMutableParagraphStyle()
             paragraph.alignment = .center
 
-            let displayTitle = "   \(button.title.trimmingCharacters(in: .whitespaces))   "
+            let cleanTitle = button.title.trimmingCharacters(in: .whitespaces)
 
             if isDestructive {
                 if isActive {
@@ -217,7 +219,7 @@ final class AlertPrompts: OperationPrompts {
                     button.layer?.borderWidth = 2.0
                     button.layer?.borderColor = NSColor.white.cgColor
                     button.attributedTitle = NSAttributedString(
-                        string: displayTitle,
+                        string: cleanTitle,
                         attributes: [
                             .foregroundColor: NSColor.white,
                             .font: NSFont.systemFont(ofSize: 13, weight: .semibold),
@@ -229,7 +231,7 @@ final class AlertPrompts: OperationPrompts {
                     button.layer?.borderWidth = 0.5
                     button.layer?.borderColor = NSColor.systemRed.withAlphaComponent(0.3).cgColor
                     button.attributedTitle = NSAttributedString(
-                        string: displayTitle,
+                        string: cleanTitle,
                         attributes: [
                             .foregroundColor: NSColor.white.withAlphaComponent(0.9),
                             .font: NSFont.systemFont(ofSize: 13, weight: .medium),
@@ -243,7 +245,7 @@ final class AlertPrompts: OperationPrompts {
                     button.layer?.borderWidth = 2.0
                     button.layer?.borderColor = NSColor.white.cgColor
                     button.attributedTitle = NSAttributedString(
-                        string: displayTitle,
+                        string: cleanTitle,
                         attributes: [
                             .foregroundColor: NSColor.white,
                             .font: NSFont.systemFont(ofSize: 13, weight: .semibold),
@@ -255,7 +257,7 @@ final class AlertPrompts: OperationPrompts {
                     button.layer?.borderWidth = 0.5
                     button.layer?.borderColor = NSColor.controlAccentColor.withAlphaComponent(0.3).cgColor
                     button.attributedTitle = NSAttributedString(
-                        string: displayTitle,
+                        string: cleanTitle,
                         attributes: [
                             .foregroundColor: NSColor.white.withAlphaComponent(0.9),
                             .font: NSFont.systemFont(ofSize: 13, weight: .medium),
@@ -269,7 +271,7 @@ final class AlertPrompts: OperationPrompts {
                     button.layer?.borderWidth = 2.0
                     button.layer?.borderColor = NSColor.white.cgColor
                     button.attributedTitle = NSAttributedString(
-                        string: displayTitle,
+                        string: cleanTitle,
                         attributes: [
                             .foregroundColor: NSColor.white,
                             .font: NSFont.systemFont(ofSize: 13, weight: .semibold),
@@ -281,7 +283,7 @@ final class AlertPrompts: OperationPrompts {
                     button.layer?.borderWidth = 0.5
                     button.layer?.borderColor = NSColor.separatorColor.withAlphaComponent(0.5).cgColor
                     button.attributedTitle = NSAttributedString(
-                        string: displayTitle,
+                        string: cleanTitle,
                         attributes: [
                             .foregroundColor: NSColor.white.withAlphaComponent(0.8),
                             .font: NSFont.systemFont(ofSize: 13, weight: .medium),

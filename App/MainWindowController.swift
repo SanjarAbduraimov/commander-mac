@@ -3,44 +3,6 @@ import SwiftUI
 import CommanderController
 import CommanderCore
 
-/// Modern macOS 15 delicate sidebar divider.
-/// Provides a comfortable hit target (7px) while drawing a subtle, translucent hairline separator.
-final class ModernSidebarSplitView: NSSplitView {
-    override var dividerThickness: CGFloat { 7 }
-
-    override func resetCursorRects() {
-        super.resetCursorRects()
-        for i in 0..<max(arrangedSubviews.count - 1, 0) {
-            let rect = dividerRect(at: i)
-            addCursorRect(rect, cursor: .resizeLeftRight)
-        }
-    }
-
-    private func dividerRect(at index: Int) -> NSRect {
-        guard arrangedSubviews.indices.contains(index), arrangedSubviews.indices.contains(index + 1) else { return .zero }
-        let leftFrame = arrangedSubviews[index].frame
-        return NSRect(x: leftFrame.maxX, y: 0, width: dividerThickness, height: bounds.height)
-    }
-
-    override func drawDivider(in rect: NSRect) {
-        effectiveAppearance.performAsCurrentDrawingAppearance {
-            let hairline = NSRect(x: (rect.midX - 0.5).rounded(), y: rect.minY, width: 1, height: rect.height)
-            NSColor.separatorColor.withAlphaComponent(0.28).setFill()
-            hairline.fill()
-        }
-    }
-}
-
-final class MainSplitViewController: NSSplitViewController {
-    override func loadView() {
-        let custom = ModernSidebarSplitView()
-        custom.isVertical = true
-        custom.dividerStyle = .thin
-        self.splitView = custom
-        self.view = custom
-    }
-}
-
 @MainActor
 final class MainWindowController: NSWindowController {
     let panes: PanesViewController
@@ -57,16 +19,19 @@ final class MainWindowController: NSWindowController {
         sidebar = SidebarViewController(model: model)
         headerBar = TopHeaderBarView()
 
-        let sidebarItem = NSSplitViewItem(viewController: sidebar)
-        sidebarItem.minimumThickness = 100
-        sidebarItem.maximumThickness = 650
+        let sidebarItem = NSSplitViewItem(sidebarWithViewController: sidebar)
+        sidebarItem.minimumThickness = 180
+        sidebarItem.maximumThickness = 550
         sidebarItem.canCollapse = true
-        sidebarItem.holdingPriority = .defaultHigh
+        sidebarItem.holdingPriority = NSLayoutConstraint.Priority(250)
 
         let panesItem = NSSplitViewItem(viewController: panes)
-        panesItem.holdingPriority = .defaultLow
+        panesItem.minimumThickness = 480
+        panesItem.holdingPriority = NSLayoutConstraint.Priority(200)
 
-        split = MainSplitViewController()
+        split = NSSplitViewController()
+        split.splitView.isVertical = true
+        split.splitView.dividerStyle = .thin
         split.addSplitViewItem(sidebarItem)
         split.addSplitViewItem(panesItem)
 
@@ -101,6 +66,7 @@ final class MainWindowController: NSWindowController {
         window.tabbingMode = .disallowed
         window.title = "Commander"
         window.setContentSize(NSSize(width: 1100, height: 700))
+        window.minSize = NSSize(width: 800, height: 480)
         window.contentMinSize = NSSize(width: 800, height: 480)
         window.isReleasedWhenClosed = false
         window.collectionBehavior = [.fullScreenPrimary, .participatesInCycle]
@@ -141,7 +107,16 @@ final class MainWindowController: NSWindowController {
         panes.footer.onOpenTransferManager = { [weak self] in
             self?.showTransferManager()
         }
-        split.splitView.setPosition(CGFloat(sidebarWidth), ofDividerAt: 0)
+        let initialSidebarWidth = max(CGFloat(sidebarWidth), 240)
+        split.splitView.setPosition(initialSidebarWidth, ofDividerAt: 0)
+        model.setSidebarWidth(Double(initialSidebarWidth))
+        DispatchQueue.main.async { [weak self] in
+            guard let self else { return }
+            let sidebarItem = self.split.splitViewItems.first
+            if !(sidebarItem?.isCollapsed ?? false) {
+                self.split.splitView.setPosition(initialSidebarWidth, ofDividerAt: 0)
+            }
+        }
         // Otherwise AppKit focuses the first editable view — the path field — and keys would edit the path.
         window.initialFirstResponder = pane(model.state.activeSide).table
         resizeObserver = NotificationCenter.default.addObserver(
@@ -151,7 +126,7 @@ final class MainWindowController: NSWindowController {
                 guard let self else { return }
                 let sidebarItem = self.split.splitViewItems.first
                 guard !(sidebarItem?.isCollapsed ?? false) else { return }
-                guard let width = self.sidebar.viewIfLoaded?.frame.width, width >= 80 else { return }
+                guard let width = self.sidebar.viewIfLoaded?.frame.width, width >= 120 else { return }
                 self.model.setSidebarWidth(Double(width))
                 self.updateHeaderBarState()
             }
@@ -163,8 +138,9 @@ final class MainWindowController: NSWindowController {
                     let p = self.pane(side)
                     if !p.pathField.isHidden {
                         let clickPoint = event.locationInWindow
-                        let containerRect = p.pathField.superview?.convert(p.pathField.superview?.bounds ?? .zero, to: nil) ?? .zero
+                        let containerRect = p.pathContainer.convert(p.pathContainer.bounds, to: nil)
                         if !containerRect.contains(clickPoint) {
+                            p.endPathEditing()
                             window.makeFirstResponder(p.table)
                         }
                     }
@@ -245,13 +221,15 @@ final class MainWindowController: NSWindowController {
     @objc func toggleSidebarAction() {
         guard let sidebarItem = split.splitViewItems.first else { return }
         if sidebarItem.isCollapsed {
-            sidebarItem.isCollapsed = false
-            let targetWidth = max(CGFloat(model.sidebarWidth), 180)
+            sidebarItem.animator().isCollapsed = false
+            let targetWidth = max(CGFloat(model.sidebarWidth), 240)
             DispatchQueue.main.async { [weak self] in
                 self?.split.splitView.setPosition(targetWidth, ofDividerAt: 0)
+                self?.split.splitView.needsDisplay = true
             }
         } else {
-            sidebarItem.isCollapsed = true
+            sidebarItem.animator().isCollapsed = true
+            split.splitView.needsDisplay = true
         }
         updateHeaderBarState()
     }

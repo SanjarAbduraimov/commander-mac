@@ -54,7 +54,7 @@ enum TelegramSharing {
 
         Task { @MainActor in
             let prepared = await prepareArchive(urls: urls) { proc in
-                MainActor.assumeIsolated {
+                DispatchQueue.main.async {
                     activeProcess = proc
                 }
             }
@@ -63,8 +63,28 @@ enum TelegramSharing {
                 window.endSheet(sheetWindow)
             }
 
-            guard !isCancelled, !prepared.isEmpty else { return }
+            if isCancelled {
+                if let first = prepared.first {
+                    try? FileManager.default.removeItem(at: first.deletingLastPathComponent())
+                }
+                return
+            }
+            guard !prepared.isEmpty else { return }
+            cleanStaleTempArchives()
             openTelegram(with: prepared, from: view)
+        }
+    }
+
+    private static func cleanStaleTempArchives() {
+        Task.detached(priority: .background) {
+            let temp = FileManager.default.temporaryDirectory
+            guard let contents = try? FileManager.default.contentsOfDirectory(at: temp, includingPropertiesForKeys: [.contentModificationDateKey]) else { return }
+            let oneHourAgo = Date().addingTimeInterval(-3600)
+            for url in contents where url.lastPathComponent.hasPrefix("CommanderTelegram_") {
+                if let date = (try? url.resourceValues(forKeys: [.contentModificationDateKey]))?.contentModificationDate, date < oneHourAgo {
+                    try? FileManager.default.removeItem(at: url)
+                }
+            }
         }
     }
 
@@ -101,6 +121,7 @@ enum TelegramSharing {
             if process.terminationStatus == 0, FileManager.default.fileExists(atPath: targetZip.path) {
                 return [targetZip]
             }
+            try? FileManager.default.removeItem(at: tempDir)
             return []
         }.value
     }

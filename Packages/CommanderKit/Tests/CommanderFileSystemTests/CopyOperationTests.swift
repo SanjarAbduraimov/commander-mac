@@ -302,4 +302,25 @@ struct CopyOperationTests {
         #expect(outcome == .cancelled)
         #expect(try names(in: dst).isEmpty)
     }
+
+    @Test func folderMergeCopiesMissingFilesWithoutPrompting() async throws {
+        let tmp = try TempDir()
+        defer { tmp.remove() }
+        let src = try tmp.dir("src/folder")
+        try write("hello", to: src.appendingPathComponent("file1.txt"))
+        try write("world", to: src.appendingPathComponent("file2.txt"))
+
+        let dst = try tmp.dir("dst")
+        let existingFolder = try tmp.dir("dst/folder")
+        try write("already here", to: existingFolder.appendingPathComponent("existing.txt"))
+
+        let delegate = RecordingDelegate()
+        let outcome = await CopyOperation(sources: [src], destination: dst, delegate: delegate).run()
+
+        #expect(outcome == .completed)
+        #expect(delegate.conflicts.isEmpty)
+        #expect(try read(existingFolder.appendingPathComponent("existing.txt")) == "already here")
+        #expect(try read(existingFolder.appendingPathComponent("file1.txt")) == "hello")
+        #expect(try read(existingFolder.appendingPathComponent("file2.txt")) == "world")
+    }
 }

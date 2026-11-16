@@ -72,6 +72,11 @@ private final class CopyRun {
         return (cancel.isSet ? .cancelled : .completed, copied)
     }
 
+    private func isDirectory(_ url: URL) -> Bool {
+        var isDir: ObjCBool = false
+        return FileManager.default.fileExists(atPath: url.path, isDirectory: &isDir) && isDir.boolValue
+    }
+
     private func copyTopLevel(_ source: URL) async -> StepResult {
         let name = source.lastPathComponent
         let taken: (String) -> Bool = { pathExists(self.destination.appendingPathComponent($0)) }
@@ -80,6 +85,12 @@ private final class CopyRun {
         if isSameDirectory(source.deletingLastPathComponent(), destination) {
             // Replace would delete the source itself, so a copy into its own folder is always a duplicate.
             target = destination.appendingPathComponent(UniqueName.duplicate(name, exists: taken))
+        } else if isSameOrInside(source, target) {
+            let decision = await delegate.decide(OperationFailure(url: target, reason: .targetContainsSource))
+            return decision == .cancelAll ? .cancelAll : .skipped
+        } else if isDirectory(source) && isDirectory(target) {
+            // Both are directories: merge contents!
+            return await copyTree(source, to: target)
         } else if pathExists(target) {
             switch await conflictDecision(source: source, existing: target) {
             case .skip:
@@ -133,6 +144,53 @@ private final class CopyRun {
         return resolution.decision
     }
 
+    private func copyChild(_ source: URL, to target: URL) async -> StepResult {
+        if cancel.isSet { return .cancelAll }
+        var resolvedTarget = target
+        if isDirectory(source) && isDirectory(target) {
+            return await copyTree(source, to: target)
+        } else if pathExists(target) {
+            switch await conflictDecision(source: source, existing: target) {
+            case .skip:
+                account(skipped: source)
+                return .skipped
+            case .keepBoth:
+                let taken: (String) -> Bool = { pathExists(target.deletingLastPathComponent().appendingPathComponent($0)) }
+                resolvedTarget = target.deletingLastPathComponent().appendingPathComponent(UniqueName.keepBoth(source.lastPathComponent, exists: taken))
+            case .replace:
+                let removal = await attempt(target, delegate: delegate, cancel: cancel) {
+                    try FileManager.default.removeItem(at: target)
+                }
+                if removal != .done { return removal }
+            case .replaceIfOlder:
+                let conflict = Conflict(source: source, existing: target)
+                if let details = conflict.details, details.isSourceNewer {
+                    let removal = await attempt(target, delegate: delegate, cancel: cancel) {
+                        try FileManager.default.removeItem(at: target)
+                    }
+                    if removal != .done { return removal }
+                } else {
+                    account(skipped: source)
+                    return .skipped
+                }
+            case .replaceIfSizeDiffers:
+                let conflict = Conflict(source: source, existing: target)
+                if let details = conflict.details, details.hasSizeDifference {
+                    let removal = await attempt(target, delegate: delegate, cancel: cancel) {
+                        try FileManager.default.removeItem(at: target)
+                    }
+                    if removal != .done { return removal }
+                } else {
+                    account(skipped: source)
+                    return .skipped
+                }
+            case .resume:
+                break
+            }
+        }
+        return await copyTree(source, to: resolvedTarget)
+    }
+
     private func copyTree(_ source: URL, to target: URL) async -> StepResult {
         if cancel.isSet { return .cancelAll }
         var info = stat()
@@ -144,7 +202,7 @@ private final class CopyRun {
 
         if (info.st_mode & S_IFMT) == S_IFDIR {
             let created = await attempt(source, delegate: delegate, cancel: cancel) {
-                try FileManager.default.createDirectory(at: target, withIntermediateDirectories: false)
+                try FileManager.default.createDirectory(at: target, withIntermediateDirectories: true)
             }
             if created != .done { return created }
             var children: [String] = []
@@ -155,7 +213,8 @@ private final class CopyRun {
 
             var result = StepResult.done
             for child in children.sorted() {
-                switch await copyTree(source.appendingPathComponent(child), to: target.appendingPathComponent(child)) {
+                if cancel.isSet { return .cancelAll }
+                switch await copyChild(source.appendingPathComponent(child), to: target.appendingPathComponent(child)) {
                 case .done: break
                 case .skipped: result = .skipped
                 case .cancelAll: return .cancelAll

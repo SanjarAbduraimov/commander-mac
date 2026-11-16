@@ -11,6 +11,9 @@ final class FileTableView: NSTableView {
     var onDragExit: (() -> Void)?
 
     private var pendingRename: Task<Void, Never>?
+    private var dragStartPoint: NSPoint?
+    private var dragStartRow: Int?
+    private var initialMouseDownEvent: NSEvent?
 
     override func becomeFirstResponder() -> Bool {
         let accepted = super.becomeFirstResponder()
@@ -53,7 +56,30 @@ final class FileTableView: NSTableView {
         ) {
             scheduleRename(of: name)
         }
-        trackDrag(from: event, row: row)
+        dragStartPoint = event.locationInWindow
+        dragStartRow = row
+        initialMouseDownEvent = event
+    }
+
+    override func mouseDragged(with event: NSEvent) {
+        super.mouseDragged(with: event)
+        guard let start = dragStartPoint, let row = dragStartRow else { return }
+        let current = event.locationInWindow
+        if hypot(current.x - start.x, current.y - start.y) > 3 {
+            dragStartPoint = nil
+            dragStartRow = nil
+            pendingRename?.cancel()
+            let downEvent = initialMouseDownEvent ?? event
+            initialMouseDownEvent = nil
+            onBeginDrag?(row, downEvent)
+        }
+    }
+
+    override func mouseUp(with event: NSEvent) {
+        dragStartPoint = nil
+        dragStartRow = nil
+        initialMouseDownEvent = nil
+        super.mouseUp(with: event)
     }
 
     override func draggingExited(_ sender: NSDraggingInfo?) {
@@ -121,6 +147,8 @@ final class FileTableView: NSTableView {
     @objc func copy(_ sender: Any?) { model?.perform(.copyToClipboard) }
     @objc func cut(_ sender: Any?) { model?.perform(.cutToClipboard) }
     @objc func paste(_ sender: Any?) { model?.perform(.paste) }
+    @objc func undo(_ sender: Any?) { model?.perform(.undo) }
+    @objc func redo(_ sender: Any?) { model?.perform(.redo) }
     override func selectAll(_ sender: Any?) { model?.perform(.markAll) }
 
     override func validateUserInterfaceItem(_ item: any NSValidatedUserInterfaceItem) -> Bool {
@@ -130,7 +158,8 @@ final class FileTableView: NSTableView {
         case #selector(cut(_:)): return model.isEnabled(.cutToClipboard, context: .table)
         case #selector(paste(_:)): return model.isEnabled(.paste, context: .table)
         case #selector(selectAll(_:)): return true
-        case Selector(("undo:")), Selector(("redo:")): return false
+        case #selector(undo(_:)): return model.isEnabled(.undo, context: .table)
+        case #selector(redo(_:)): return model.isEnabled(.redo, context: .table)
         default: return super.validateUserInterfaceItem(item)
         }
     }
@@ -154,19 +183,6 @@ final class FileTableView: NSTableView {
                   model.state.activeSide == self.side, model.tab(self.side).cursor == name
             else { return }
             model.perform(.rename)
-        }
-    }
-
-    private func trackDrag(from mouseDown: NSEvent, row: Int) {
-        let start = mouseDown.locationInWindow
-        while let next = window?.nextEvent(matching: [.leftMouseUp, .leftMouseDragged]) {
-            if next.type == .leftMouseUp { return }
-            let location = next.locationInWindow
-            if hypot(location.x - start.x, location.y - start.y) > 3 {
-                pendingRename?.cancel()
-                onBeginDrag?(row, mouseDown)
-                return
-            }
         }
     }
 

@@ -65,6 +65,7 @@ final class BreadcrumbBar: NSView {
         button.font = NSFont.systemFont(ofSize: 12, weight: isLast ? .semibold : .medium)
         button.contentTintColor = isLast ? NSColor.labelColor : NSColor.secondaryLabelColor
         if let cell = button.cell as? NSButtonCell {
+            cell.usesSingleLineMode = true
             cell.wraps = false
             cell.isScrollable = false
             cell.lineBreakMode = .byTruncatingMiddle

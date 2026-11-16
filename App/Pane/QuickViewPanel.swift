@@ -21,6 +21,13 @@ final class QuickViewPanel: NSView {
     private let closeButton = NSButton()
     private let container = NSView()
 
+    private let zoomStack = NSStackView()
+    private let zoomOutButton = NSButton()
+    private let zoomLabel = NSTextField(labelWithString: "100%")
+    private let zoomInButton = NSButton()
+    private let zoomResetButton = NSButton()
+    private var imageScrollView: NSScrollView?
+
     private var currentImageView: NSImageView?
     private var avPlayerView: AVPlayerView?
     private var pdfView: PDFView?
@@ -114,7 +121,48 @@ final class QuickViewPanel: NSView {
         titlesStack.spacing = 1
         titlesStack.translatesAutoresizingMaskIntoConstraints = false
 
-        let headerStack = NSStackView(views: [iconView, titlesStack, NSView(), badgeView, closeButton])
+        // Zoom controls for image preview
+        zoomOutButton.isBordered = false
+        zoomOutButton.image = NSImage(systemSymbolName: "minus", accessibilityDescription: "Zoom Out")
+        zoomOutButton.contentTintColor = NSColor.secondaryLabelColor
+        zoomOutButton.target = self
+        zoomOutButton.action = #selector(zoomOutClicked)
+        zoomOutButton.toolTip = "Zoom Out (⌘-)"
+        zoomOutButton.translatesAutoresizingMaskIntoConstraints = false
+
+        zoomLabel.font = NSFont.monospacedDigitSystemFont(ofSize: 10, weight: .medium)
+        zoomLabel.textColor = NSColor.secondaryLabelColor
+        zoomLabel.alignment = .center
+        zoomLabel.translatesAutoresizingMaskIntoConstraints = false
+
+        zoomInButton.isBordered = false
+        zoomInButton.image = NSImage(systemSymbolName: "plus", accessibilityDescription: "Zoom In")
+        zoomInButton.contentTintColor = NSColor.secondaryLabelColor
+        zoomInButton.target = self
+        zoomInButton.action = #selector(zoomInClicked)
+        zoomInButton.toolTip = "Zoom In (⌘+)"
+        zoomInButton.translatesAutoresizingMaskIntoConstraints = false
+
+        zoomResetButton.isBordered = false
+        zoomResetButton.title = "Fit"
+        zoomResetButton.font = NSFont.systemFont(ofSize: 10, weight: .semibold)
+        zoomResetButton.contentTintColor = NSColor.secondaryLabelColor
+        zoomResetButton.target = self
+        zoomResetButton.action = #selector(zoomResetClicked)
+        zoomResetButton.toolTip = "Fit / Actual Size (⌘0)"
+        zoomResetButton.translatesAutoresizingMaskIntoConstraints = false
+
+        zoomStack.orientation = .horizontal
+        zoomStack.alignment = .centerY
+        zoomStack.spacing = 2
+        zoomStack.addArrangedSubview(zoomOutButton)
+        zoomStack.addArrangedSubview(zoomLabel)
+        zoomStack.addArrangedSubview(zoomInButton)
+        zoomStack.addArrangedSubview(zoomResetButton)
+        zoomStack.translatesAutoresizingMaskIntoConstraints = false
+        zoomStack.isHidden = true
+
+        let headerStack = NSStackView(views: [iconView, titlesStack, NSView(), zoomStack, badgeView, closeButton])
         headerStack.orientation = .horizontal
         headerStack.alignment = .centerY
         headerStack.spacing = 8
@@ -255,35 +303,150 @@ final class QuickViewPanel: NSView {
         return false
     }
 
+    var isShowingImage: Bool {
+        imageScrollView != nil
+    }
+
     private func showImagePreview(url: URL, sizeStr: String, kindName: String) {
         removeCurrentSubviews(except: emptyLabel)
 
-        let imageView = NSImageView()
-        imageView.imageScaling = .scaleProportionallyUpOrDown
-        imageView.translatesAutoresizingMaskIntoConstraints = false
-        imageView.refusesFirstResponder = true
-
-        if let image = NSImage(contentsOf: url) {
-            imageView.image = image
-            if let rep = image.representations.first {
-                detailLabel.stringValue = "\(rep.pixelsWide) × \(rep.pixelsHigh) • \(sizeStr) • \(kindName)"
-            } else {
-                detailLabel.stringValue = "\(sizeStr) • \(kindName)"
-            }
-        } else {
-            imageView.image = NSWorkspace.shared.icon(forFile: url.path)
+        guard let image = NSImage(contentsOf: url) else {
+            let iv = NSImageView()
+            iv.image = NSWorkspace.shared.icon(forFile: url.path)
+            iv.imageScaling = .scaleProportionallyUpOrDown
+            iv.translatesAutoresizingMaskIntoConstraints = false
+            container.addSubview(iv)
+            currentImageView = iv
             detailLabel.stringValue = "\(sizeStr) • \(kindName)"
+            zoomStack.isHidden = true
+            NSLayoutConstraint.activate([
+                iv.centerXAnchor.constraint(equalTo: container.centerXAnchor),
+                iv.centerYAnchor.constraint(equalTo: container.centerYAnchor),
+                iv.widthAnchor.constraint(equalToConstant: 96),
+                iv.heightAnchor.constraint(equalToConstant: 96)
+            ])
+            return
         }
 
-        container.addSubview(imageView)
+        let rep = image.representations.first
+        let pixelW = rep != nil && rep!.pixelsWide > 0 ? CGFloat(rep!.pixelsWide) : image.size.width
+        let pixelH = rep != nil && rep!.pixelsHigh > 0 ? CGFloat(rep!.pixelsHigh) : image.size.height
+        detailLabel.stringValue = "\(Int(pixelW)) × \(Int(pixelH)) • \(sizeStr) • \(kindName)"
+
+        let scrollView = NSScrollView()
+        scrollView.hasVerticalScroller = true
+        scrollView.hasHorizontalScroller = true
+        scrollView.autohidesScrollers = true
+        scrollView.borderType = .noBorder
+        scrollView.drawsBackground = false
+        scrollView.allowsMagnification = true
+        scrollView.minMagnification = 0.05
+        scrollView.maxMagnification = 10.0
+        scrollView.translatesAutoresizingMaskIntoConstraints = false
+
+        let clipView = CenteredClipView()
+        clipView.drawsBackground = false
+        scrollView.contentView = clipView
+
+        let imageView = ZoomableImageView()
+        imageView.image = image
+        imageView.imageScaling = .scaleAxesIndependently
+        imageView.frame = NSRect(x: 0, y: 0, width: max(pixelW, 10), height: max(pixelH, 10))
+
+        scrollView.documentView = imageView
+        container.addSubview(scrollView)
+        imageScrollView = scrollView
         currentImageView = imageView
 
         NSLayoutConstraint.activate([
-            imageView.topAnchor.constraint(equalTo: container.topAnchor, constant: 12),
-            imageView.leadingAnchor.constraint(equalTo: container.leadingAnchor, constant: 12),
-            imageView.trailingAnchor.constraint(equalTo: container.trailingAnchor, constant: -12),
-            imageView.bottomAnchor.constraint(equalTo: container.bottomAnchor, constant: -12),
+            scrollView.topAnchor.constraint(equalTo: container.topAnchor),
+            scrollView.leadingAnchor.constraint(equalTo: container.leadingAnchor),
+            scrollView.trailingAnchor.constraint(equalTo: container.trailingAnchor),
+            scrollView.bottomAnchor.constraint(equalTo: container.bottomAnchor)
         ])
+
+        clipView.postsBoundsChangedNotifications = true
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(magnificationChanged),
+            name: NSView.boundsDidChangeNotification,
+            object: clipView
+        )
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(magnificationChanged),
+            name: NSScrollView.didEndLiveMagnifyNotification,
+            object: scrollView
+        )
+
+        zoomStack.isHidden = false
+
+        DispatchQueue.main.async { [weak self] in
+            self?.fitImageInView()
+        }
+
+        imageView.onDoubleClick = { [weak self] in
+            self?.toggleFitOrActual()
+        }
+    }
+
+    private func fitScale() -> CGFloat {
+        guard let sv = imageScrollView, let doc = sv.documentView else { return 1.0 }
+        let viewport = sv.contentView.bounds.size
+        let docSize = doc.frame.size
+        guard docSize.width > 0, docSize.height > 0, viewport.width > 0, viewport.height > 0 else { return 1.0 }
+        let availW = max(viewport.width - 20, 20)
+        let availH = max(viewport.height - 20, 20)
+        let scaleX = availW / docSize.width
+        let scaleY = availH / docSize.height
+        return min(scaleX, scaleY, 1.0)
+    }
+
+    func fitImageInView() {
+        guard let sv = imageScrollView else { return }
+        let scale = fitScale()
+        sv.magnification = max(scale, sv.minMagnification)
+        updateZoomLabel()
+    }
+
+    func toggleFitOrActual() {
+        guard let sv = imageScrollView else { return }
+        let current = sv.magnification
+        let fit = fitScale()
+        if abs(current - 1.0) < 0.08 {
+            sv.setMagnification(fit, centeredAt: NSPoint(x: sv.contentView.bounds.midX, y: sv.contentView.bounds.midY))
+        } else {
+            sv.setMagnification(1.0, centeredAt: NSPoint(x: sv.contentView.bounds.midX, y: sv.contentView.bounds.midY))
+        }
+        updateZoomLabel()
+    }
+
+    @objc func zoomInClicked() {
+        guard let sv = imageScrollView else { return }
+        let newMag = min(sv.magnification * 1.25, sv.maxMagnification)
+        sv.setMagnification(newMag, centeredAt: NSPoint(x: sv.contentView.bounds.midX, y: sv.contentView.bounds.midY))
+        updateZoomLabel()
+    }
+
+    @objc func zoomOutClicked() {
+        guard let sv = imageScrollView else { return }
+        let newMag = max(sv.magnification / 1.25, sv.minMagnification)
+        sv.setMagnification(newMag, centeredAt: NSPoint(x: sv.contentView.bounds.midX, y: sv.contentView.bounds.midY))
+        updateZoomLabel()
+    }
+
+    @objc func zoomResetClicked() {
+        toggleFitOrActual()
+    }
+
+    @objc private func magnificationChanged() {
+        updateZoomLabel()
+    }
+
+    private func updateZoomLabel() {
+        guard let sv = imageScrollView else { return }
+        let pct = Int(round(sv.magnification * 100))
+        zoomLabel.stringValue = "\(pct)%"
     }
 
     private func showAVPreview(url: URL, sizeStr: String, kindName: String) {
@@ -459,6 +622,12 @@ final class QuickViewPanel: NSView {
         if let folder = folderCard, !set.contains(folder) { folderCard = nil }
         if let scroll = textScrollView, !set.contains(scroll) { textScrollView = nil; textView = nil }
         if let ql = previewView, !set.contains(ql) { previewView = nil }
+        if let isv = imageScrollView, !set.contains(isv) {
+            NotificationCenter.default.removeObserver(self, name: NSView.boundsDidChangeNotification, object: isv.contentView)
+            NotificationCenter.default.removeObserver(self, name: NSScrollView.didEndLiveMagnifyNotification, object: isv)
+            imageScrollView = nil
+            zoomStack.isHidden = true
+        }
     }
 
     private func clearContent() {
@@ -475,24 +644,67 @@ final class QuickViewPanel: NSView {
 }
 
 final class QuickViewBadge: NSView {
-    override func draw(_ dirtyRect: NSRect) {
-        let path = NSBezierPath(roundedRect: bounds, xRadius: 4, yRadius: 4)
-        NSColor.controlAccentColor.withAlphaComponent(0.12).setFill()
-        path.fill()
+    private let label = NSTextField(labelWithString: "QUICK VIEW")
 
-        let font = NSFont.systemFont(ofSize: 9, weight: .bold)
-        let str = "QUICK VIEW" as NSString
-        let attrs: [NSAttributedString.Key: Any] = [
-            .font: font,
-            .foregroundColor: NSColor.controlAccentColor
-        ]
-        let size = str.size(withAttributes: attrs)
-        let rect = NSRect(
-            x: ((bounds.width - size.width) / 2).rounded(),
-            y: ((bounds.height - size.height) / 2).rounded() - 0.5,
-            width: size.width,
-            height: size.height
-        )
-        str.draw(in: rect, withAttributes: attrs)
+    override init(frame: NSRect) {
+        super.init(frame: frame)
+        wantsLayer = true
+        layer?.cornerRadius = 4
+        layer?.masksToBounds = true
+        layer?.backgroundColor = NSColor.controlAccentColor.withAlphaComponent(0.12).cgColor
+
+        label.font = NSFont.systemFont(ofSize: 9, weight: .bold)
+        label.textColor = NSColor.controlAccentColor
+        label.alignment = .center
+        label.isBezeled = false
+        label.drawsBackground = false
+        label.isEditable = false
+        label.isSelectable = false
+        label.translatesAutoresizingMaskIntoConstraints = false
+        addSubview(label)
+
+        NSLayoutConstraint.activate([
+            label.centerXAnchor.constraint(equalTo: centerXAnchor),
+            label.centerYAnchor.constraint(equalTo: centerYAnchor),
+        ])
+    }
+
+    @available(*, unavailable)
+    required init?(coder: NSCoder) {
+        fatalError("init(coder:) is not used")
+    }
+
+    override func viewDidChangeEffectiveAppearance() {
+        super.viewDidChangeEffectiveAppearance()
+        effectiveAppearance.performAsCurrentDrawingAppearance {
+            layer?.backgroundColor = NSColor.controlAccentColor.withAlphaComponent(0.12).cgColor
+        }
+    }
+}
+
+final class CenteredClipView: NSClipView {
+    override func constrainBoundsRect(_ proposedBounds: NSRect) -> NSRect {
+        var rect = super.constrainBoundsRect(proposedBounds)
+        guard let documentView = documentView else { return rect }
+        let docFrame = documentView.frame
+        if docFrame.width < bounds.width {
+            rect.origin.x = (docFrame.width - bounds.width) / 2.0
+        }
+        if docFrame.height < bounds.height {
+            rect.origin.y = (docFrame.height - bounds.height) / 2.0
+        }
+        return rect
+    }
+}
+
+final class ZoomableImageView: NSImageView {
+    var onDoubleClick: (() -> Void)?
+
+    override func mouseDown(with event: NSEvent) {
+        if event.clickCount == 2 {
+            onDoubleClick?()
+            return
+        }
+        super.mouseDown(with: event)
     }
 }

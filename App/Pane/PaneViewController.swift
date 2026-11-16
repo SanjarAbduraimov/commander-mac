@@ -3,6 +3,14 @@ import CommanderController
 import CommanderCore
 import os
 
+final class PaneRootView: NSView {
+    var onActivate: (() -> Void)?
+    override func mouseDown(with event: NSEvent) {
+        onActivate?()
+        super.mouseDown(with: event)
+    }
+}
+
 @MainActor
 final class PaneViewController: NSViewController, NSTextFieldDelegate, NSDraggingSource {
     private static let signposter = OSSignposter(subsystem: "local.sanjar.commander", category: .pointsOfInterest)
@@ -11,7 +19,7 @@ final class PaneViewController: NSViewController, NSTextFieldDelegate, NSDraggin
     let side: PaneSide
     let table = FileTableView()
     let pathField = NSTextField()
-    private let pathContainer = NSView()
+    let pathContainer = PathContainerView()
 
     private let tableController: FileTableController
     private lazy var renameEditor = RenameEditor(model: model, side: side, table: table)
@@ -50,7 +58,8 @@ final class PaneViewController: NSViewController, NSTextFieldDelegate, NSDraggin
     }
 
     override func loadView() {
-        let root = NSView()
+        let root = PaneRootView()
+        root.onActivate = { [weak self] in self?.paneClicked() }
         root.setAccessibilityElement(true)
         root.setAccessibilityRole(.group)
         root.setAccessibilityIdentifier("pane.\(side.rawValue)")
@@ -83,16 +92,13 @@ final class PaneViewController: NSViewController, NSTextFieldDelegate, NSDraggin
         pathField.focusRingType = .none
         pathField.drawsBackground = false
         pathField.lineBreakMode = .byTruncatingHead
+        pathField.textColor = .controlTextColor
         pathField.setAccessibilityIdentifier("pathEdit.\(side.rawValue)")
         pathField.delegate = self
         pathField.isHidden = true
 
         pathContainer.translatesAutoresizingMaskIntoConstraints = false
         pathContainer.wantsLayer = true
-        pathContainer.layer?.cornerRadius = 7
-        pathContainer.layer?.backgroundColor = NSColor.quaternaryLabelColor.withAlphaComponent(0.08).cgColor
-        pathContainer.layer?.borderWidth = 0
-        pathContainer.layer?.borderColor = NSColor.controlAccentColor.cgColor
 
         table.side = side
         table.model = model
@@ -232,13 +238,9 @@ final class PaneViewController: NSViewController, NSTextFieldDelegate, NSDraggin
             toastView.bottomAnchor.constraint(equalTo: statusRow.topAnchor, constant: -10),
         ])
 
-        // Clicking anywhere in the pane makes it active; the recognizer must not swallow the click.
-        let click = NSClickGestureRecognizer(target: self, action: #selector(paneClicked))
-        click.delaysPrimaryMouseButtonEvents = false
-        root.addGestureRecognizer(click)
         view = root
 
-        updatePathContainerColors()
+        pathContainer.needsDisplay = true
     }
 
     override func viewDidLayout() {
@@ -253,7 +255,7 @@ final class PaneViewController: NSViewController, NSTextFieldDelegate, NSDraggin
         tabBar.update(titles: pane.tabs.map { Self.title(for: $0.path) }, active: pane.activeTabIndex)
         if pathField.currentEditor() == nil { pathField.stringValue = tab.path.path }
         breadcrumbs.show(tab.path)
-        updatePathContainerColors()
+        pathContainer.needsDisplay = true
         let folderSizes = model.folderSizes(side)
         statusLabel.stringValue = PaneText.status(tab, folderSizes: folderSizes)
         banner.show(model.banner(side))
@@ -319,21 +321,39 @@ final class PaneViewController: NSViewController, NSTextFieldDelegate, NSDraggin
         }
     }
 
-    private func updatePathContainerColors() {
-        let appearance = viewIfLoaded?.effectiveAppearance ?? NSApp.effectiveAppearance
-        appearance.performAsCurrentDrawingAppearance {
-            if pathField.isHidden {
-                pathContainer.layer?.backgroundColor = NSColor.quaternaryLabelColor.withAlphaComponent(0.08).cgColor
-                pathContainer.layer?.borderWidth = 0
-                pathContainer.layer?.borderColor = NSColor.clear.cgColor
-            } else {
-                pathContainer.layer?.backgroundColor = NSColor.controlBackgroundColor.cgColor
-                pathContainer.layer?.borderWidth = 1.5
-                pathContainer.layer?.borderColor = NSColor.controlAccentColor.cgColor
+final class PathContainerView: NSView {
+    var isEditing: Bool = false {
+        didSet {
+            if isEditing != oldValue {
+                needsDisplay = true
             }
-            pathField.textColor = NSColor.controlTextColor
         }
     }
+
+    override var wantsUpdateLayer: Bool { true }
+
+    override func viewDidChangeEffectiveAppearance() {
+        super.viewDidChangeEffectiveAppearance()
+        needsDisplay = true
+    }
+
+    override func updateLayer() {
+        super.updateLayer()
+        layer?.cornerRadius = 6
+        layer?.masksToBounds = true
+        effectiveAppearance.performAsCurrentDrawingAppearance {
+            if isEditing {
+                layer?.backgroundColor = NSColor.textBackgroundColor.cgColor
+                layer?.borderWidth = 1.5
+                layer?.borderColor = NSColor.controlAccentColor.cgColor
+            } else {
+                layer?.backgroundColor = NSColor.quaternaryLabelColor.withAlphaComponent(0.08).cgColor
+                layer?.borderWidth = 0.5
+                layer?.borderColor = NSColor.separatorColor.withAlphaComponent(0.15).cgColor
+            }
+        }
+    }
+}
 
     func showToast(icon: String, message: String) {
         toastView.show(icon: icon, message: message)
@@ -342,9 +362,18 @@ final class PaneViewController: NSViewController, NSTextFieldDelegate, NSDraggin
     func focusPathField() {
         breadcrumbs.isHidden = true
         pathField.isHidden = false
-        updatePathContainerColors()
+        pathContainer.isEditing = true
+        pathField.textColor = .controlTextColor
         view.window?.makeFirstResponder(pathField)
         pathField.selectText(nil)
+    }
+
+    func endPathEditing() {
+        guard !pathField.isHidden else { return }
+        pathField.isHidden = true
+        breadcrumbs.isHidden = false
+        pathContainer.isEditing = false
+        pathField.stringValue = model.tab(side).path.path
     }
 
     func controlTextDidEndEditing(_ notification: Notification) {
@@ -352,9 +381,7 @@ final class PaneViewController: NSViewController, NSTextFieldDelegate, NSDraggin
         // `selectText` ends and restarts editing; only a real end (no editor left) brings the breadcrumbs back.
         DispatchQueue.main.async { [weak self] in
             guard let self, self.pathField.currentEditor() == nil else { return }
-            self.pathField.isHidden = true
-            self.breadcrumbs.isHidden = false
-            self.updatePathContainerColors()
+            self.endPathEditing()
         }
     }
 
@@ -455,6 +482,17 @@ final class PaneViewController: NSViewController, NSTextFieldDelegate, NSDraggin
 
     func draggingSession(_ session: NSDraggingSession, sourceOperationMaskFor context: NSDraggingContext) -> NSDragOperation {
         context == .outsideApplication ? [.copy, .move, .link, .generic] : [.copy, .move]
+    }
+
+    func draggingSession(_ session: NSDraggingSession, endedAt screenPoint: NSPoint, operation: NSDragOperation) {
+        DispatchQueue.main.async { [weak self] in
+            guard let self else { return }
+            self.tableController.endDrag()
+            if let window = self.table.window {
+                window.invalidateCursorRects(for: self.table)
+                window.resetCursorRects()
+            }
+        }
     }
 
     /// Icon (stacked when several items), the grabbed item's name on a rounded plate, and a Finder-style count badge.
